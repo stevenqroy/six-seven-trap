@@ -36,9 +36,9 @@
 | 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
-| 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | next | — | — |
-| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | next | — | — |
-| 18 | S7R-038 | PWA foundation | — | no | codex/gemini | next | — | — |
+| 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
+| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | wip:gemini | gemini/S7R-015 | gemini |
+| 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
 | 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | blocked:all | — | — |
 | 20 | S7R-054 | Polish pass | gate-1 | yes | claude | blocked:gate-1 | — | — |
 | 21 | S7R-055 | Launch prep | gate-1 | yes | claude | blocked:gate-1 | — | — |
@@ -96,3 +96,5 @@
 | 2025-02-12 | S7R-011 | `src/systems/enemy-state-machine.js` — enemy lifecycle runtime | codex |
 | — | infra | `TICKETS.md`, `CLAUDE.md`, plan updates — multi-platform workflow | claude |
 | 2026-02-12 | S7R-046 | `src/ui/action-bar.js`, `action-bar-config.js`, `hud-updates.js` — action button UI framework, flag-gated, main.js -9 lines | claude |
+| 2026-02-12 | S7R-018 | `src/enemies/harvester.js`, `tests/unit/enemies/harvester.test.js` — V1 Harvester tractor-beam enemy | codex |
+| 2026-02-12 | S7R-038 | `public/manifest.json`, `src/service-worker.js` — PWA manifest + cache-first SW, flag-gated | codex |
