@@ -63,6 +63,7 @@ const DEFAULT_FLAGS = {
   // Phase 6: Guardian Command
   actionBar: false,                  // S7R-046: Action button UI
   actionInputArbitration: false,     // S7R-047: Multi-touch move+action
+  multiTouchAction: false,           // S7R-047: multi-touch move+action
   guardianActiveMoves: false,        // S7R-048: Direct combat abilities
   commandEnergy: false,              // S7R-049: Summon energy system
   supportFramework: false,           // S7R-050: Support unit runtime

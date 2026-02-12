@@ -1,4 +1,5 @@
 import { GESTURE } from '../constants.js';
+import { getFlag } from '../config/flags.js';
 
 const NOOP = () => {};
 const NEGATIVE_INFINITY = Number.NEGATIVE_INFINITY;
@@ -19,6 +20,10 @@ function normalizeMode(mode) {
   if (mode === INPUT_MODES.LEGACY) return INPUT_MODES.LEGACY;
   if (mode === 'statechart') return INPUT_MODES.STATE_CHART;
   return INPUT_MODES.STATE_CHART;
+}
+
+function isMultiTouchActionEnabled() {
+  return getFlag('multiTouchAction');
 }
 
 /**
@@ -96,7 +101,9 @@ function createLegacyRuntime(canvas, handlers) {
   }
 
   function onPointerDown(e) {
-    if (!e.isPrimary) return;
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
+    if (pointerDown) return;
     if (e.pointerType === 'touch') e.preventDefault();
     pointerDown = true;
     pointerId = e.pointerId;
@@ -123,7 +130,9 @@ function createLegacyRuntime(canvas, handlers) {
   }
 
   function onPointerMove(e) {
-    if (!e.isPrimary) return;
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
+    if (pointerDown && pointerId !== e.pointerId) return;
     if (e.pointerType === 'touch') e.preventDefault();
     handlers.onMove(e.clientX);
     if (!pointerDown || pointerId !== e.pointerId) return;
@@ -135,15 +144,20 @@ function createLegacyRuntime(canvas, handlers) {
   }
 
   function onTouchMove(e) {
+    const touchCount = Number.isFinite(e.touches?.length) ? e.touches.length : 0;
+    if (isMultiTouchActionEnabled() && touchCount > 1) {
+      return;
+    }
     e.preventDefault();
     if (!e.touches || !e.touches.length) return;
     handlers.onMove(e.touches[0].clientX);
   }
 
   function onPointerUp(e) {
-    if (!e.isPrimary) return;
-    if (e.pointerType === 'touch') e.preventDefault();
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
     if (!pointerDown || pointerId !== e.pointerId) return;
+    if (e.pointerType === 'touch') e.preventDefault();
 
     const upAt = performance.now();
     const duration = upAt - downAt;
@@ -194,9 +208,11 @@ function createLegacyRuntime(canvas, handlers) {
   }
 
   function onPointerCancel(e) {
-    if (!e.isPrimary) return;
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
+    if (!pointerDown || pointerId !== e.pointerId) return;
     if (e.pointerType === 'touch') e.preventDefault();
-    if (pointerDown && pointerId === e.pointerId && holdStarted) {
+    if (holdStarted) {
       handlers.onHoldEnd({ x: e.clientX, y: e.clientY, event: e });
     }
     if (typeof canvas.releasePointerCapture === 'function') {
@@ -347,14 +363,17 @@ function createStateChartRuntime(canvas, handlers) {
   }
 
   function onPointerDown(e) {
-    if (!e.isPrimary) return;
-    if (e.pointerType === 'touch') e.preventDefault();
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
     if (pointerId !== null) return;
+    if (e.pointerType === 'touch') e.preventDefault();
     beginTracking(e, performance.now());
   }
 
   function onPointerMove(e) {
-    if (!e.isPrimary) return;
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
+    if (pointerId !== null && pointerId !== e.pointerId) return;
     if (e.pointerType === 'touch') e.preventDefault();
     handlers.onMove(e.clientX);
     if (pointerId === null || pointerId !== e.pointerId) return;
@@ -367,15 +386,20 @@ function createStateChartRuntime(canvas, handlers) {
   }
 
   function onTouchMove(e) {
+    const touchCount = Number.isFinite(e.touches?.length) ? e.touches.length : 0;
+    if (isMultiTouchActionEnabled() && touchCount > 1) {
+      return;
+    }
     e.preventDefault();
     if (!e.touches || !e.touches.length) return;
     handlers.onMove(e.touches[0].clientX);
   }
 
   function onPointerUp(e) {
-    if (!e.isPrimary) return;
-    if (e.pointerType === 'touch') e.preventDefault();
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
     if (pointerId === null || pointerId !== e.pointerId) return;
+    if (e.pointerType === 'touch') e.preventDefault();
 
     const upAt = performance.now();
     const duration = upAt - downAt;
@@ -414,7 +438,9 @@ function createStateChartRuntime(canvas, handlers) {
   }
 
   function onPointerCancel(e) {
-    if (!e.isPrimary) return;
+    const multiTouchEnabled = isMultiTouchActionEnabled();
+    if (!multiTouchEnabled && !e.isPrimary) return;
+    if (pointerId === null || pointerId !== e.pointerId) return;
     if (e.pointerType === 'touch') e.preventDefault();
     cancelPointer(e);
   }
