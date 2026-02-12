@@ -32,7 +32,7 @@
 | 9 | S7R-011 | Enemy state machine | S7R-010 | yes | claude | done | main | — |
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
-| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | next | — | — |
+| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | review | codex/S7R-048 | codex |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-048 | Codex | Depends on done S7R-047; touches main.js — button-mapped powers |
+| S7R-048 | Claude QA | In review on `codex/S7R-048` |
 
 > **Update this section** whenever ticket statuses change.
 
@@ -98,3 +98,4 @@
 | 2026-02-12 | S7R-038 | `public/manifest.json`, `src/service-worker.js` — PWA manifest + cache-first SW, flag-gated | codex |
 | 2026-02-12 | S7R-015 | `src/enemies/skimmer.js`, `tests/unit/enemies/skimmer.test.js` — V1 Skimmer lateral dash harassment enemy | codex |
 | 2026-02-12 | S7R-047 | `src/core/input.js`, `src/config/flags.js`, `tests/unit/input/multi-touch.test.js` — flag-gated multi-touch move/action arbitration | codex |
+| 2026-02-12 | S7R-048 | `src/ui/action-router.js`, `src/ui/action-bar-config.js`, `src/main.js` — button-mapped powers routing with cooldown/cost gates | codex |

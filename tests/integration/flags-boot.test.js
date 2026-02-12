@@ -180,6 +180,7 @@ describe('Flags Integration: Game Boot', () => {
       'actionBar',
       'actionInputArbitration',
       'multiTouchAction',
+      'buttonMappedPowers',
       'guardianActiveMoves',
       'commandEnergy',
       'supportFramework',
