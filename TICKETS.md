@@ -73,8 +73,25 @@
 10. **Progressive extraction**: every ticket that modifies `src/main.js` must leave it shorter (net lines ≤ 0). Extract, don't add.
 11. **No shared state mutation from modules**: modules receive state as params or import `S` from `src/state.js`. Never create a second mutable singleton.
 12. **Conflict protocol**: if your branch has merge conflicts with main, rebase onto latest main and re-run `npx vite build` before marking `review`. Don't merge broken code.
+13. **Stay informed**: (a) Steven routes tasks and relays cross-worker changes. (b) Every PR describes files changed and exports added/modified. (c) Every merge gets a one-liner in the Merge Log below. Workers: read the last few log entries when starting a session.
 
 ## main.js Lock
 **Currently held by**: _nobody (unlocked)_
 **Queue**: _(empty)_
 > When you need main.js, write your name here. When done, clear it and notify the next in queue.
+
+## Merge Log
+> Every merge to main gets a one-liner here. Workers: read the last few entries when starting a session to see what changed since you last pulled.
+
+| Date | Ticket | What changed | Who |
+|------|--------|-------------|-----|
+| 2025-02-12 | S7R-001 | `src/config/flags.js`, `src/config/debug-panel.js` — feature flag system + debug panel | codex |
+| 2025-02-12 | S7R-002 | `src/utils/rng.js`, `src/core/run-rng.js` — seeded PRNG | codex |
+| 2025-02-12 | S7R-003 | `src/systems/telemetry.js` — telemetry scaffold | codex |
+| 2025-02-12 | S7R-004 | `vitest.config.js`, `tests/` — test harness | codex |
+| 2025-02-12 | S7R-005 | CSS safe areas via flag class toggle | codex |
+| 2025-02-12 | S7R-007 | `src/config/accessibility-settings.js`, `src/ui/settings-panel.js` | codex |
+| 2025-02-12 | S7R-008 | `src/systems/adaptive-quality.js` | codex |
+| 2025-02-12 | S7R-010 | `src/systems/enemy-registry.js` | codex |
+| 2025-02-12 | S7R-011 | `src/systems/enemy-state-machine.js` — enemy lifecycle runtime | codex |
+| — | infra | `TICKETS.md`, `CLAUDE.md`, plan updates — multi-platform workflow | claude |
