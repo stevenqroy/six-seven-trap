@@ -48,10 +48,8 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-046 | Claude Code | No deps, touches main.js |
-| S7R-018 | Codex | Deps (010,011) done, new module only |
+| S7R-047 | Claude Code | Depends on done S7R-046; touches `src/main.js` |
 | S7R-015 | Claude QA | In review on `codex/S7R-015` |
-| S7R-038 | Codex or Gemini | No deps, no main.js |
 
 > **Update this section** whenever ticket statuses change.
 
@@ -74,6 +72,7 @@
 11. **No shared state mutation from modules**: modules receive state as params or import `S` from `src/state.js`. Never create a second mutable singleton.
 12. **Conflict protocol**: if your branch has merge conflicts with main, rebase onto latest main and re-run `npx vite build` before marking `review`. Don't merge broken code.
 13. **Stay informed**: (a) Steven routes tasks and relays cross-worker changes. (b) Every PR describes files changed and exports added/modified. (c) Every merge gets a one-liner in the Merge Log below. Workers: read the last few log entries when starting a session.
+14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
 **Currently held by**: _nobody (unlocked)_
