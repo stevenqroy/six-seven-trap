@@ -361,6 +361,7 @@ describe('Feature Flags System', () => {
       expect(getFlag('guardianActiveMoves')).toBeDefined();
       expect(getFlag('commandEnergy')).toBeDefined();
       expect(getFlag('supportFramework')).toBeDefined();
+      expect(getFlag('supportMedicFirefly')).toBeDefined();
     });
 
     it('should default all flags to false for safety', () => {
