@@ -1538,6 +1538,13 @@ import { createRunRngTracker } from './core/run-rng.js';
     pauseOverlay.classList.toggle('active', S.isPaused);
   }
 
+  function usePower(cost) {
+    if (!canAfford(S, cost)) return false;
+    spendPower(S, cost);
+    hudUpdater.updatePowerBar(S);
+    return true;
+  }
+
   function beforeOpenSettingsPanel() {
     if (S.isTitleScreen || S.isGameOver || S.isVictory) return false;
     settingsOpenedWhileRunning = !S.isPaused;
