@@ -137,6 +137,62 @@ describe('skimmer enemy (S7R-015)', () => {
     expect(afterFrame.hp).toBe(beforeHit.hp - 2);
   });
 
+  it('resets spawn context cleanly when spawn is called multiple times', () => {
+    const state = createState({ wCSS: 400, hCSS: 240 });
+
+    skimmer.spawn({ x: 30, y: 70, direction: 1 });
+    skimmer.update(0, state);
+    const firstSpawn = skimmer.serializeDebug();
+    expect(firstSpawn.x).toBe(30);
+    expect(firstSpawn.y).toBe(70);
+    expect(firstSpawn.dashDirection).toBe(1);
+
+    skimmer.spawn({ x: 260, y: 90, direction: -1 });
+    skimmer.update(0, state);
+    const secondSpawn = skimmer.serializeDebug();
+    expect(secondSpawn.x).toBe(260);
+    expect(secondSpawn.y).toBe(90);
+    expect(secondSpawn.dashDirection).toBe(-1);
+    expect(secondSpawn.strafingRuns).toBe(0);
+    expect(secondSpawn.runtimeEntityId).toBe('enemy-1');
+  });
+
+  it('treats invalid onHit payloads as no-op damage/interrupts', () => {
+    skimmer.spawn({ x: 80, y: 90, direction: 1 });
+    const beforeHit = skimmer.serializeDebug();
+
+    const handled = skimmer.onHit('invalid-payload');
+    const afterHit = skimmer.serializeDebug();
+
+    expect(handled).toBe(true);
+    expect(afterHit.hp).toBe(beforeHit.hp);
+    expect(afterHit.lifecycleState).toBe(beforeHit.lifecycleState);
+  });
+
+  it('destroy clears runtime, movement state, and debug payload fields', () => {
+    const state = createState();
+    skimmer.spawn({
+      x: 90,
+      y: 100,
+      direction: 1,
+    });
+    skimmer.update(0.02, state);
+    skimmer.update(0.36, state);
+    skimmer.update(0.016, state);
+    expect(skimmer.serializeDebug().runtime).not.toBe(null);
+
+    skimmer.destroy();
+    const debug = skimmer.serializeDebug();
+
+    expect(debug.hp).toBe(0);
+    expect(debug.lifecycleState).toBe('despawned');
+    expect(debug.runtime).toBe(null);
+    expect(debug.runtimeEntityId).toBe(null);
+    expect(debug.trailCount).toBe(0);
+    expect(debug.x).toBe(0);
+    expect(debug.y).toBe(0);
+  });
+
   it('draws body and active trail artifacts when dashing', () => {
     const state = createState();
     const { ctx, calls } = createMockCtx();
