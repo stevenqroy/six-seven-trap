@@ -88,6 +88,7 @@ import { createAccessibilitySettingsController } from './config/accessibility-se
 import { createSettingsPanel } from './ui/settings-panel.js';
 import { createActionBar } from './ui/action-bar.js';
 import { createActionBarButtons } from './ui/action-bar-config.js';
+import { createActionRouter } from './ui/action-router.js';
 import { createHudUpdater } from './ui/hud-updates.js';
 import { createRunRngTracker } from './core/run-rng.js';
 
@@ -1569,17 +1570,13 @@ import { createRunRngTracker } from './core/run-rng.js';
   });
 
   // Action Bar UI (S7R-046)
+  let actionRouter = null;
   actionBar = createActionBar({
     enabled: getFlag('actionBar'),
-    buttons: createActionBarButtons({
-      S,
-      activateShield,
-      fireProjectile,
-      getGuardianPose,
-      telemetry,
-      usePower,
-    }),
+    buttons: createActionBarButtons(),
+    beforeActivate: (buttonId) => Boolean(actionRouter && actionRouter.handleActivation(buttonId)),
   });
+  actionRouter = createActionRouter({ S, actionBar, activateShield, fireProjectile, getGuardianPose, telemetry, usePower });
 
   window.addEventListener('flagchange', (event) => {
     const detail = event.detail;
