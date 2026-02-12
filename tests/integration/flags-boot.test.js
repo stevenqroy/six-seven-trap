@@ -179,6 +179,7 @@ describe('Flags Integration: Game Boot', () => {
     const guardianFlags = [
       'actionBar',
       'actionInputArbitration',
+      'multiTouchAction',
       'guardianActiveMoves',
       'commandEnergy',
       'supportFramework',
