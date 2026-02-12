@@ -33,7 +33,7 @@
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
-| 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | next | — | — |
+| 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | review | codex/S7R-050 | codex |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-050 | Codex | Support framework runtime — no main.js, standalone module |
+| S7R-050 | Claude (QA) | Ready for QA — support runtime + registry foundation (build gate passed) |
 
 > **Update this section** whenever ticket statuses change.
 
@@ -99,3 +99,4 @@
 | 2026-02-12 | S7R-015 | `src/enemies/skimmer.js`, `tests/unit/enemies/skimmer.test.js` — V1 Skimmer lateral dash harassment enemy | codex |
 | 2026-02-12 | S7R-047 | `src/core/input.js`, `src/config/flags.js`, `tests/unit/input/multi-touch.test.js` — flag-gated multi-touch move/action arbitration | codex |
 | 2026-02-12 | S7R-048 | `src/ui/action-router.js`, `src/ui/action-bar-config.js`, `src/main.js` — button-mapped powers routing with cooldown/cost gates | codex |
+| 2026-02-12 | S7R-050 | `src/systems/support-runtime.js`, `src/systems/support-registry.js` — support runtime lifecycle + registry foundation, flag-gated with unit tests | codex |
