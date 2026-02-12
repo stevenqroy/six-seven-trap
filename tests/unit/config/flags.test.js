@@ -356,6 +356,7 @@ describe('Feature Flags System', () => {
       expect(getFlag('actionBar')).toBeDefined();
       expect(getFlag('actionInputArbitration')).toBeDefined();
       expect(getFlag('multiTouchAction')).toBeDefined();
+      expect(getFlag('buttonMappedPowers')).toBeDefined();
       expect(getFlag('guardianActiveMoves')).toBeDefined();
       expect(getFlag('commandEnergy')).toBeDefined();
       expect(getFlag('supportFramework')).toBeDefined();
