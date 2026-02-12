@@ -229,7 +229,7 @@ function renderPanelContent() {
     'Phase 3: Enemy Pack Alpha': ['enemySkimmer', 'enemyRamBrute', 'enemyShieldOrbiter', 'enemyHarvester', 'enemySplitter', 'enemyEMPDrone'],
     'Phase 4: Enemy Pack Beta': ['enemySniperPrism', 'enemyBomberArc', 'enemyRiftWarper', 'enemyNecroCollector', 'enemyCommanderBeacon', 'enemyMimicCaster', 'enemySynergyRules', 'unifiedTelegraph', 'damageMatrix', 'rewardEconomy', 'miniBosses', 'mothershipRewrite'],
     'Phase 5: Player Counterplay': ['focusMode', 'panicClear', 'abilityRebalance', 'dynamicDirector'],
-    'Phase 6: Guardian Command': ['actionBar', 'actionInputArbitration', 'multiTouchAction', 'buttonMappedPowers', 'guardianActiveMoves', 'commandEnergy', 'supportFramework', 'supportMedicFirefly', 'supportBulwarkBot', 'supportStrikerHawk'],
+    'Phase 6: Guardian Command': ['actionBar', 'actionInputArbitration', 'multiTouchAction', 'buttonMappedPowers', 'supportRuntime', 'guardianActiveMoves', 'commandEnergy', 'supportFramework', 'supportMedicFirefly', 'supportBulwarkBot', 'supportStrikerHawk'],
     'Phase 7: App Productization': ['mobileLifecyclePolish', 'pwaFoundation', 'capacitorWrappers'],
   };
 
