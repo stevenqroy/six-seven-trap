@@ -15,7 +15,6 @@ import {
   SCOWL_OVERLAY,
   BADGUYS_OVERLAY_DEFAULT,
   DANGER_BEAM_TUNING,
-  MAX_LIVES,
   POWER,
   SHIELD,
   PROJECTILE,
@@ -63,7 +62,6 @@ import {
 import {
   resetPower,
   chargePower,
-  getPowerRatio,
   canAfford,
   spendPower,
   drainPower,
