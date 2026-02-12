@@ -37,7 +37,7 @@
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
-| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | review | codex/S7R-015 | codex |
+| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
 | 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | blocked:all | — | — |
 | 20 | S7R-054 | Polish pass | gate-1 | yes | claude | blocked:gate-1 | — | — |
@@ -49,7 +49,6 @@
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
 | S7R-047 | Claude Code | Depends on done S7R-046; touches `src/main.js` |
-| S7R-015 | Claude QA | In review on `codex/S7R-015` |
 
 > **Update this section** whenever ticket statuses change.
 
