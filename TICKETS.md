@@ -34,7 +34,7 @@
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | done | main | codex |
-| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | next | — | — |
+| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | review | codex/S7R-051 | codex |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | next | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-051 | Codex | Medic Firefly — standalone support module, no main.js |
+| S7R-051 | Claude (QA) | Ready for QA — Medic Firefly support module (build gate passed) |
 | S7R-053 | Gemini | Striker Hawk — standalone support module, no main.js |
 
 > **Update this section** whenever ticket statuses change.
@@ -101,3 +101,4 @@
 | 2026-02-12 | S7R-047 | `src/core/input.js`, `src/config/flags.js`, `tests/unit/input/multi-touch.test.js` — flag-gated multi-touch move/action arbitration | codex |
 | 2026-02-12 | S7R-048 | `src/ui/action-router.js`, `src/ui/action-bar-config.js`, `src/main.js` — button-mapped powers routing with cooldown/cost gates | codex |
 | 2026-02-12 | S7R-050 | `src/systems/support-runtime.js`, `src/systems/support-registry.js` — support runtime lifecycle + registry foundation, flag-gated with unit tests | codex |
+| 2026-02-12 | S7R-051 | `src/supports/medic-firefly.js`, `tests/unit/supports/medic-firefly.test.js` — healing pulse support with fractional life progress + MAX_LIVES cap | codex |
