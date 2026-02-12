@@ -30,8 +30,8 @@
 | 7 | S7R-008 | Adaptive quality | S7R-001 | yes | claude | done | main | — |
 | 8 | S7R-010 | Enemy registry | S7R-001 | yes | claude | done | main | — |
 | 9 | S7R-011 | Enemy state machine | S7R-010 | yes | claude | done | main | — |
-| 10 | S7R-046 | Action button UI | — | yes | claude | next | — | — |
-| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | blocked:046 | — | — |
+| 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
+| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | next | — | — |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | blocked:047 | — | — |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
@@ -95,3 +95,4 @@
 | 2025-02-12 | S7R-010 | `src/systems/enemy-registry.js` | codex |
 | 2025-02-12 | S7R-011 | `src/systems/enemy-state-machine.js` — enemy lifecycle runtime | codex |
 | — | infra | `TICKETS.md`, `CLAUDE.md`, plan updates — multi-platform workflow | claude |
+| 2026-02-12 | S7R-046 | `src/ui/action-bar.js`, `action-bar-config.js`, `hud-updates.js` — action button UI framework, flag-gated, main.js -9 lines | claude |
