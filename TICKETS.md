@@ -31,7 +31,7 @@
 | 8 | S7R-010 | Enemy registry | S7R-001 | yes | claude | done | main | — |
 | 9 | S7R-011 | Enemy state machine | S7R-010 | yes | claude | done | main | — |
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
-| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | next | — | — |
+| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | wip:codex | codex/S7R-047 | codex |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | blocked:047 | — | — |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-047 | Claude Code | Depends on done S7R-046; touches `src/main.js` |
+| S7R-047 | Codex (wip) | In progress — multi-touch input arbitration |
 
 > **Update this section** whenever ticket statuses change.
 
@@ -74,7 +74,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: _nobody (unlocked)_
+**Currently held by**: codex (S7R-047)
 **Queue**: _(empty)_
 > When you need main.js, write your name here. When done, clear it and notify the next in queue.
 
