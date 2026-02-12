@@ -88,6 +88,9 @@ import { initFlags, getFlag } from './config/flags.js';
 import { initDebugPanel } from './config/debug-panel.js';
 import { createAccessibilitySettingsController } from './config/accessibility-settings.js';
 import { createSettingsPanel } from './ui/settings-panel.js';
+import { createActionBar } from './ui/action-bar.js';
+import { createActionBarButtons } from './ui/action-bar-config.js';
+import { createHudUpdater } from './ui/hud-updates.js';
 import { createRunRngTracker } from './core/run-rng.js';
 
 (() => {
@@ -337,6 +340,21 @@ import { createRunRngTracker } from './core/run-rng.js';
   const startGameBtn = document.getElementById('startGameBtn');
   let settingsPanel = null;
   let settingsOpenedWhileRunning = false;
+  let actionBar = null;
+
+  // HUD updater (S7R-046)
+  const hudUpdater = createHudUpdater({
+    livesEl,
+    shipHpFill,
+    shipHpText,
+    powerFill,
+    powerText,
+    powerBar,
+    highScoreEl,
+    titleBest,
+    hudEl,
+    shipHpBar,
+  });
 
   // Core loading UI
   const loadingScreen = document.getElementById('loadingScreen');
@@ -614,7 +632,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       if (!activateShield(S, now)) return;
       spendPower(S, POWER.SHIELD_COST);
       telemetry.onAbilityUsed('shield');
-      updatePowerBar();
+      hudUpdater.updatePowerBar(S);
     },
     onDoubleTap: () => {
       if (S.isTitleScreen || S.isGameOver || S.isPaused || S.isVictory || S.ultimate.active) return;
@@ -623,7 +641,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       if (!fireProjectile(S, pose.cx, pose.anchorY - 50)) return;
       spendPower(S, POWER.PROJECTILE_COST);
       telemetry.onAbilityUsed('projectile');
-      updatePowerBar();
+      hudUpdater.updatePowerBar(S);
     },
     onHoldStart: () => {
       if (S.isTitleScreen || S.isGameOver || S.isPaused || S.isVictory || S.ultimate.active) return;
@@ -645,7 +663,7 @@ import { createRunRngTracker } from './core/run-rng.js';
 
       spendPower(S, POWER.SLAM_COST);
       telemetry.onAbilityUsed('slam');
-      updatePowerBar();
+      hudUpdater.updatePowerBar(S);
 
       S.slam.shockwave = {
         x: originX,
@@ -667,17 +685,6 @@ import { createRunRngTracker } from './core/run-rng.js';
     },
   });
 
-  function syncBestDisplays() {
-    highScoreEl.textContent = `Best: ${S.highScore}`;
-    if (titleBest) titleBest.textContent = `Best: ${S.highScore}`;
-  }
-
-  function setGameplayUiVisible(visible) {
-    const display = visible ? '' : 'none';
-    if (hudEl) hudEl.style.display = display;
-    if (shipHpBar) shipHpBar.style.display = display;
-    if (powerBar) powerBar.style.display = display;
-  }
 
   function showTitleScreen() {
     S.isTitleScreen = true;
@@ -697,58 +704,23 @@ import { createRunRngTracker } from './core/run-rng.js';
     laser(false);
     dangerdanger(false);
     toggleDangerBeam(false);
-    setGameplayUiVisible(false);
+    hudUpdater.setGameplayUiVisible(false);
     if (titleScreen) titleScreen.classList.add('active');
     S.gameStartTime = performance.now();
-    syncBestDisplays();
+    hudUpdater.syncBestDisplays(S);
   }
 
   function startGameFromTitle() {
     if (!S.isTitleScreen) return;
     if (titleScreen) titleScreen.classList.remove('active');
-    setGameplayUiVisible(true);
+    hudUpdater.setGameplayUiVisible(true);
     resetGame();
   }
 
-  syncBestDisplays();
+  hudUpdater.syncBestDisplays(S);
 
-  // Lives HUD helper
-  function updateLivesDisplay() {
-    const full = S.lives;
-    livesEl.textContent = '❤️'.repeat(full) + '🖤'.repeat(Math.max(0, MAX_LIVES - full));
-  }
-
-  function triggerLifeGainPulse() {
-    livesEl.classList.remove('gain');
-    void livesEl.offsetWidth;
-    livesEl.classList.add('gain');
-  }
-  updateLivesDisplay();
-
-  // Ship HP bar helper
-  function updateShipHpBar() {
-    const ratio = getShipHPRatio(S);
-    shipHpFill.style.width = `${ratio * 100}%`;
-    // Color shifts: green → yellow → red as HP drops
-    if (ratio > 0.6) {
-      shipHpFill.style.background = 'linear-gradient(90deg, #44ff88, #88ff44)';
-    } else if (ratio > 0.3) {
-      shipHpFill.style.background = 'linear-gradient(90deg, #ffaa22, #ffdd44)';
-    } else {
-      shipHpFill.style.background = 'linear-gradient(90deg, #ff2222, #ff6644)';
-    }
-    const hpPct = Math.ceil(ratio * 100);
-    shipHpText.textContent = S.shipHP > 0 ? `ALIEN SHIP ${hpPct}%` : 'DEFEATED';
-  }
-
-  function updatePowerBar() {
-    const ratio = getPowerRatio(S);
-    powerFill.style.width = `${ratio * 100}%`;
-    powerText.textContent = `POWER ${Math.round(ratio * 100)}%`;
-    if (powerBar) {
-      powerBar.classList.toggle('near-full', ratio >= POLISH.NEAR_FULL_POWER_RATIO && ratio < 1);
-    }
-  }
+  // Initialize HUD displays (S7R-046)
+  hudUpdater.updateLivesDisplay(S);
 
   function drawWorld(now, cx) {
     const elapsed = Math.max(0, now - S.gameStartTime);
@@ -1071,8 +1043,8 @@ import { createRunRngTracker } from './core/run-rng.js';
     updatePhaseIndicator();
   }
 
-  updateShipHpBar();
-  updatePowerBar();
+  hudUpdater.updateShipHpBar(S);
+  hudUpdater.updatePowerBar(S);
   updatePhaseIndicator();
 
   function updateShipRecoil(dt) {
@@ -1354,7 +1326,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     S.slam.shockwave = null;
 
     S.power = 0;
-    updatePowerBar();
+    hudUpdater.updatePowerBar(S);
 
     const removed = clearAllTraps(10);
     if (removed > 0) {
@@ -1371,7 +1343,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       } else {
         applyShipDamage(ULTIMATE.DAMAGE, null, null, 'ultimate');
       }
-      updateShipHpBar();
+      hudUpdater.updateShipHpBar(S);
     }
 
     createParticles(cx, anchorY - 12, '#9dfcff', 18);
@@ -1473,9 +1445,9 @@ import { createRunRngTracker } from './core/run-rng.js';
     S.dangerBeam.phaseA = random() * Math.PI * 2;
     S.dangerBeam.phaseB = random() * Math.PI * 2;
     S.dangerBeam.huePhase = random() * Math.PI * 2;
-    updateLivesDisplay();
-    updateShipHpBar();
-    updatePowerBar();
+    hudUpdater.updateLivesDisplay(S);
+    hudUpdater.updateShipHpBar(S);
+    hudUpdater.updatePowerBar(S);
     scoreEl.textContent = S.score;
     comboEl.textContent = '';
     comboEl.classList.remove('active');
@@ -1548,10 +1520,10 @@ import { createRunRngTracker } from './core/run-rng.js';
     if (S.score > S.highScore) {
       S.highScore = S.score;
       localStorage.setItem('highScore', S.highScore);
-      syncBestDisplays();
+      hudUpdater.syncBestDisplays(S);
     }
 
-    updateShipHpBar();
+    hudUpdater.updateShipHpBar(S);
     updatePhaseIndicator();
     // Delay showing the modal to let the explosion play
     victoryTimeoutId = setTimeout(() => {
@@ -1591,6 +1563,19 @@ import { createRunRngTracker } from './core/run-rng.js';
     afterClose: afterCloseSettingsPanel,
   });
 
+  // Action Bar UI (S7R-046)
+  actionBar = createActionBar({
+    enabled: getFlag('actionBar'),
+    buttons: createActionBarButtons({
+      S,
+      activateShield,
+      fireProjectile,
+      getGuardianPose,
+      telemetry,
+      usePower,
+    }),
+  });
+
   window.addEventListener('flagchange', (event) => {
     const detail = event.detail;
     if (!detail) return;
@@ -1613,12 +1598,17 @@ import { createRunRngTracker } from './core/run-rng.js';
     if (detail.flagName === 'enemyStateMachine') {
       resetEnemyStateMachine(performance.now());
     }
+
+    if (detail.flagName === 'actionBar') {
+      if (actionBar) actionBar.setEnabled(Boolean(detail.newValue));
+    }
   });
 
   window.addEventListener('flagsreset', () => {
     accessibilitySettingsEnabled = Boolean(getFlag('accessibilitySettings'));
     accessibilitySettingsController.setEnabled(accessibilitySettingsEnabled);
     if (settingsPanel) settingsPanel.setEnabled(accessibilitySettingsEnabled);
+    if (actionBar) actionBar.setEnabled(Boolean(getFlag('actionBar')));
     resetAdaptiveQuality(performance.now());
     applyEnemyRegistryFlag();
     resetEnemyStateMachine(performance.now());
@@ -2778,7 +2768,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     // Beam harvest eruption damages the ship (portal overload)
     if (S.shipHP > 0 && !S.isVictory) {
       applyShipDamage(5, mouthX, mouthY, 'beam-eruption');
-      updateShipHpBar();
+      hudUpdater.updateShipHpBar(S);
     }
   }
 
@@ -3259,6 +3249,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       telemetry.onFrame(rawDt * 1000);
       updateAdaptiveQuality(rawDt * 1000, now);
       updateEnemyStateMachine(rawDt * 1000, now);
+      if (actionBar) actionBar.updateCooldowns(dt);
       updateBadguysState(now, dt);
 
       // Boss phase transitions
@@ -3316,7 +3307,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       updateUltimate(now, dt);
       if (S.magnet.active) {
         const hasPower = drainPower(S, POWER.MAGNET_DRAIN, dt);
-        updatePowerBar();
+        hudUpdater.updatePowerBar(S);
         if (!hasPower) S.magnet.active = false;
       }
       const projectileHits = updateProjectiles(S, dt, badguysRender);
@@ -3328,7 +3319,7 @@ import { createRunRngTracker } from './core/run-rng.js';
           S.cameraShake = Math.max(S.cameraShake, 5);
           if (S.shipHP <= 0) break;
         }
-        updateShipHpBar();
+        hudUpdater.updateShipHpBar(S);
       }
 
       // Camera shake
@@ -3722,7 +3713,7 @@ import { createRunRngTracker } from './core/run-rng.js';
 
             const stillAlive = loseLife(S, now);
             telemetry.onLifeLost(S.lives);
-            updateLivesDisplay();
+            hudUpdater.updateLivesDisplay(S);
             livesEl.classList.remove('hit');
             void livesEl.offsetWidth; // force reflow for re-trigger
             livesEl.classList.add('hit');
@@ -3742,7 +3733,7 @@ import { createRunRngTracker } from './core/run-rng.js';
               if (S.score > S.highScore) {
                 S.highScore = S.score;
                 localStorage.setItem('highScore', S.highScore);
-                syncBestDisplays();
+                hudUpdater.syncBestDisplays(S);
               }
 
               idiotModal.style.display = 'flex';
@@ -3774,7 +3765,7 @@ import { createRunRngTracker } from './core/run-rng.js';
               pushScorePopup(n.x + (random() - 0.5) * 30, n.y - 42, `${S.combo}x`, '#ffe89a', 20);
             }
             chargePower(S, POWER.PER_BOUNCE + S.combo * POWER.COMBO_BONUS);
-            updatePowerBar();
+            hudUpdater.updatePowerBar(S);
             if (!S.ultimate.active && S.power >= POWER.ULTIMATE_COST) {
               S.ultimate.pendingTrigger = true;
             }
@@ -3783,14 +3774,14 @@ import { createRunRngTracker } from './core/run-rng.js';
             if (S.shipHP > 0 && !S.isVictory) {
               const dmg = S.combo >= 5 ? 2 : 1; // combo bonus damage
               applyShipDamage(dmg, n.x, n.y, 'bounce');
-              updateShipHpBar();
+              hudUpdater.updateShipHpBar(S);
             }
 
             // Check for extra life at score milestones
             if (checkExtraLife(S, S.score)) {
               telemetry.onLifeGained(S.lives);
-              updateLivesDisplay();
-              triggerLifeGainPulse();
+              hudUpdater.updateLivesDisplay(S);
+              hudUpdater.triggerLifeGainPulse();
               pushScorePopup(cx, hCSS * 0.3, 'LIFE +1', '#9cffc0', 24);
               createParticles(cx, hCSS * 0.3, '#00ff88', 20);
             }
