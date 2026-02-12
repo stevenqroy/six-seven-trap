@@ -33,9 +33,9 @@
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
-| 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | review | codex/S7R-050 | codex |
-| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
-| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
+| 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | done | main | codex |
+| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | next | — | — |
+| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | next | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
@@ -48,7 +48,8 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-050 | Claude (QA) | Ready for QA — support runtime + registry foundation (build gate passed) |
+| S7R-051 | Codex | Medic Firefly — standalone support module, no main.js |
+| S7R-053 | Gemini | Striker Hawk — standalone support module, no main.js |
 
 > **Update this section** whenever ticket statuses change.
 
