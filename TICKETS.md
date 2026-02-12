@@ -31,8 +31,8 @@
 | 8 | S7R-010 | Enemy registry | S7R-001 | yes | claude | done | main | — |
 | 9 | S7R-011 | Enemy state machine | S7R-010 | yes | claude | done | main | — |
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
-| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | review | codex/S7R-047 | codex |
-| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | blocked:047 | — | — |
+| 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
+| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | next | — | — |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-047 | Claude QA | In review on `codex/S7R-047` |
+| S7R-048 | Codex | Depends on done S7R-047; touches main.js — button-mapped powers |
 
 > **Update this section** whenever ticket statuses change.
 
