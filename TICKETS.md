@@ -34,22 +34,22 @@
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | done | main | codex |
-| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | next | — | — |
-| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | next | — | — |
+| 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | done | main | codex |
+| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | done | main | gemini |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
-| 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | blocked:all | — | — |
-| 20 | S7R-054 | Polish pass | gate-1 | yes | claude | blocked:gate-1 | — | — |
-| 21 | S7R-055 | Launch prep | gate-1 | yes | claude | blocked:gate-1 | — | — |
+| 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | **READY** | — | — |
+| 20 | S7R-054 | Polish pass | gate-1 | yes | claude | next | — | — |
+| 21 | S7R-055 | Launch prep | gate-1 | yes | claude | blocked:054 | — | — |
 | 22 | — | V1-PLAYTEST-GATE-2 | 20-21 | — | steven | blocked:all | — | — |
 
 ## What can run RIGHT NOW (in parallel)
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-051 | Codex | Medic Firefly — standalone support module, no main.js |
-| S7R-053 | Gemini | Striker Hawk — standalone support module, no main.js |
+| V1-PLAYTEST-GATE-1 | Steven | All 10-18 done — playtest the game! |
+| S7R-054 | Codex/Claude | Polish pass — tune costs, cooldowns, balance |
 
 > **Update this section** whenever ticket statuses change.
 
@@ -101,3 +101,5 @@
 | 2026-02-12 | S7R-047 | `src/core/input.js`, `src/config/flags.js`, `tests/unit/input/multi-touch.test.js` — flag-gated multi-touch move/action arbitration | codex |
 | 2026-02-12 | S7R-048 | `src/ui/action-router.js`, `src/ui/action-bar-config.js`, `src/main.js` — button-mapped powers routing with cooldown/cost gates | codex |
 | 2026-02-12 | S7R-050 | `src/systems/support-runtime.js`, `src/systems/support-registry.js` — support runtime lifecycle + registry foundation, flag-gated with unit tests | codex |
+| 2026-02-12 | S7R-051 | `src/supports/medic-firefly.js` — healing pulse support unit, fractional heal progress, flag-gated | codex |
+| 2026-02-12 | S7R-053 | `src/supports/striker-hawk.js` — dive-strike support unit, threat-priority targeting, flag-gated | gemini |
