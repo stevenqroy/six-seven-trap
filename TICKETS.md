@@ -32,8 +32,8 @@
 | 9 | S7R-011 | Enemy state machine | S7R-010 | yes | claude | done | main | — |
 | 10 | S7R-046 | Action button UI | — | yes | claude | done | main | claude |
 | 11 | S7R-047 | Multi-touch move+action | S7R-046 | yes | claude | done | main | codex |
-| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | review | codex/S7R-048 | codex |
-| 13 | S7R-050 | Support unit runtime | S7R-048 | yes | claude | blocked:048 | — | — |
+| 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
+| 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | next | — | — |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
@@ -48,7 +48,7 @@
 
 | Ticket | Platform | Why it's ready |
 |--------|----------|----------------|
-| S7R-048 | Claude QA | In review on `codex/S7R-048` |
+| S7R-050 | Codex | Support framework runtime — no main.js, standalone module |
 
 > **Update this section** whenever ticket statuses change.
 
