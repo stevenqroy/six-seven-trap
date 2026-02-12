@@ -69,7 +69,7 @@ const DEFAULT_FLAGS = {
   guardianActiveMoves: false,        // S7R-048: Direct combat abilities
   commandEnergy: false,              // S7R-049: Summon energy system
   supportFramework: false,           // S7R-050: Support unit runtime
-  supportMedicFirefly: false,        // S7R-051: Medic support unit
+  supportMedicFirefly: false,        // S7R-051: Medic Firefly support
   supportBulwarkBot: false,          // S7R-052: Bulwark support unit
   supportStrikerHawk: false,         // S7R-053: Striker support unit
 
