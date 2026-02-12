@@ -37,7 +37,7 @@
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | blocked:050 | — | — |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
-| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | wip:gemini | gemini/S7R-015 | gemini |
+| 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | wip:codex | codex/S7R-015 | codex |
 | 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
 | 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | blocked:all | — | — |
 | 20 | S7R-054 | Polish pass | gate-1 | yes | claude | blocked:gate-1 | — | — |
@@ -50,7 +50,7 @@
 |--------|----------|----------------|
 | S7R-046 | Claude Code | No deps, touches main.js |
 | S7R-018 | Codex | Deps (010,011) done, new module only |
-| S7R-015 | Gemini | Deps (010,011) done, new module only |
+| S7R-015 | Codex | Deps (010,011) done, new module only |
 | S7R-038 | Codex or Gemini | No deps, no main.js |
 
 > **Update this section** whenever ticket statuses change.
@@ -98,3 +98,4 @@
 | 2026-02-12 | S7R-046 | `src/ui/action-bar.js`, `action-bar-config.js`, `hud-updates.js` — action button UI framework, flag-gated, main.js -9 lines | claude |
 | 2026-02-12 | S7R-018 | `src/enemies/harvester.js`, `tests/unit/enemies/harvester.test.js` — V1 Harvester tractor-beam enemy | codex |
 | 2026-02-12 | S7R-038 | `public/manifest.json`, `src/service-worker.js` — PWA manifest + cache-first SW, flag-gated | codex |
+| 2026-02-12 | S7R-015 | `src/enemies/skimmer.js`, `tests/unit/enemies/skimmer.test.js` — V1 Skimmer lateral dash harassment enemy | codex |
