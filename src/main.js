@@ -15,7 +15,6 @@ import {
   SCOWL_OVERLAY,
   BADGUYS_OVERLAY_DEFAULT,
   DANGER_BEAM_TUNING,
-  MAX_LIVES,
   POWER,
   SHIELD,
   PROJECTILE,
@@ -63,7 +62,6 @@ import {
 import {
   resetPower,
   chargePower,
-  getPowerRatio,
   canAfford,
   spendPower,
   drainPower,
@@ -1536,6 +1534,13 @@ import { createRunRngTracker } from './core/run-rng.js';
     if (S.isTitleScreen || S.isGameOver || S.isVictory) return;
     S.isPaused = !S.isPaused;
     pauseOverlay.classList.toggle('active', S.isPaused);
+  }
+
+  function usePower(cost) {
+    if (!canAfford(S, cost)) return false;
+    spendPower(S, cost);
+    hudUpdater.updatePowerBar(S);
+    return true;
   }
 
   function beforeOpenSettingsPanel() {
