@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Six Seven Trap - Enhanced Edition</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="loadingScreen">
+      <div id="loadingBox">
+        <div id="loadingTitle">Six Seven Ranch</div>
+        <div id="loadingSubtitle">Preparing the ranch...</div>
+        <div id="loadingTrack">
+          <div id="loadingFill"></div>
+        </div>
+        <div id="loadingText">Loading 0/0</div>
+      </div>
+    </div>
+
+    <div id="titleScreen">
+      <div id="titleBox">
+        <div id="titleKicker">Six Seven Ranch</div>
+        <h1 id="titleHeading">Protect The Ranch</h1>
+        <p id="titleStory">
+          The 6s and 7s came out to play in the sun. The alien ship is here to abduct them.
+          Guard the ranch.
+        </p>
+        <div id="titleBest">Best: 0</div>
+        <button id="startGameBtn">Tap To Start</button>
+      </div>
+    </div>
+
+    <div id="fsBtn">
+      <svg id="iconExpand" viewBox="0 0 24 24">
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+      </svg>
+      <svg id="iconCompress" viewBox="0 0 24 24" style="display: none">
+        <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
+      </svg>
+    </div>
+
+    <div id="shipHpBar">
+      <div id="shipHpFill"></div>
+      <div id="shipHpText">ALIEN SHIP</div>
+    </div>
+
+    <div id="hud">
+      <div id="hudInner">
+        <div id="score">0</div>
+        <div id="combo"></div>
+        <div id="lives">❤️❤️❤️</div>
+        <div id="highScore">Best: 0</div>
+        <span id="phaseIndicator"></span>
+        <button class="btn" id="pauseBtn">Pause</button>
+        <button class="btn" id="settingsBtn" hidden>Settings</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div id="powerBar">
+      <div id="powerFill"></div>
+      <div id="powerText">POWER 0%</div>
+    </div>
+
+    <div id="pauseOverlay">
+      <div id="pauseBox">
+        <h2>⏸️ PAUSED</h2>
+        <div id="pauseActions">
+          <button class="btn" id="resumeBtn" style="font-size: 18px; padding: 12px 30px">
+            Resume
+          </button>
+          <button class="btn" id="pauseSettingsBtn" hidden>Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsOverlay" aria-hidden="true">
+      <div id="settingsBox" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <h2 id="settingsTitle">Settings & Accessibility</h2>
+        <p id="settingsSubtitle">Changes apply immediately and persist across reloads.</p>
+
+        <label class="settingsToggle">
+          <input type="checkbox" id="settingReducedMotion" />
+          <span>Reduced Motion</span>
+        </label>
+
+        <label class="settingsToggle">
+          <input type="checkbox" id="settingLowGraphics" />
+          <span>Low Graphics Mode</span>
+        </label>
+
+        <label class="settingsToggle">
+          <input type="checkbox" id="settingHighContrast" />
+          <span>High Contrast UI</span>
+        </label>
+
+        <fieldset id="settingControlScaleGroup">
+          <legend>Control Size</legend>
+          <label class="settingsRadio">
+            <input type="radio" name="settingControlScale" value="normal" checked />
+            <span>Standard</span>
+          </label>
+          <label class="settingsRadio">
+            <input type="radio" name="settingControlScale" value="large" />
+            <span>Large</span>
+          </label>
+          <label class="settingsRadio">
+            <input type="radio" name="settingControlScale" value="xlarge" />
+            <span>Extra Large</span>
+          </label>
+        </fieldset>
+
+        <div id="settingsActions">
+          <button class="btn" id="settingsCloseBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="idiotModal">
+      <div id="idiotBox">
+        <h1>⚠️ GAME OVER ⚠️</h1>
+        <p>This idiot doesn't know what a six or a 7 is!</p>
+        <div id="stats">
+          <div><strong>Final Score:</strong> <span id="finalScore">0</span></div>
+          <div><strong>Best Combo:</strong> <span id="bestCombo">0</span>x</div>
+          <div><strong>Survival Time:</strong> <span id="survivalTime">0</span>s</div>
+        </div>
+        <button id="restartBigBtn">Try Again</button>
+      </div>
+    </div>
+
+    <div id="victoryModal">
+      <div id="victoryBox">
+        <h1>🎉 VICTORY! 🎉</h1>
+        <p>The alien ship has been defeated! Your ranch is safe!</p>
+        <div id="victoryStats">
+          <div><strong>Final Score:</strong> <span id="victoryScore">0</span></div>
+          <div><strong>Best Combo:</strong> <span id="victoryCombo">0</span>x</div>
+          <div><strong>Time:</strong> <span id="victoryTime">0</span>s</div>
+        </div>
+        <button id="victoryPlayAgain">Play Again</button>
+      </div>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

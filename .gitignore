@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+.env
+.env.*
+test-results/
+playwright-report/
+coverage/
+*.tgz
+.vite/
+.claude/
+.codex/
+
+# Raw / intermediate assets (keep repo lightweight)
+src/assets/**/*-raw.png
+src/assets/**/*-raw.jpg
+src/assets/**/*-raw.jpeg
+src/assets/test.mp4
+src/assets/**/*.tmp
