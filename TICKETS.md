@@ -77,7 +77,7 @@
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
-| S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | next | codex or gemini |
+| S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | review (codex/S7R-056) | claude (qa) |
 
 ### Research tasks (no ticket needed)
 
