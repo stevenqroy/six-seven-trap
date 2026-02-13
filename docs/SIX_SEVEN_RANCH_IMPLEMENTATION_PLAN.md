@@ -649,6 +649,31 @@ Parallelization:
 - Target: KPI comparison report before moving to app packaging.
 - Tests: data integrity and metric comparison checks.
 
+### S7R-056 Project dashboard
+- Lane: D
+- Estimate: S
+- Dependencies: none
+- Target: Standalone HTML dashboard that reads TICKETS.md and renders real-time project status.
+- Deliverables:
+  1. `dashboard.html` at repo root — single-file, zero dependencies, opens in any browser
+  2. Parses `TICKETS.md` from local filesystem (via fetch or textarea paste fallback)
+  3. Renders:
+     - Story-level progress bar (done/total tickets, percentage)
+     - Phase timeline with current position highlighted
+     - Ticket table with status color coding (done=green, wip=yellow, review=blue, blocked=red, next=white)
+     - "What can run RIGHT NOW" section with TL;DRs
+     - Platform ownership breakdown (pie or bar chart — who did what)
+     - Merge log timeline
+  4. Auto-refreshes when TICKETS.md changes (watch via polling or manual reload button)
+  5. Responsive — works on mobile and desktop
+  6. No build step, no npm dependencies, no framework — vanilla HTML/CSS/JS in one file
+- Acceptance:
+  1. Open `dashboard.html` in browser, see current project state
+  2. All ticket statuses render correctly with color coding
+  3. Progress percentage matches TICKETS.md
+  4. Works offline (no CDN dependencies)
+- Tests: manual visual verification (no automated tests needed for a dev tool)
+
 Phase 6 exit criteria:
 1. Center character has direct active command abilities.
 2. Support summons are functional, balanced, and stable.

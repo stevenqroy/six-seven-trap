@@ -3,6 +3,23 @@
 > **Single source of truth.** Every worker (Claude Code, Codex, Gemini) reads this before starting and updates it when done.
 > Commit changes to this file on the working branch. Merge conflicts = discussion needed.
 
+## Story
+
+**Six Seven Ranch** — mobile-first arcade action game. V1 goal: shippable vertical slice with action buttons, 2 enemies, 2 support units, and PWA install. Validate fun and retention before expanding.
+
+**V1 phases (where we are):**
+- ~~Phase 0: Infrastructure~~ — flags, RNG, telemetry, test harness (done)
+- ~~Phase 1: Mobile baseline~~ — safe areas, accessibility, adaptive quality (done)
+- ~~Phase 2: Enemy runtime~~ — registry, state machine, harvester, skimmer (done)
+- ~~Phase 6 subset: Commands + supports~~ — action bar, multi-touch, powers, support runtime, medic firefly, striker hawk (done)
+- ~~PWA~~ — manifest + service worker (done)
+- **NOW → Gate-1 playtest** — all features on, manual mobile test, validate session length + ability usage
+- Next → S7R-054 polish pass (tune costs, cooldowns, balance based on playtest)
+- Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
+- Next → Gate-2 playtest (runs/session, ability diversity, soak test)
+
+**18 of 22 V1 tickets done (82%). 2 tickets + 2 gates remaining.**
+
 ## Status Key
 - `done` — merged to main, verified
 - `wip:worker` — in progress (e.g. `wip:codex`, `wip:claude`, `wip:gemini`)
@@ -35,23 +52,40 @@
 | 12 | S7R-048 | Button-mapped existing powers | S7R-047 | yes | claude | done | main | codex |
 | 13 | S7R-050 | Support unit runtime | S7R-048 | no (new module) | codex/gemini | done | main | codex |
 | 14 | S7R-051 | Medic Firefly support | S7R-050 | no (new module) | codex/gemini | done | main | codex |
-| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | review | codex/S7R-053-rewrite | codex |
+| 15 | S7R-053 | Striker Hawk support | S7R-050 | no (new module) | codex/gemini | done | main | codex |
 | 16 | S7R-018 | V1 Lean Harvester | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 17 | S7R-015 | V1 Lean Skimmer | S7R-010,011 | no (new module) | codex/gemini | done | main | codex |
 | 18 | S7R-038 | PWA foundation | — | no | codex/gemini | done | main | codex |
-| 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | blocked:053 | — | — |
+| 19 | — | V1-PLAYTEST-GATE-1 | 10-18 all done | — | steven | next | — | — |
 | 20 | S7R-054 | Polish pass | gate-1 | yes | claude | next | — | — |
 | 21 | S7R-055 | Launch prep | gate-1 | yes | claude | blocked:054 | — | — |
 | 22 | — | V1-PLAYTEST-GATE-2 | 20-21 | — | steven | blocked:all | — | — |
 
-## What can run RIGHT NOW (in parallel)
+## What can run RIGHT NOW
 
-| Ticket | Platform | Why it's ready |
-|--------|----------|----------------|
-| S7R-053 | Claude (QA) | Ready for QA — Striker Hawk rewrite with support-runtime integration |
-| S7R-054 | Codex/Claude | Polish pass — tune costs, cooldowns, balance |
+> **Update this section** whenever ticket statuses change. Platforms: read this to know what's available.
 
-> **Update this section** whenever ticket statuses change.
+### Implementation tickets
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| V1-PLAYTEST-GATE-1 | Enable all flags, play on mobile, check session length + ability usage + fairness | next | steven (manual) |
+| S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
+| S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
+
+### Tooling tickets (no blockers, can start now)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | next | codex or gemini |
+
+### Research tasks (no ticket needed)
+
+| Task | TL;DR | Good for |
+|------|-------|----------|
+| S7R-054 prep | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table. | codex or gemini |
+| main.js extraction | Identify top 5 blocks in main.js that should become standalone modules. Line ranges, what they do, lines saved. | gemini |
+| Test gap audit | Review all modules for missing test coverage, edge cases, pattern violations. | codex or gemini |
 
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
