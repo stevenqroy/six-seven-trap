@@ -54,6 +54,12 @@ Repository workflow rules for Claude Code in this project.
 - Note feature flag behavior and rollback path when applicable.
 - Mention residual risks/follow-ups explicitly.
 
+## Claude's roles
+
+- **QA hub**: every `review` ticket gets QA'd by Claude before merging to main
+- **Ticket grooming**: before a ticket moves to `next`, Claude writes a ready brief (reference files, patterns to match, gotchas) in the TICKETS.md TL;DR so implementers spend zero tokens on discovery
+- **Prompt preparation**: when dispatching to Codex/Gemini, Claude prepares the full prompt per the handoff format
+
 ## Communication protocol (multi-platform)
 
 ### Code quality rules (all platforms)

@@ -15,14 +15,26 @@ Identify yourself in branches and commits:
 
 Never work on another platform's branch. Never develop on `main`.
 
+## Ticket grooming (Claude only)
+
+Before a ticket moves to `next`, Claude grooms it:
+1. Read the spec, resolve ambiguities
+2. List reference files the implementer must read
+3. Identify which existing patterns to match
+4. Note dependency gotchas or shared-file risks
+5. Write a ready brief in the "What can run RIGHT NOW" TL;DR
+
+Groomed tickets have a TL;DR that tells the implementer exactly what to build and what to read. Ungroomed tickets say what the feature is but not how to approach it. **Platforms should not start ungroomed tickets.**
+
 ## Startup protocol
 
 Every session, before writing any code:
 1. Read `TICKETS.md` — find your assigned `wip` row (your platform name in the Owner column)
-2. Read the ticket spec in `docs/SIX_SEVEN_RANCH_IMPLEMENTATION_PLAN.md`
-3. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
-4. Read reference files listed in "Mandatory quality patterns" below
-5. Start work
+2. Read the ticket's TL;DR in "What can run RIGHT NOW" for the ready brief
+3. Read the ticket spec in `docs/SIX_SEVEN_RANCH_IMPLEMENTATION_PLAN.md`
+4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
+5. Read reference files listed in the ready brief and "Mandatory quality patterns" below
+6. Start work
 
 ## Stop protocol
 
