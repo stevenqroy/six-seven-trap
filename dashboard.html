@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Six Seven Ranch Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1118;
+      --surface: #171b26;
+      --surface-soft: #1f2533;
+      --text: #eef2ff;
+      --muted: #a8b1c7;
+      --line: #2e354a;
+      --done: #31c471;
+      --wip: #f2bd45;
+      --review: #4f90ff;
+      --blocked: #ef5a5a;
+      --next: #dce2f2;
+      --skip: #9a9fb2;
+      --unknown: #8f96ab;
+      --accent: #7bd4ff;
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 700px at 10% 10%, #1a2338 0%, var(--bg) 50%);
+      color: var(--text);
+      font: 14px/1.45 "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1400px, calc(100% - 24px));
+      margin: 12px auto 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.14)), var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .panel-head h1,
+    .panel-head h2,
+    .panel-head h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .panel-body {
+      padding: 12px 14px;
+    }
+
+    .kicker {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    button,
+    input[type="file"] {
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #4b5675;
+    }
+
+    .source-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .status-done { background: rgba(49, 196, 113, 0.18); color: #7ff0b0; border-color: rgba(49, 196, 113, 0.35); }
+    .status-wip { background: rgba(242, 189, 69, 0.18); color: #ffd77c; border-color: rgba(242, 189, 69, 0.35); }
+    .status-review { background: rgba(79, 144, 255, 0.2); color: #8eb8ff; border-color: rgba(79, 144, 255, 0.35); }
+    .status-blocked { background: rgba(239, 90, 90, 0.2); color: #ff9f9f; border-color: rgba(239, 90, 90, 0.35); }
+    .status-next { background: rgba(220, 226, 242, 0.15); color: #edf2ff; border-color: rgba(220, 226, 242, 0.25); }
+    .status-skip { background: rgba(154, 159, 178, 0.2); color: #c8cee0; border-color: rgba(154, 159, 178, 0.35); }
+    .status-unknown { background: rgba(143, 150, 171, 0.2); color: #c8cee0; border-color: rgba(143, 150, 171, 0.35); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    .progress-metric {
+      display: grid;
+      gap: 10px;
+    }
+
+    .progress-value {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .progress-value small {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .bar {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: #293149;
+      overflow: hidden;
+      border: 1px solid #37405c;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #2bbf6a, #7ee3a5);
+      transition: width 0.3s ease;
+    }
+
+    .phase-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .phase-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .phase-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--unknown);
+    }
+
+    .phase-item.phase-current {
+      border-color: rgba(123, 212, 255, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(123, 212, 255, 0.24);
+    }
+
+    .phase-item.phase-done .phase-dot { background: var(--done); }
+    .phase-item.phase-wip .phase-dot { background: var(--wip); }
+    .phase-item.phase-review .phase-dot { background: var(--review); }
+    .phase-item.phase-blocked .phase-dot { background: var(--blocked); }
+    .phase-item.phase-next .phase-dot { background: var(--next); }
+
+    .ticket-wrap,
+    .merge-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      font-size: 12px;
+    }
+
+    th {
+      background: #1e2535;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .right-now {
+      display: grid;
+      gap: 10px;
+    }
+
+    .right-now-group {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .right-now-group h3 {
+      margin: 0;
+      padding: 9px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--line);
+      background: #1d2434;
+    }
+
+    .right-now-group table {
+      min-width: 0;
+    }
+
+    .owner-bars {
+      display: grid;
+      gap: 8px;
+    }
+
+    .owner-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 36px;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .owner-row .rail {
+      height: 10px;
+      border-radius: 999px;
+      background: #293149;
+      border: 1px solid #38425d;
+      overflow: hidden;
+    }
+
+    .owner-row .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #73b5ff, #7ee3ff);
+      width: 0;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .timeline-item {
+      border-left: 2px solid #39415b;
+      padding: 0 0 8px 10px;
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-item .top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .fallback {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #101521;
+      color: var(--text);
+      padding: 10px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, "Liberation Mono", monospace;
+    }
+
+    .error {
+      color: #ffb4b4;
+      font-size: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .span-8,
+      .span-6,
+      .span-4 {
+        grid-column: span 12;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        justify-content: flex-start;
+      }
+
+      .owner-row {
+        grid-template-columns: 90px 1fr 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="panel-body">
+        <div class="topbar">
+          <div class="title">
+            <div class="kicker">Six Seven Ranch</div>
+            <h1>Project Dashboard</h1>
+            <div class="muted">Parses <code>TICKETS.md</code> directly. No build step, no dependencies.</div>
+          </div>
+          <div class="controls">
+            <button id="loadBtn" type="button">Load TICKETS.md</button>
+            <button id="reloadBtn" type="button">Manual Refresh</button>
+            <label>
+              <input id="fileInput" type="file" accept=".md,text/markdown,text/plain">
+            </label>
+          </div>
+        </div>
+
+        <div class="source-row">
+          <span id="sourceBadge" class="badge status-next">No data loaded</span>
+          <span id="updatedAt" class="muted"></span>
+          <span id="errorText" class="error"></span>
+        </div>
+
+        <div id="fallbackPanel" class="fallback">
+          <div class="muted">If local fetch is blocked, paste <code>TICKETS.md</code> below and render.</div>
+          <textarea id="pasteArea" placeholder="Paste TICKETS.md here..."></textarea>
+          <div>
+            <button id="renderPasteBtn" type="button">Render Pasted Markdown</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel span-4">
+        <div class="panel-head">
+          <h2>Progress</h2>
+        </div>
+        <div class="panel-body" id="progressCard"></div>
+      </article>
+
+      <article class="panel span-4">
+        <div class="panel-head">
+          <h2>Phase Timeline</h2>
+        </div>
+        <div class="panel-body" id="phaseCard"></div>
+      </article>
+
+      <article class="panel span-4">
+        <div class="panel-head">
+          <h2>Ownership</h2>
+        </div>
+        <div class="panel-body" id="ownerCard"></div>
+      </article>
+
+      <article class="panel span-12">
+        <div class="panel-head">
+          <h2>V1 Ticket Status</h2>
+        </div>
+        <div class="panel-body" id="ticketTable"></div>
+      </article>
+
+      <article class="panel span-12">
+        <div class="panel-head">
+          <h2>What Can Run RIGHT NOW</h2>
+        </div>
+        <div class="panel-body" id="rightNow"></div>
+      </article>
+
+      <article class="panel span-12">
+        <div class="panel-head">
+          <h2>Merge Log Timeline</h2>
+        </div>
+        <div class="panel-body" id="mergeTimeline"></div>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    const STATUS_CLASS = {
+      done: 'status-done',
+      wip: 'status-wip',
+      review: 'status-review',
+      blocked: 'status-blocked',
+      next: 'status-next',
+      skip: 'status-skip',
+      unknown: 'status-unknown',
+    };
+
+    const PHASES = [
+      { label: 'Phase 0: Infrastructure', tickets: ['S7R-001', 'S7R-002', 'S7R-003', 'S7R-004'] },
+      { label: 'Phase 1: Mobile baseline', tickets: ['S7R-005', 'S7R-007', 'S7R-008'] },
+      { label: 'Phase 2: Enemy runtime', tickets: ['S7R-010', 'S7R-011', 'S7R-015', 'S7R-018'] },
+      { label: 'Phase 6 subset: Commands + supports', tickets: ['S7R-046', 'S7R-047', 'S7R-048', 'S7R-050', 'S7R-051', 'S7R-053'] },
+      { label: 'PWA foundation', tickets: ['S7R-038'] },
+      { label: 'Gate-1 Playtest', names: ['V1-PLAYTEST-GATE-1'] },
+      { label: 'S7R-054: Polish pass', tickets: ['S7R-054'] },
+      { label: 'S7R-055: Launch prep', tickets: ['S7R-055'] },
+      { label: 'Gate-2 Playtest', names: ['V1-PLAYTEST-GATE-2'] },
+    ];
+
+    let lastText = '';
+    let sourceMode = 'none';
+    let pollTimer = null;
+
+    const sourceBadge = document.getElementById('sourceBadge');
+    const updatedAt = document.getElementById('updatedAt');
+    const errorText = document.getElementById('errorText');
+    const fallbackPanel = document.getElementById('fallbackPanel');
+    const pasteArea = document.getElementById('pasteArea');
+
+    document.getElementById('loadBtn').addEventListener('click', () => {
+      loadFromFetch(true);
+    });
+
+    document.getElementById('reloadBtn').addEventListener('click', () => {
+      if (sourceMode === 'fetch') {
+        loadFromFetch(true);
+        return;
+      }
+      if (pasteArea.value.trim()) {
+        applyMarkdown(pasteArea.value, 'paste');
+      }
+    });
+
+    document.getElementById('renderPasteBtn').addEventListener('click', () => {
+      if (!pasteArea.value.trim()) {
+        setError('Paste TICKETS.md content first.');
+        return;
+      }
+      setError('');
+      applyMarkdown(pasteArea.value, 'paste');
+    });
+
+    document.getElementById('fileInput').addEventListener('change', (event) => {
+      const [file] = event.target.files || [];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = typeof reader.result === 'string' ? reader.result : '';
+        pasteArea.value = text;
+        applyMarkdown(text, 'file');
+      };
+      reader.onerror = () => {
+        setError('Failed to read selected file.');
+      };
+      reader.readAsText(file);
+    });
+
+    function setBadge(label, status) {
+      sourceBadge.className = `badge ${STATUS_CLASS[status] || STATUS_CLASS.unknown}`;
+      sourceBadge.textContent = label;
+    }
+
+    function setError(message) {
+      errorText.textContent = message;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function plainText(value) {
+      return String(value ?? '')
+        .replace(/`/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/_/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .trim();
+    }
+
+    function normalizeStatus(statusRaw) {
+      const status = plainText(statusRaw).toLowerCase();
+      if (status.startsWith('done')) return 'done';
+      if (status.startsWith('wip')) return 'wip';
+      if (status.startsWith('review')) return 'review';
+      if (status.startsWith('blocked')) return 'blocked';
+      if (status.startsWith('next')) return 'next';
+      if (status.startsWith('skip')) return 'skip';
+      return 'unknown';
+    }
+
+    function splitRow(line) {
+      return line
+        .trim()
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split('|')
+        .map((cell) => cell.trim());
+    }
+
+    function parseMarkdownTable(lines) {
+      if (!Array.isArray(lines) || lines.length < 2) return null;
+      const headers = splitRow(lines[0]);
+      const separator = lines[1];
+      if (!/\|\s*-{3,}/.test(separator)) return null;
+
+      const rows = [];
+      const objects = [];
+      for (let i = 2; i < lines.length; i += 1) {
+        const line = lines[i];
+        if (!line.trim() || /^\|\s*-/.test(line.trim())) continue;
+        const row = splitRow(line);
+        rows.push(row);
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] ?? '';
+        });
+        objects.push(obj);
+      }
+
+      return { headers, rows, objects };
+    }
+
+    function parseTablesWithHeadings(sectionText) {
+      const lines = sectionText.split(/\r?\n/);
+      const tables = [];
+      let currentHeading = '';
+
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        const headingMatch = line.match(/^###\s+(.+)$/);
+        if (headingMatch) {
+          currentHeading = headingMatch[1].trim();
+          continue;
+        }
+
+        if (!line.trim().startsWith('|')) continue;
+        const block = [];
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          block.push(lines[i]);
+          i += 1;
+        }
+        i -= 1;
+
+        const parsed = parseMarkdownTable(block);
+        if (parsed) {
+          parsed.heading = currentHeading || 'Overview';
+          tables.push(parsed);
+        }
+      }
+
+      return tables;
+    }
+
+    function escapeRegExp(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function getSection(markdown, heading) {
+      const rx = new RegExp(`^${escapeRegExp(heading)}.*\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`, 'm');
+      const match = markdown.match(rx);
+      return match ? match[1] : '';
+    }
+
+    function parseV1Tickets(markdown) {
+      const section = getSection(markdown, '## V1 Track');
+      const tables = parseTablesWithHeadings(section);
+      const table = tables.find((item) => item.headers.includes('Ticket') && item.headers.includes('Status'));
+      if (!table) return [];
+
+      return table.objects.map((row) => ({
+        number: plainText(row['#']),
+        ticket: plainText(row.Ticket),
+        name: plainText(row.Name),
+        depends: plainText(row.Depends),
+        touchesMain: plainText(row['Touches main.js?']),
+        platform: plainText(row['Best platform']),
+        statusRaw: plainText(row.Status),
+        status: normalizeStatus(row.Status),
+        branch: plainText(row.Branch),
+        owner: plainText(row.Owner),
+      }));
+    }
+
+    function parseWhatCanRun(markdown) {
+      const section = getSection(markdown, '## What can run RIGHT NOW');
+      return parseTablesWithHeadings(section);
+    }
+
+    function parseMergeLog(markdown) {
+      const section = getSection(markdown, '## Merge Log');
+      const tables = parseTablesWithHeadings(section);
+      const table = tables.find((item) => item.headers.includes('Date') && item.headers.includes('Ticket'));
+      if (!table) return [];
+
+      return table.objects.map((row) => ({
+        date: plainText(row.Date),
+        ticket: plainText(row.Ticket),
+        change: plainText(row['What changed']),
+        who: plainText(row.Who),
+      }));
+    }
+
+    function renderProgress(tickets) {
+      const total = tickets.length;
+      const done = tickets.filter((ticket) => ticket.status === 'done').length;
+      const percent = total ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('progressCard').innerHTML = `
+        <div class="progress-metric">
+          <div class="progress-value">${done}<small>of ${total} done</small></div>
+          <div class="bar"><span style="width:${percent}%"></span></div>
+          <div class="muted">${percent}% complete</div>
+        </div>
+      `;
+    }
+
+    function summarizePhaseStatus(rows) {
+      if (!rows.length) return 'unknown';
+      const statuses = rows.map((row) => row.status);
+      if (statuses.every((status) => status === 'done')) return 'done';
+      if (statuses.some((status) => status === 'wip' || status === 'review')) return 'wip';
+      if (statuses.some((status) => status === 'next')) return 'next';
+      if (statuses.some((status) => status === 'blocked')) return 'blocked';
+      if (statuses.some((status) => status === 'skip')) return 'skip';
+      return 'unknown';
+    }
+
+    function renderPhaseTimeline(tickets) {
+      const byTicket = new Map(tickets.map((ticket) => [ticket.ticket, ticket]));
+      const byName = new Map(tickets.map((ticket) => [ticket.name, ticket]));
+
+      const phaseStates = PHASES.map((phase) => {
+        const rows = [];
+        (phase.tickets || []).forEach((ticketId) => {
+          if (byTicket.has(ticketId)) rows.push(byTicket.get(ticketId));
+        });
+        (phase.names || []).forEach((name) => {
+          if (byName.has(name)) rows.push(byName.get(name));
+        });
+
+        return {
+          label: phase.label,
+          status: summarizePhaseStatus(rows),
+          rows,
+        };
+      });
+
+      const currentIndex = phaseStates.findIndex((phase) => phase.status !== 'done');
+
+      document.getElementById('phaseCard').innerHTML = `
+        <div class="phase-list">
+          ${phaseStates.map((phase, index) => `
+            <div class="phase-item phase-${phase.status} ${index === currentIndex ? 'phase-current' : ''}">
+              <span class="phase-dot"></span>
+              <span>${escapeHtml(phase.label)}</span>
+              <span class="badge ${STATUS_CLASS[phase.status] || STATUS_CLASS.unknown}">${escapeHtml(phase.status)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderOwnership(tickets) {
+      const doneRows = tickets.filter((ticket) => ticket.status === 'done');
+      const counts = {};
+      doneRows.forEach((row) => {
+        const owner = row.owner;
+        if (!owner || owner === '—' || owner === '-') return;
+        counts[owner] = (counts[owner] || 0) + 1;
+      });
+
+      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (!items.length) {
+        document.getElementById('ownerCard').innerHTML = '<div class="muted">No completed ownership data.</div>';
+        return;
+      }
+
+      const maxValue = Math.max(...items.map((item) => item[1]));
+      document.getElementById('ownerCard').innerHTML = `
+        <div class="owner-bars">
+          ${items.map(([owner, count]) => {
+            const width = Math.max(4, Math.round((count / maxValue) * 100));
+            return `
+              <div class="owner-row">
+                <strong>${escapeHtml(owner)}</strong>
+                <div class="rail"><div class="fill" style="width:${width}%"></div></div>
+                <span>${count}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderTicketTable(tickets) {
+      if (!tickets.length) {
+        document.getElementById('ticketTable').innerHTML = '<div class="muted">No ticket table found.</div>';
+        return;
+      }
+
+      document.getElementById('ticketTable').innerHTML = `
+        <div class="ticket-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ticket</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Branch</th>
+                <th>Owner</th>
+                <th>Depends</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tickets.map((ticket) => `
+                <tr>
+                  <td>${escapeHtml(ticket.number)}</td>
+                  <td><strong>${escapeHtml(ticket.ticket || '—')}</strong></td>
+                  <td>${escapeHtml(ticket.name)}</td>
+                  <td><span class="badge ${STATUS_CLASS[ticket.status] || STATUS_CLASS.unknown}">${escapeHtml(ticket.statusRaw)}</span></td>
+                  <td>${escapeHtml(ticket.branch || '—')}</td>
+                  <td>${escapeHtml(ticket.owner || '—')}</td>
+                  <td>${escapeHtml(ticket.depends || '—')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderWhatCanRun(tables) {
+      if (!tables.length) {
+        document.getElementById('rightNow').innerHTML = '<div class="muted">No “What can run RIGHT NOW” tables detected.</div>';
+        return;
+      }
+
+      document.getElementById('rightNow').innerHTML = `
+        <div class="right-now">
+          ${tables.map((table) => `
+            <section class="right-now-group">
+              <h3>${escapeHtml(table.heading)}</h3>
+              <div class="ticket-wrap">
+                <table>
+                  <thead>
+                    <tr>${table.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
+                  </thead>
+                  <tbody>
+                    ${table.rows.map((row) => `
+                      <tr>
+                        ${row.map((cell, index) => {
+                          const header = table.headers[index] || '';
+                          if (header.toLowerCase().includes('status')) {
+                            const status = normalizeStatus(cell);
+                            return `<td><span class="badge ${STATUS_CLASS[status] || STATUS_CLASS.unknown}">${escapeHtml(plainText(cell))}</span></td>`;
+                          }
+                          return `<td>${escapeHtml(plainText(cell))}</td>`;
+                        }).join('')}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderMergeLog(entries) {
+      if (!entries.length) {
+        document.getElementById('mergeTimeline').innerHTML = '<div class="muted">No merge log data found.</div>';
+        return;
+      }
+
+      const latestFirst = [...entries].reverse();
+      document.getElementById('mergeTimeline').innerHTML = `
+        <div class="timeline">
+          ${latestFirst.map((entry) => `
+            <div class="timeline-item">
+              <div class="top">
+                <strong>${escapeHtml(entry.ticket)}</strong>
+                <span class="badge status-next">${escapeHtml(entry.date)}</span>
+                <span class="badge status-review">${escapeHtml(entry.who)}</span>
+              </div>
+              <div class="muted">${escapeHtml(entry.change)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function applyMarkdown(markdown, mode) {
+      const text = String(markdown || '');
+      if (!text.trim()) {
+        setError('No markdown content to parse.');
+        return;
+      }
+
+      const tickets = parseV1Tickets(text);
+      const rightNowTables = parseWhatCanRun(text);
+      const mergeLog = parseMergeLog(text);
+
+      renderProgress(tickets);
+      renderPhaseTimeline(tickets);
+      renderOwnership(tickets);
+      renderTicketTable(tickets);
+      renderWhatCanRun(rightNowTables);
+      renderMergeLog(mergeLog);
+
+      lastText = text;
+      sourceMode = mode;
+      setError('');
+      updatedAt.textContent = `Updated ${new Date().toLocaleString()}`;
+      if (mode === 'fetch') {
+        setBadge('Loaded from TICKETS.md', 'done');
+      } else if (mode === 'file') {
+        setBadge('Loaded from file upload', 'review');
+      } else {
+        setBadge('Loaded from pasted markdown', 'wip');
+      }
+
+      fallbackPanel.classList.remove('hidden');
+      if (mode === 'fetch') {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    }
+
+    async function fetchTickets() {
+      const response = await fetch(`TICKETS.md?ts=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.text();
+    }
+
+    async function loadFromFetch(notifyOnError) {
+      try {
+        const text = await fetchTickets();
+        pasteArea.value = text;
+        applyMarkdown(text, 'fetch');
+      } catch (error) {
+        stopPolling();
+        setBadge('Fetch unavailable', 'blocked');
+        if (notifyOnError) {
+          setError(`Could not fetch TICKETS.md (${error.message}). Use paste or file upload fallback.`);
+        }
+      }
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = window.setInterval(async () => {
+        try {
+          const text = await fetchTickets();
+          if (text !== lastText) {
+            applyMarkdown(text, 'fetch');
+          }
+        } catch {
+          stopPolling();
+          setBadge('Polling stopped (fetch failed)', 'blocked');
+        }
+      }, 10000);
+    }
+
+    function stopPolling() {
+      if (!pollTimer) return;
+      window.clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    loadFromFetch(false);
+  </script>
+</body>
+</html>
