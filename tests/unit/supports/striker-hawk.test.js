@@ -1,147 +1,219 @@
-
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as strikerHawk from '../../../src/supports/striker-hawk.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initFlags, resetFlags, setFlag } from '../../../src/config/flags.js';
+import * as strikerHawk from '../../../src/supports/striker-hawk.js';
 import * as harvester from '../../../src/enemies/harvester.js';
 import * as skimmer from '../../../src/enemies/skimmer.js';
 
 vi.mock('../../../src/enemies/harvester.js');
 vi.mock('../../../src/enemies/skimmer.js');
 
-const MOCK_STATE = { wCSS: 800, hCSS: 600 };
+function createState({
+  wCSS = 800,
+  hCSS = 600,
+} = {}) {
+  return { wCSS, hCSS };
+}
 
-describe('Striker Hawk Support (S7R-053)', () => {
+function createHarvesterSnapshot(overrides = {}) {
+  return {
+    enabled: true,
+    hp: 30,
+    x: 420,
+    y: 240,
+    ...overrides,
+  };
+}
+
+function createSkimmerSnapshot(overrides = {}) {
+  return {
+    enabled: true,
+    hp: 20,
+    x: 380,
+    y: 220,
+    ...overrides,
+  };
+}
+
+function runUpdates(seconds, state, step = 0.05) {
+  const frames = Math.ceil(seconds / step);
+  for (let i = 0; i < frames; i++) {
+    strikerHawk.update(step, state);
+  }
+}
+
+describe('striker hawk support (S7R-053 rewrite)', () => {
   beforeEach(() => {
     if (typeof window.dispatchEvent !== 'function') {
       window.dispatchEvent = () => true;
     }
     resetFlags();
     initFlags();
+    setFlag('supportRuntime', true);
     setFlag('supportStrikerHawk', true);
     strikerHawk.destroy();
-    vi.useFakeTimers();
+
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot());
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot());
+    harvester.onHit.mockImplementation(() => true);
+    skimmer.onHit.mockImplementation(() => true);
   });
 
   afterEach(() => {
     strikerHawk.destroy();
     resetFlags();
     vi.clearAllMocks();
-    vi.useRealTimers();
   });
 
   it('gates behavior behind the supportStrikerHawk flag', () => {
     setFlag('supportStrikerHawk', false);
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE);
+    const state = createState();
+
+    strikerHawk.spawn({ state });
+    strikerHawk.update(0.2, state);
+
     const debug = strikerHawk.serializeDebug();
     expect(debug.enabled).toBe(false);
-    expect(debug.x).toBe(0);
-    expect(debug.y).toBe(0);
+    expect(debug.lifecycleState).toBe('disabled');
+    expect(debug.runtime).toBe(null);
+    expect(debug.strikesCompleted).toBe(0);
   });
 
-  it('selects harvester as higher priority target', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300 });
-    skimmer.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300 });
+  it('selects harvester as higher-priority target', () => {
+    const state = createState();
 
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE); // Enter orbit
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE); // Should target
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot());
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot());
+
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+
+    strikerHawk.update(0.2, state);
+    strikerHawk.update(0.05, state);
 
     const debug = strikerHawk.serializeDebug();
-    expect(debug.target.id).toBe('harvester');
+    expect(debug.targetId).toBe('harvester');
+    expect(debug.targetThreat).toBe(3);
   });
 
-  it('selects skimmer if harvester is not available', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: false, hp: 0 });
-    skimmer.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300 });
+  it('selects skimmer if harvester is unavailable', () => {
+    const state = createState();
 
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE);
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE);
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot({ enabled: false, hp: 0 }));
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot({ enabled: true, hp: 12 }));
+
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+
+    strikerHawk.update(0.2, state);
+    strikerHawk.update(0.05, state);
 
     const debug = strikerHawk.serializeDebug();
-    expect(debug.target.id).toBe('skimmer');
+    expect(debug.targetId).toBe('skimmer');
+    expect(debug.targetThreat).toBe(2);
   });
-  
-  it('does not select a target if no enemies are present', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: false, hp: 0 });
-    skimmer.serializeDebug.mockReturnValue({ enabled: false, hp: 0 });
 
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE);
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE);
+  it('does not target when no attackable enemies are present', () => {
+    const state = createState();
 
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot({ enabled: false, hp: 0 }));
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot({ enabled: false, hp: 0 }));
+
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+
+    runUpdates(1.0, state);
     const debug = strikerHawk.serializeDebug();
-    expect(debug.target).toBe(null);
-    expect(debug.lifecycleState).toBe('idle');
+
+    expect(debug.targetId).toBe(null);
+    expect(debug.behaviorState).toBe('idle');
   });
 
-  it('dive-strikes and calls onHit on the target', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300, w: 50, h: 50 });
-    skimmer.serializeDebug.mockReturnValue({ enabled: false, hp: 0 });
+  it('dive-strikes and calls onHit on the selected target', () => {
+    const state = createState();
 
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE);
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE); // Target
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot({ x: 420, y: 140 }));
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot({ enabled: false, hp: 0 }));
 
-    for (let i = 0; i < 10; i++) {
-      strikerHawk.update(0.1, MOCK_STATE);
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      damage: 7,
+      diveSpeedPxPerSec: 1200,
+      strikeRadiusPx: 58,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+
+    for (let i = 0; i < 40 && harvester.onHit.mock.calls.length === 0; i++) {
+      strikerHawk.update(0.05, state);
     }
 
-    expect(harvester.onHit).toHaveBeenCalledWith({ damage: 5, interrupt: true });
+    expect(harvester.onHit).toHaveBeenCalledWith({
+      damage: 7,
+      interrupt: true,
+    });
+    expect(strikerHawk.serializeDebug().strikesCompleted).toBeGreaterThanOrEqual(1);
   });
 
-  it('enforces a cooldown between strikes', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300, w: 50, h: 50 });
-    skimmer.serializeDebug.mockReturnValue({ enabled: false, hp: 0 });
+  it('enforces cooldown between strike cycles', () => {
+    const state = createState();
 
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE); // orbit
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE); // target
+    harvester.serializeDebug.mockReturnValue(createHarvesterSnapshot({ x: 420, y: 140 }));
+    skimmer.serializeDebug.mockReturnValue(createSkimmerSnapshot({ enabled: false, hp: 0 }));
 
-    // Complete the dive
-    for (let i = 0; i < 10; i++) {
-      strikerHawk.update(0.1, MOCK_STATE);
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      cooldownMs: 4000,
+      diveSpeedPxPerSec: 1200,
+      strikeRadiusPx: 58,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+
+    for (let i = 0; i < 80 && harvester.onHit.mock.calls.length === 0; i++) {
+      strikerHawk.update(0.05, state);
     }
-    
-    // Recover
-    for (let i = 0; i < 30; i++) {
-      strikerHawk.update(0.1, MOCK_STATE);
-    }
-
-    const debugAfterStrike = strikerHawk.serializeDebug();
-    expect(debugAfterStrike.lifecycleState).toBe('idle');
     expect(harvester.onHit).toHaveBeenCalledTimes(1);
 
-    // Try to strike again before cooldown
-    strikerHawk.update(0.1, MOCK_STATE);
-    const debugBeforeCooldown = strikerHawk.serializeDebug();
-    expect(debugBeforeCooldown.target).toBe(null);
-    
-    vi.advanceTimersByTime(5000);
-    strikerHawk.update(0.1, MOCK_STATE);
-    const debugAfterCooldown = strikerHawk.serializeDebug();
-    expect(debugAfterCooldown.target.id).toBe('harvester');
+    runUpdates(3.5, state);
+    expect(harvester.onHit).toHaveBeenCalledTimes(1);
+
+    runUpdates(1.2, state);
+    expect(harvester.onHit.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('destroy() cleans up all state', () => {
-    harvester.serializeDebug.mockReturnValue({ enabled: true, hp: 10, x: 400, y: 300 });
-    strikerHawk.spawn();
-    strikerHawk.update(0.1, MOCK_STATE);
-    vi.advanceTimersByTime(2000);
-    strikerHawk.update(0.1, MOCK_STATE);
-    
-    strikerHawk.destroy();
+  it('destroy() resets runtime and transient state cleanly', () => {
+    const state = createState();
 
+    strikerHawk.spawn({
+      state,
+      initialCooldownMs: 0,
+      getGuardianPosition: () => ({ x: 400, y: 120 }),
+    });
+    runUpdates(0.6, state);
+    expect(strikerHawk.serializeDebug().runtime).not.toBe(null);
+
+    strikerHawk.destroy();
     const debug = strikerHawk.serializeDebug();
-    expect(debug.lifecycleState).toBe('idle');
-    expect(debug.target).toBe(null);
+
+    expect(debug.lifecycleState).toBe('despawned');
+    expect(debug.behaviorState).toBe('idle');
+    expect(debug.runtime).toBe(null);
+    expect(debug.runtimeUnitId).toBe(null);
+    expect(debug.targetId).toBe(null);
     expect(debug.x).toBe(0);
     expect(debug.y).toBe(0);
+    expect(debug.orbitAngle).toBe(0);
+    expect(debug.strikeCooldownMs).toBe(0);
+    expect(debug.strikesCompleted).toBe(0);
+    expect(debug.stateEnteredAtMs).toBe(0);
   });
 });
