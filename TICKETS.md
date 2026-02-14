@@ -14,11 +14,12 @@
 - ~~Phase 6 subset: Commands + supports~~ — action bar, multi-touch, powers, support runtime, medic firefly, striker hawk (done)
 - ~~PWA~~ — manifest + service worker (done)
 - **NOW → Gate-1 playtest** — all features on, manual mobile test, validate session length + ability usage
+- **NOW → Ability VFX** — shield sparkle/electric, slam push/shockwave, projectile trails/colors (S7R-071–073)
 - Next → S7R-054 polish pass (tune costs, cooldowns, balance based on playtest)
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**21 of 26 V1 tickets done (81%). 5 tickets + 2 gates remaining.**
+**21 of 29 V1 tickets done (72%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -67,6 +68,9 @@
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
 | 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
+| 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex/gemini | next | — | — |
+| 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push mechanic | — | no | codex/gemini | next | — | — |
+| 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -79,6 +83,14 @@
 | V1-PLAYTEST-GATE-1 | Enable all flags, play on mobile, check session length + ability usage + fairness | next | steven (manual) |
 | S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
+
+### VFX tickets (no blockers, can start now)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | next | codex/gemini |
+| S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers away like a brush | next | codex/gemini |
+| S7R-073 | Projectile trails, color variety, energy bolt look, usage limiter | next | codex/gemini |
 
 ### Cleanup tickets (no blockers, can start now)
 
@@ -366,6 +378,131 @@
 - [ ] Grouped by system (sky, parallax, shake, spawn, fence, etc.)
 - [ ] Doc exists at the path above
 - [ ] No code changes — research only
+
+#### S7R-071 Ready Brief
+
+**What:** Overhaul shield visual effects to be visually exciting — sparkle particles, electric/lightning arcs, and a degradation system where the shield visibly breaks down as it absorbs damage. Add a proper cooldown timer that greys out the Shield button so it can't be spammed.
+
+**Reference files to read first:**
+- `src/game-objects/shield.js` lines 47-89 (current render — radial gradient + simple stroke circle)
+- `src/game-objects/shield.js` lines 34-42 (alpha/pulse config)
+- `src/constants.js` lines 35-39 (SHIELD constants: DURATION_MS=3000, RADIUS_PX=140, COOLDOWN_MS=1000)
+- `src/constants.js` line 27 (POWER.SHIELD_COST=25)
+- `src/ui/action-router.js` lines 55-62 (handleShield — already calls setButtonCooldown)
+
+**Files to modify:**
+1. `src/game-objects/shield.js` — Replace the simple gradient+stroke with:
+   - **Sparkle particles**: 15-25 small bright particles orbiting the shield perimeter, varying in size (2-5px), white/cyan/gold colors, random twinkle (opacity oscillation)
+   - **Electric arcs**: 3-5 jagged lightning lines that crackle across the shield surface, regenerating every 150-300ms with new random paths. Use 2-3 segment bezier curves between random points on the circle perimeter
+   - **Degradation**: Track remaining shield time as a ratio. As it runs down: sparkle count drops, electric arcs get dimmer/fewer, shield color shifts from bright cyan → dull blue → red-tinted, border becomes dashed/broken at <25% remaining
+   - **Impact flash**: When shield blocks a hit, burst of 8-12 sparks outward from impact point + screen-edge glow pulse
+   - **Activation burst**: On first frame of shield, radial burst of sparks expanding outward
+2. `src/constants.js` — Increase `SHIELD.COOLDOWN_MS` from 1000 to 4000 (4 second cooldown). This makes the button grey out meaningfully. Increase `POWER.SHIELD_COST` from 25 to 30.
+3. `src/ui/action-router.js` — Verify `setButtonCooldown` is called with the new cooldown value (it already reads from `SHIELD.COOLDOWN_MS / 1000`)
+
+**DO NOT modify:** `src/main.js`, `src/ui/action-bar.js`, `src/ui/action-bar-config.js`
+
+**Gotchas:**
+- Shield rendering happens in `drawShield()` which receives `(ctx, state, cx, anchorY)`. All particle state must live on the `state.shield` object — don't create module-level mutable arrays
+- The existing ripple effect (lines 75-86) triggers on hit via `state.shield.rippleTime`. Reuse this trigger for the new impact flash
+- `globalCompositeOperation = 'lighter'` is already used — keep it for additive blending on sparks
+- Performance: cap total particles at 30. Use simple circles, not complex shapes. Reuse particle objects (pool pattern from S7R-061)
+
+**Acceptance criteria:**
+- [ ] Shield has visible sparkle particles orbiting the perimeter
+- [ ] Shield has electric/lightning arc effects
+- [ ] Shield visually degrades over its 3-second duration (color shift, fewer sparks)
+- [ ] Impact creates a burst of sparks from the hit point
+- [ ] Shield button greys out for 4 seconds after use (cooldown visible on button)
+- [ ] Power cost is 30 (drains the bar noticeably)
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-072 Ready Brief
+
+**What:** Overhaul slam shockwave to be visually exciting with animated expansion, and add a push mechanic that physically shoves the alien ship and any non-6/7 numbers away from the blast origin like a brush stroke.
+
+**Reference files to read first:**
+- `src/main.js` lines 1022-1054 (slam shockwave update + render — expanding circle with hue-shifting stroke)
+- `src/main.js` lines 797-813 (slam activation, shockwave creation)
+- `src/ui/action-router.js` lines 77-101 (handleSlam — creates shockwave object with maxRadius=200, duration=600ms)
+- `src/constants.js` line 30 (POWER.SLAM_COST=40)
+- `src/main.js` line 812 (alternative maxRadius using screen diagonal)
+
+**Files to modify:**
+1. `src/main.js` — Replace slam rendering (lines 1030-1054) with:
+   - **Expanding ring**: Keep the outward-expanding ring but add a 2nd inner ring trailing 30% behind. Both should have gradient fills (not just strokes) with radial fade
+   - **Particle debris**: Spawn 20-30 small particles at the wavefront that scatter outward and fade. Colors: bright white core → orange → purple trail
+   - **Screen shake**: Add 3-4 frames of camera shake (±4px random offset on ctx.translate) when slam activates
+   - **Ground ripple**: Concentric semi-transparent rings left behind as the wave passes (fade over 800ms)
+   - **Flash**: Keep existing white flash but make it more dramatic (10% opacity, faster decay)
+2. `src/main.js` — Add push mechanic in the slam update logic (near line 1022):
+   - **Push aliens**: When shockwave radius reaches the alien ship's y-position, push the ship upward by 40-60px over 500ms (smooth ease-out). Use `state.badguysFlight.y` or equivalent
+   - **Push non-6/7 numbers**: Any active enemy/projectile that is NOT a 6 or 7 (check entity type) within the shockwave radius gets pushed outward from the slam origin. Apply a velocity impulse proportional to proximity (closer = stronger push, 200-400px/s)
+   - **Push 6/7 numbers**: 6 and 7 entities are immune to push — they stay in place (the guardian protects them)
+3. `src/ui/action-router.js` — Increase `SLAM_SHOCKWAVE_MAX_RADIUS_PX` from 200 to match screen diagonal (use the main.js pattern). Increase `SLAM_SHOCKWAVE_DURATION_MS` from 600 to 800 for a more dramatic expansion.
+
+**DO NOT modify:** `src/game-objects/shield.js`, `src/game-objects/projectile.js`, any support/enemy module files
+
+**Gotchas:**
+- There's a cost mismatch: `action-router.js` hardcodes `SLAM_POWER_COST = 50` but `constants.js` has `POWER.SLAM_COST = 40` and `main.js` uses the constant (40). Fix this by removing the local constant in action-router and importing from constants.js
+- The ship push must be temporary — after 500ms it should drift back to its original y-position
+- Screen shake must reset `ctx.translate` before the end of the frame or everything shifts
+- Non-6/7 push: currently there's no entity type field on bouncing numbers. You may need to check what data each entity carries to distinguish 6/7 from other objects
+
+**Acceptance criteria:**
+- [ ] Slam has dual expanding rings (outer + trailing inner)
+- [ ] Particle debris scatters outward from the wavefront
+- [ ] Screen shakes briefly on slam activation
+- [ ] Alien ship gets pushed upward when shockwave reaches it
+- [ ] Non-6/7 entities get pushed away from blast origin
+- [ ] 6 and 7 entities are NOT pushed (they're protected)
+- [ ] Slam cost mismatch fixed (single source of truth in constants.js)
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-073 Ready Brief
+
+**What:** Overhaul projectile visual effects to look like an exciting energy bolt with colorful trails, varied colors, and more visual punch. Add a usage limiter so fire can't always be used — cooldown timer that greys out the button between shots.
+
+**Reference files to read first:**
+- `src/game-objects/projectile.js` lines 57-109 (current render — gold trail particles + gradient bolt + white highlight)
+- `src/game-objects/projectile.js` lines 14-25 (fireProjectile — checks MAX_ACTIVE cap of 3)
+- `src/constants.js` lines 42-48 (PROJECTILE constants: SPEED=8, DAMAGE=5, MAX_ACTIVE=3, RADIUS=8, TRAIL_LENGTH=6)
+- `src/constants.js` line 28 (POWER.PROJECTILE_COST=15)
+- `src/ui/action-router.js` lines 65-74 (handleProjectile)
+
+**Files to modify:**
+1. `src/game-objects/projectile.js` — Replace rendering (lines 57-109) with:
+   - **Color variety**: Each projectile gets a random color theme on creation (pick from: cyan/white, magenta/pink, gold/orange, green/lime). Store as `projectile.colorTheme` index
+   - **Energy bolt head**: Replace the simple line stroke with a 10-12px glowing orb. Draw 2-3 concentric circles: bright white core (3px) → theme color (6px, 60% alpha) → outer glow (12px, 20% alpha)
+   - **Particle trail**: Increase TRAIL_LENGTH from 6 to 12. Each trail point spawns 1-2 small particles that drift sideways (±2px random) and fade. Trail particles use the theme color with decreasing alpha
+   - **Motion streak**: Draw a tapered line from trail[-1] to current position, width 4px→1px, using theme color at 40% alpha
+   - **Impact burst**: When projectile hits the ship (despawn), spawn 8-10 spark particles that scatter from the hit point in the theme color (this requires adding a `projectile.hitShip` flag)
+2. `src/constants.js` — Change `POWER.PROJECTILE_COST` from 15 to 20. Increase `PROJECTILE.TRAIL_LENGTH` from 6 to 12.
+3. `src/ui/action-router.js` — Add cooldown to fire button: after firing, call `setButtonCooldown(readActionBar, 'projectile', 1.2)` (1.2 second cooldown). This greys out the Fire button between shots.
+
+**DO NOT modify:** `src/main.js`, `src/game-objects/shield.js`, any support/enemy module files
+
+**Gotchas:**
+- `fireProjectile()` creates the projectile object (line 17-22). Add `colorTheme: Math.floor(Math.random() * 4)` to the object literal there
+- The existing `globalCompositeOperation = 'lighter'` (line 70) should be kept for the additive glow effect
+- Trail particles need to be lightweight — just position + alpha + size, no complex physics. Reuse the circular buffer pattern
+- Impact burst: `drawProjectiles` currently just skips dead projectiles. To detect hits, check if the projectile was removed because `y < ship area` vs `life <= 0`. Alternatively, handle the burst in the collision detection code in main.js (search for projectile hit detection)
+- `shadowBlur` was gated behind quality tier in S7R-060 — respect that gate for new glow effects
+
+**Acceptance criteria:**
+- [ ] Each projectile has a random color theme (4 varieties)
+- [ ] Projectile head is a glowing energy orb (not a line)
+- [ ] Longer particle trail (12 positions) with drifting fade particles
+- [ ] Motion streak connects trail to head
+- [ ] Fire button greys out for 1.2 seconds between shots (cooldown visible)
+- [ ] Power cost is 20 per shot (noticeable drain)
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
 
 ### Tooling tickets (no blockers, can start now)
 
