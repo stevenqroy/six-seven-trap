@@ -18,22 +18,27 @@ Before marking a ticket `next`:
 
 ## QA protocol
 
-Before starting QA, set ticket status to `reviewing` in TICKETS.md and commit.
+**Step 0 — mark reviewing (MANDATORY, do this FIRST):**
+1. Confirm you are on main (`git branch --show-current`)
+2. Set ticket status to `reviewing` in TICKETS.md on main
+3. Commit and push so the dashboard reflects the review is in progress
+4. THEN switch to the feature branch to begin QA
 
-QA runs the AGENTS.md gate (lint, test, build, diff review) plus:
+**Step 1 — QA gate on the feature branch:**
+Run the AGENTS.md gate (lint, test, build, diff review) plus:
 5. Ready brief check — verify every acceptance criterion in the Ready Brief
 6. Scope check — no files modified outside "Files to modify", nothing in "DO NOT modify" touched
 7. Pattern check — code matches conventions per reference files listed in the brief
 
 **Merge method**: Cherry-pick code commits only — never `git merge` the full branch. Agent branches have stale TICKETS.md/AGENTS.md/CLAUDE.md that would regress main. After cherry-pick, update TICKETS.md status on main manually.
 
-On PASS: set to `done`, cherry-pick code to main, output:
+On PASS: switch to main, cherry-pick code, set to `done`, output:
 ```
 S7R-### QA: PASS
 Merged to main, tests N/N
 ```
 
-On FAIL: set back to `review` with notes, output:
+On FAIL: switch to main, set back to `review` with notes, output:
 ```
 S7R-### QA: FAIL
 [what's wrong, 1-2 lines]
