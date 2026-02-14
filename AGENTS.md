@@ -155,6 +155,7 @@ Before emitting any response:
 
 - [ ] On correct branch (`git branch --show-current`)
 - [ ] All code committed — `git status` shows clean working tree
+- [ ] Code and TICKETS.md in **separate commits** (code first, TICKETS.md last)
 - [ ] QA gate already passed (don't re-run — just confirm)
 - [ ] No files outside Ready Brief scope
 - [ ] TICKETS.md updated (status, branch, owner)
