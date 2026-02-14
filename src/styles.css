@@ -808,7 +808,7 @@ html.a11y-reduced-motion #victoryBox {
 
   /* Row 3: Power bar below HUD */
   #powerBar {
-    top: calc(56px + var(--s7r-safe-top));
+    top: calc(64px + var(--s7r-safe-top));
     width: min(220px, 60vw);
     height: 8px;
   }

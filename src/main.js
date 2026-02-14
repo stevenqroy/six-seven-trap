@@ -332,6 +332,7 @@ import { createRunRngTracker } from './core/run-rng.js';
   const highScoreEl = document.getElementById('highScore');
   const comboEl = document.getElementById('combo');
   const resetBtn = document.getElementById('resetBtn');
+  const pauseResetBtn = document.getElementById('pauseResetBtn');
   const pauseBtn = document.getElementById('pauseBtn');
   const resumeBtn = document.getElementById('resumeBtn');
   const idiotModal = document.getElementById('idiotModal');
@@ -1724,6 +1725,7 @@ import { createRunRngTracker } from './core/run-rng.js';
   });
 
   resetBtn.onclick = resetGame;
+  if (pauseResetBtn) pauseResetBtn.onclick = resetGame;
   restartBigBtn.onclick = showTitleScreen;
   victoryPlayAgain.onclick = showTitleScreen;
   pauseBtn.onclick = togglePause;
