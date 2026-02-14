@@ -25,6 +25,8 @@ QA runs the AGENTS.md gate (lint, test, build, diff review) plus:
 6. Scope check — no files modified outside "Files to modify", nothing in "DO NOT modify" touched
 7. Pattern check — code matches conventions per reference files listed in the brief
 
+**Merge warning**: Agent branches often have stale TICKETS.md (branched from older main). When merging, always keep main's TICKETS.md and only apply the status change — never accept the branch's full TICKETS.md.
+
 On PASS: set to `done`, merge to main, output:
 ```
 S7R-### QA: PASS
@@ -36,6 +38,18 @@ On FAIL: set back to `review` with notes, output:
 S7R-### QA: FAIL
 [what's wrong, 1-2 lines]
 ```
+
+## Intake — when a TL;DR handoff arrives
+
+When the user shares a TL;DR handoff from Codex/Gemini:
+1. Switch to main (stash current work if needed — same-branch stash only)
+2. Update TICKETS.md on main: set the ticket's status to `review`, fill Branch and Owner
+3. If agent released the main.js lock, update that on main too
+4. Commit and push to main so the dashboard reflects reality
+5. Switch back to previous branch, restore stash
+6. Then proceed with QA (or note it for later)
+
+**Why**: Agents only update TICKETS.md on their own branch. Main won't reflect the status until Claude syncs it.
 
 ## Dispatch format
 
