@@ -65,7 +65,7 @@
 | 24 | S7R-058 | Add missing destroy() methods | — | no | codex/gemini | done | main | codex |
 | 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | done | main | gemini |
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
-| 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | wip:codex | codex/S7R-061 | codex |
+| 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | review | codex/S7R-061 | codex |
 
 ## What can run RIGHT NOW
 
@@ -87,7 +87,7 @@
 | S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
 | S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | done | — |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
-| S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | wip:codex | codex |
+| S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | review | claude |
 
 ### Research tickets (no blockers, can start now)
 
@@ -407,7 +407,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: `wip:codex (S7R-061)`
+**Currently held by**: _nobody (unlocked)_
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
