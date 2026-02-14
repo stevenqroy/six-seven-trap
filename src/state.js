@@ -228,8 +228,8 @@ const state = {
 
   // Editor state
   badguysEditor: {
-    enabled: true,
-    visible: true,
+    enabled: false,
+    visible: false,
     scaleStep: 0.01,
     scaleStepFast: 0.03,
   },

@@ -386,13 +386,14 @@ import { createRunRngTracker } from './core/run-rng.js';
   const badguysRawImg = new Image();
   const badguysCleanImg = new Image();
 
+  const base = import.meta.env.BASE_URL;
   const trackedImageAssets = [
-    { img: avatar, src: '/src/assets/center-avatar.png?v=2', label: 'Guardian' },
-    { img: leftHandImg, src: '/src/assets/left-hand.png?v=3', label: 'Left hand' },
-    { img: rightHandImg, src: '/src/assets/right-hand.png?v=3', label: 'Right hand' },
-    { img: scowlImg, src: '/src/assets/scowl.png?v=1', label: 'Scowl overlay' },
-    { img: badguysRawImg, src: '/src/assets/test-sheet-raw.png?v=2', label: 'Ship sprites (raw)' },
-    { img: badguysCleanImg, src: '/src/assets/test-sheet-best.png?v=2', label: 'Ship sprites (clean)' },
+    { img: avatar, src: `${base}assets/center-avatar.png?v=2`, label: 'Guardian' },
+    { img: leftHandImg, src: `${base}assets/left-hand.png?v=3`, label: 'Left hand' },
+    { img: rightHandImg, src: `${base}assets/right-hand.png?v=3`, label: 'Right hand' },
+    { img: scowlImg, src: `${base}assets/scowl.png?v=1`, label: 'Scowl overlay' },
+    { img: badguysRawImg, src: `${base}assets/test-sheet-raw.png?v=2`, label: 'Ship sprites (raw)' },
+    { img: badguysCleanImg, src: `${base}assets/test-sheet-best.png?v=2`, label: 'Ship sprites (clean)' },
   ];
 
   function updateLoadingProgress(loaded, total, label = '') {
