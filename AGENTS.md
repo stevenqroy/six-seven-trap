@@ -116,20 +116,7 @@ Research tickets (🔍/🎭) produce a markdown doc, not code.
 
 ## Mandatory quality patterns
 
-Before writing any support unit, enemy, or system module, **read these reference files first**:
-- `src/supports/medic-firefly.js` — gold-standard support unit template
-- `src/systems/support-runtime.js` — runtime all support units must use
-- `src/enemies/harvester.js` — enemy module interface reference
-
-Match the reference patterns exactly:
-1. Use `createSupportRuntime` for support units — never manual lifecycle
-2. Use internal clock (`runtimeNowMs += frameMs`) — never `performance.now()`
-3. Receive state as parameter — never import `S` globally for logic
-4. `destroy()` must reset EVERY instance field to default
-5. `serializeDebug()` must list explicit named fields — never `...instance` spread
-6. Add defensive helpers: `toFinite()`, `toNonNegativeFinite()`, `clamp()`, `normalizeState()`
-7. Wrap external module reads in try/catch (see `readEnemyDebug()` in striker-hawk.js)
-8. Add `buildProfile(context)` with a frozen `DEFAULT_PROFILE`
+Before writing any support unit, enemy, or system module: **read `docs/patterns.md` first.** It lists the reference files and 8 patterns you must match exactly.
 
 ## main.js rules
 
@@ -162,10 +149,10 @@ Before emitting any response:
 4. Delete every alternative approach not asked for.
 5. Delete every caveat that isn't preventing data loss, security breach, or crash.
 
-## Before every commit — verify
+## Pre-commit sanity check (quick — after QA gate passes)
 
 - [ ] On correct branch (`git branch --show-current`)
-- [ ] QA gate passed (lint, test, build)
+- [ ] QA gate already passed (don't re-run — just confirm)
 - [ ] No files outside Ready Brief scope
 - [ ] TICKETS.md updated (status, branch, owner)
 - [ ] No debug code, no console.log

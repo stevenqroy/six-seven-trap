@@ -87,5 +87,6 @@ When context is getting heavy or a session is ending, add an entry to the TICKET
 - [ ] Confirmed branch with `git branch --show-current`
 - [ ] Working tree clean or as expected (`git status`)
 - [ ] Not interleaving branches — finish current work first
-- [ ] QA gate + ready brief acceptance criteria checked
+- [ ] QA gate passed (lint, test, build)
+- [ ] Ready Brief acceptance criteria — every checkbox verified
 - [ ] TICKETS.md status updated
