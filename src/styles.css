@@ -269,7 +269,7 @@ canvas {
 /* Power bar */
 #powerBar {
   position: absolute;
-  top: calc(66px + var(--s7r-safe-top));
+  top: calc(76px + var(--s7r-safe-top));
   left: 50%;
   transform: translateX(-50%);
   width: min(280px, 60vw);
@@ -784,10 +784,11 @@ html.a11y-reduced-motion #victoryBox {
   }
   #shipHpBar {
     top: calc(4px + var(--s7r-safe-top));
-    width: min(252px, 72vw);
+    left: calc(50% + 24px);
+    width: min(200px, 50vw);
   }
   #powerBar {
-    top: calc(56px + var(--s7r-safe-top));
+    top: calc(64px + var(--s7r-safe-top));
     width: min(252px, 72vw);
   }
   .btn {
@@ -799,6 +800,9 @@ html.a11y-reduced-motion #victoryBox {
     left: calc(8px + var(--s7r-safe-left));
     width: 38px;
     height: 38px;
+  }
+  #shipHpBar {
+    left: calc(50% + 20px);
   }
   #titleBox {
     padding: 18px 14px 14px;
@@ -836,7 +840,7 @@ html.a11y-reduced-motion #victoryBox {
     height: 12px;
   }
   #powerBar {
-    top: calc(42px + var(--s7r-safe-top));
+    top: calc(50px + var(--s7r-safe-top));
     width: min(230px, 46vw);
     height: 10px;
   }
