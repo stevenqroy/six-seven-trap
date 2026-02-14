@@ -264,17 +264,16 @@ canvas {
   text-transform: uppercase;
 }
 
-/* Power bar — below the HUD */
+/* Power bar — left vertical rail */
 #powerBar {
   position: absolute;
-  top: calc(74px + var(--s7r-safe-top));
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(260px, 55vw);
-  height: 10px;
+  top: calc(52px + var(--s7r-safe-top));
+  left: calc(8px + var(--s7r-safe-left));
+  width: 16px;
+  height: min(230px, 42vh);
   background: rgba(12, 8, 22, 0.62);
   border: 1px solid rgba(255, 215, 120, 0.35);
-  border-radius: 7px;
+  border-radius: 9px;
   overflow: hidden;
   z-index: 12;
   pointer-events: none;
@@ -286,24 +285,29 @@ canvas {
 }
 @keyframes powerNearFullPulse {
   from {
-    transform: translateX(-50%) scale(1);
+    transform: scale(1);
     box-shadow: 0 0 12px rgba(255, 214, 120, 0.25);
   }
   to {
-    transform: translateX(-50%) scale(1.015);
+    transform: scale(1.04);
     box-shadow: 0 0 22px rgba(255, 214, 120, 0.5);
   }
 }
 #powerFill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #5b35c5 0%, #9d58ff 45%, #ffd86b 100%);
-  border-radius: 7px;
-  transition: width 0.2s ease-out;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(0deg, #5b35c5 0%, #9d58ff 45%, #ffd86b 100%);
+  border-radius: 8px;
+  transition: height 0.2s ease-out;
 }
 #powerText {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,6 +316,7 @@ canvas {
   color: rgba(255, 255, 255, 0.82);
   letter-spacing: 1.8px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 #phaseIndicator {
   font-size: 12px;
@@ -806,11 +811,12 @@ html.a11y-reduced-motion #victoryBox {
     border-radius: 6px;
   }
 
-  /* Row 3: Power bar below HUD */
+  /* Left power rail */
   #powerBar {
-    top: calc(64px + var(--s7r-safe-top));
-    width: min(220px, 60vw);
-    height: 8px;
+    top: calc(42px + var(--s7r-safe-top));
+    left: calc(4px + var(--s7r-safe-left));
+    width: 14px;
+    height: min(180px, 38vh);
   }
   #titleBox {
     padding: 18px 14px 14px;
@@ -846,9 +852,10 @@ html.a11y-reduced-motion #victoryBox {
     height: 12px;
   }
   #powerBar {
-    top: calc(44px + var(--s7r-safe-top));
-    width: min(200px, 40vw);
-    height: 8px;
+    top: calc(22px + var(--s7r-safe-top));
+    left: calc(4px + var(--s7r-safe-left));
+    width: 12px;
+    height: min(132px, 34vh);
   }
   #titleBox,
   #loadingBox,

@@ -116,7 +116,7 @@ export function createHudUpdater({
   function updatePowerBar(state) {
     if (!powerFill || !powerText) return;
     const ratio = getPowerRatio(state);
-    powerFill.style.width = `${ratio * 100}%`;
+    powerFill.style.height = `${ratio * 100}%`;
     powerText.textContent = `POWER ${Math.round(ratio * 100)}%`;
 
     if (powerBar) {
