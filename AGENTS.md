@@ -13,7 +13,7 @@ Identify yourself in branches and commits:
 - **Gemini**: branch `gemini/S7R-###`, commits tagged `(S7R-###)`
 - **Claude/Sonnet**: branch `claude/S7R-###`, commits tagged `(S7R-###)`
 
-Never work on another platform's branch. Never develop on `main`.
+Never work on another platform's branch. Never develop on `main`. If you find yourself on the wrong branch, **STOP** — do not write code, do not edit files. Switch to your correct branch first.
 
 ## Startup protocol
 
@@ -22,10 +22,15 @@ Every session, before writing any code:
 2. Read `TICKETS.md` — find your assigned ticket (your platform name in the Owner column)
 3. Search for your ticket's **Ready Brief** in `TICKETS.md` (search `S7R-### Ready Brief`)
 4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
-5. **Create or switch to YOUR branch** — `git checkout -b yourplatform/S7R-### main` (new) or `git checkout yourplatform/S7R-###` (existing). Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. STOP if it doesn't match.
+5. **Create or switch to YOUR branch:**
+   - New branch: `git fetch origin && git checkout -b yourplatform/S7R-### origin/main`
+   - Existing branch: `git checkout yourplatform/S7R-### && git fetch origin && git rebase origin/main`
+   - **HARD GATE**: Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. If it doesn't match, **STOP IMMEDIATELY**. Do not write any code. Do not edit any file. Fix the branch first.
 6. If the ready brief lists reference files, read them
 7. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
 8. Start work
+
+**Branch verification is not optional.** Codex once wrote 400+ lines of shield code on the wrong branch. That work was discarded. Always verify.
 
 ## Claiming a ticket
 
@@ -90,7 +95,9 @@ Do NOT include: test output, diff output, file contents, validation logs, or imp
 - Never force push. Never amend unless explicitly asked.
 - Never revert changes you didn't make.
 - Never develop on `main`. One branch per ticket.
+- **Never write code without verifying your branch first.** Run `git branch --show-current` before every coding session and after every `git checkout`.
 - If your branch has merge conflicts with main, rebase onto latest main and re-run `npx vite build` before marking `review`.
+- If you discover you're on the wrong branch with uncommitted changes: `git stash && git checkout correctbranch && git stash pop`. But this should never happen if you verify first.
 
 ## Research tickets
 
@@ -155,8 +162,9 @@ Before emitting any response:
 
 ## Pre-commit sanity check (quick — after QA gate passes)
 
-- [ ] On correct branch (`git branch --show-current`)
+- [ ] **FIRST**: `git branch --show-current` matches `yourplatform/S7R-###` — STOP if wrong
 - [ ] All code committed — `git status` shows clean working tree
+- [ ] Rebased onto latest main (`git fetch origin && git rebase origin/main`)
 - [ ] Code and TICKETS.md in **separate commits** (code first, TICKETS.md last)
 - [ ] QA gate already passed (don't re-run — just confirm)
 - [ ] No files outside Ready Brief scope

@@ -58,12 +58,21 @@ When the user shares a TL;DR handoff from Codex/Gemini:
 
 ## Dispatch — when sending work to an agent
 
-When preparing work for Codex/Gemini, the prompt must include:
-1. Branch name and base
-2. What to build (behavior spec)
-3. Reference files to read first
-4. Test requirements
-5. "Read AGENTS.md, then TICKETS.md for the Ready Brief"
+The dispatch prompt must follow this exact template:
+
+```
+<Agent>: please start S7R-### — <ticket name>.
+Branch: <agent>/S7R-###
+
+STEP 1: Read AGENTS.md — follow the startup protocol exactly.
+STEP 2: Create your branch from latest main: git checkout -b <agent>/S7R-### origin/main
+        Run git branch --show-current and confirm it says <agent>/S7R-###. STOP if it doesn't.
+STEP 3: Update TICKETS.md — set status to wip:<agent>, Branch to <agent>/S7R-###, Owner to <agent>. Commit this change first.
+STEP 4: Read your ticket's Ready Brief in TICKETS.md (search for "S7R-### Ready Brief").
+STEP 5: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.
+STEP 6: Before marking review — rebase onto latest main: git fetch origin && git rebase origin/main. Re-run build after rebase.
+STEP 7: Commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Output the TL;DR handoff from AGENTS.md.
+```
 
 **After dispatching**, immediately sync main's TICKETS.md:
 - Set the ticket to `wip:<agent>`, fill Branch and Owner

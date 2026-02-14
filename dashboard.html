@@ -1142,7 +1142,8 @@
     function buildDispatchPrompt(ticket, platform) {
       const id = ticket.ticket || ticket.name;
       const name = ticket.name || '';
-      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\n\nSTEP 1: Read AGENTS.md — follow the startup protocol exactly.\nSTEP 2: Update TICKETS.md — set status to wip:${platform.toLowerCase()}, Branch to ${platform.toLowerCase()}/${id}, Owner to ${platform.toLowerCase()}. Commit this change first.\nSTEP 3: Read your ticket's Ready Brief in TICKETS.md (search for "${id} Ready Brief").\nSTEP 4: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.\nSTEP 5: When done — commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Output the TL;DR handoff from AGENTS.md.`;
+      const p = platform.toLowerCase();
+      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${p}/${id}\n\nSTEP 1: Read AGENTS.md \u2014 follow the startup protocol exactly.\nSTEP 2: Create your branch from latest main: git checkout -b ${p}/${id} origin/main\n        Run git branch --show-current and confirm it says ${p}/${id}. STOP if it doesn't.\nSTEP 3: Update TICKETS.md \u2014 set status to wip:${p}, Branch to ${p}/${id}, Owner to ${p}. Commit this change first.\nSTEP 4: Read your ticket's Ready Brief in TICKETS.md (search for "${id} Ready Brief").\nSTEP 5: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.\nSTEP 6: Before marking review \u2014 rebase onto latest main: git fetch origin && git rebase origin/main. Re-run build after rebase.\nSTEP 7: Commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Output the TL;DR handoff from AGENTS.md.`;
     }
 
     function statusLabel(s) {
