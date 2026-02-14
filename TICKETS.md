@@ -63,7 +63,7 @@
 | 22 | — | V1-PLAYTEST-GATE-2 | 20-21 | — | steven | blocked:all | — | — |
 | 23 | S7R-057 | Shared defensive helpers | — | no (new module) | codex/gemini | done | main | codex |
 | 24 | S7R-058 | Add missing destroy() methods | — | no | codex/gemini | done | main | codex |
-| 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | next | — | — |
+| 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | wip:gemini | gemini/S7R-059 | gemini |
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | review | codex/S7R-060 | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | next | — | — |
 
@@ -85,7 +85,7 @@
 |--------|-------|--------|-------------|
 | S7R-057 | Extract shared defensive helpers into `src/utils/defensive.js` | done | — |
 | S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
-| S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | next | gemini |
+| S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | wip:gemini | gemini |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | review | claude |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | next | codex |
 
@@ -407,7 +407,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: _nobody (unlocked)_
+**Currently held by**: wip:gemini (S7R-059)
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_

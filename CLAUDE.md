@@ -51,7 +51,7 @@ When the user shares a TL;DR handoff from Codex/Gemini:
 
 **Why**: Agents only update TICKETS.md on their own branch. Main won't reflect the status until Claude syncs it.
 
-## Dispatch format
+## Dispatch — when sending work to an agent
 
 When preparing work for Codex/Gemini, the prompt must include:
 1. Branch name and base
@@ -59,6 +59,13 @@ When preparing work for Codex/Gemini, the prompt must include:
 3. Reference files to read first
 4. Test requirements
 5. "Read AGENTS.md, then TICKETS.md for the Ready Brief"
+
+**After dispatching**, immediately sync main's TICKETS.md:
+- Set the ticket to `wip:<agent>`, fill Branch and Owner
+- If the ticket uses main.js, set the main.js Lock
+- Commit and push to main
+
+**Why**: The agent will claim the ticket on its branch, but main must also reflect it to prevent double-assignment.
 
 ## Branch hygiene (hard gate)
 
