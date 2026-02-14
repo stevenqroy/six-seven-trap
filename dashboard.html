@@ -1121,7 +1121,7 @@
     function buildDispatchPrompt(ticket, platform) {
       const id = ticket.ticket || ticket.name;
       const name = ticket.name || '';
-      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\nBEFORE writing any code, update TICKETS.md: set status to wip:${platform.toLowerCase()}, set Branch to ${platform.toLowerCase()}/${id}, set Owner to ${platform.toLowerCase()}.\nRead TICKETS.md for the full spec.`;
+      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\n\nSTEP 1: Read AGENTS.md — follow the startup protocol exactly.\nSTEP 2: Update TICKETS.md — set status to wip:${platform.toLowerCase()}, Branch to ${platform.toLowerCase()}/${id}, Owner to ${platform.toLowerCase()}. Commit this change first.\nSTEP 3: Read your ticket's Ready Brief in TICKETS.md (search for "${id} Ready Brief").\nSTEP 4: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.\nSTEP 5: When done, set status to review in TICKETS.md and output the TL;DR handoff from AGENTS.md.`;
     }
 
     function statusLabel(s) {
