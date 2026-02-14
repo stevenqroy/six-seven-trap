@@ -72,6 +72,22 @@ function normalizeState(state) {
   return FALLBACK_STATE;
 }
 
+function isDebugPanelVisible() {
+  if (typeof window === 'undefined') return false;
+  if (typeof window.__debugPanelVisible === 'boolean') {
+    return window.__debugPanelVisible;
+  }
+  if (!window.document || typeof window.document.getElementById !== 'function') {
+    return false;
+  }
+  const panel = window.document.getElementById('s7r-debug-panel');
+  return Boolean(panel && panel.style.display !== 'none');
+}
+
+function maybeSerializeDebug() {
+  return isDebugPanelVisible() ? serializeDebug() : null;
+}
+
 function normalizeAngle(value) {
   if (!Number.isFinite(value)) return 0;
   const turn = Math.PI * 2;
@@ -408,7 +424,7 @@ export function spawn(ctx = {}) {
   positionInOrbit(instance.boundState);
 
   if (!getFlag('supportStrikerHawk')) {
-    return serializeDebug();
+    return maybeSerializeDebug();
   }
 
   instance.runtime = createSupportRuntime({
@@ -419,7 +435,7 @@ export function spawn(ctx = {}) {
   });
 
   spawnRuntimeUnit();
-  return serializeDebug();
+  return maybeSerializeDebug();
 }
 
 export function update(dt, state) {
@@ -429,7 +445,7 @@ export function update(dt, state) {
 
   if (!getFlag('supportStrikerHawk')) {
     instance.lifecycleState = 'disabled';
-    return serializeDebug();
+    return maybeSerializeDebug();
   }
 
   if (!instance.runtime) {
@@ -439,7 +455,7 @@ export function update(dt, state) {
     });
   }
 
-  if (!instance.runtime) return serializeDebug();
+  if (!instance.runtime) return maybeSerializeDebug();
 
   const frameMs = dtSeconds * 1000;
   instance.runtimeNowMs += frameMs;
@@ -451,7 +467,7 @@ export function update(dt, state) {
   if (!runtimeUnit) {
     instance.target = null;
     setBehaviorState(BEHAVIOR_STATES.IDLE);
-    return serializeDebug();
+    return maybeSerializeDebug();
   }
 
   if (instance.lifecycleState === SUPPORT_LIFECYCLE_STATES.ACTIVE) {
@@ -462,7 +478,7 @@ export function update(dt, state) {
     updateOrbit(dtSeconds, safeState);
   }
 
-  return serializeDebug();
+  return maybeSerializeDebug();
 }
 
 export function draw(ctx) {
