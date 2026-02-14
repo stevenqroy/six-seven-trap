@@ -364,9 +364,17 @@ describe('Feature Flags System', () => {
       expect(getFlag('supportMedicFirefly')).toBeDefined();
     });
 
-    it('should default all flags to false for safety', () => {
+    it('should default non-shipped flags to false for safety', () => {
+      // Flags intentionally enabled by default (shipped features)
+      const shippedFlags = new Set([
+        'actionBar',
+        'actionInputArbitration',
+        'multiTouchAction',
+        'buttonMappedPowers',
+      ]);
       const flags = getAllFlags();
-      const allFalse = Object.values(flags).every(value => value === false);
+      const nonShipped = Object.entries(flags).filter(([k]) => !shippedFlags.has(k));
+      const allFalse = nonShipped.every(([, v]) => v === false);
 
       expect(allFalse).toBe(true);
     });
