@@ -255,6 +255,117 @@
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 
+#### S7R-062 Ready Brief
+
+**What:** Catalog every tunable constant across all game modules — damage values, cooldowns, speeds, radii, costs, durations, spawn rates, cap limits. Output a markdown table that S7R-054 (polish pass) will use to make balance decisions.
+
+**Files to scan:** `src/main.js`, `src/enemies/*.js`, `src/supports/*.js`, `src/systems/*.js`, `src/game-objects/*.js`, `src/ui/*.js`, `src/config/*.js`
+
+**Output format:** Write to `docs/research/S7R-062-tunable-constants.md`. Table columns: `| File | Line | Constant/Value | Current Value | What it controls | Unit |`
+
+**Done criteria:**
+- [ ] Every numeric literal that affects gameplay balance is cataloged
+- [ ] Grouped by system (enemy, support, particle, UI, timing)
+- [ ] Doc exists at the path above
+- [ ] No code changes — research only
+
+#### S7R-063 Ready Brief
+
+**What:** Identify the top 5 blocks in `src/main.js` that should be extracted into standalone modules. For each, provide line range, what it does, estimated lines saved, target module path, and dependency analysis.
+
+**Files to read:** `src/main.js` (primary), existing extracted modules for pattern reference: `src/systems/power.js`, `src/ui/action-bar.js`
+
+**Output format:** Write to `docs/research/S7R-063-main-extraction.md`. For each candidate: line range, description, lines saved, target path, imports needed, exports produced.
+
+**Done criteria:**
+- [ ] 5 candidates identified with line ranges
+- [ ] Each has a dependency analysis (what state it touches)
+- [ ] Total lines-saved estimate
+- [ ] Doc exists at the path above
+- [ ] No code changes — research only
+
+#### S7R-064 Ready Brief
+
+**What:** Audit all modules for missing test coverage, uncovered edge cases, and pattern violations vs the gold standard (`src/supports/medic-firefly.js`).
+
+**Files to scan:** `tests/**/*.test.js`, cross-referenced against `src/**/*.js`
+
+**Output format:** Write to `docs/research/S7R-064-test-gaps.md`. Table: `| Module | Has Tests? | Missing Coverage | Priority |`. Then a section listing specific test cases to add.
+
+**Done criteria:**
+- [ ] Every src module checked for corresponding test file
+- [ ] Edge cases identified (null inputs, empty arrays, boundary values)
+- [ ] Pattern violations flagged (modules not matching medic-firefly conventions)
+- [ ] Doc exists at the path above
+- [ ] No code changes — research only
+
+#### S7R-065 Ready Brief
+
+**What:** Write the narrative design brief. The numbers are alien kids at school recess. The alien ship is their parents coming to pick them up — the kids don't want to go home yet. Flesh out: who are the characters, what's the tone, what do enemies/supports represent in-story?
+
+**Reference:** Story Log entries in this file (Feb 12-13), FRIENDLY entries in `dashboard.html` for story tone.
+
+**Output format:** Write to `docs/research/S7R-065-narrative-design.md`. Sections: Characters (with personality), Tone & Voice, What Everything Represents (gameplay → story mapping), One-Page Story Summary.
+
+**Done criteria:**
+- [ ] Every game entity has a story identity
+- [ ] Tone is defined
+- [ ] Clear mapping: gameplay mechanic → story meaning
+- [ ] Doc exists at the path above
+
+#### S7R-066 Ready Brief
+
+**What:** Research sprite sheet formats and tools for small 2D characters (16x16 or 32x32). What format works best with HTML5 canvas? How to animate idle/walk/hit states? What free tools exist?
+
+**Output format:** Write to `docs/research/S7R-066-sprite-sheets.md`. Sections: Format Recommendation, Animation Approach, Tool Recommendations (free, with links), Implementation Notes for canvas.
+
+**Done criteria:**
+- [ ] Format recommendation with pros/cons
+- [ ] At least 3 tool recommendations with links
+- [ ] Canvas integration approach described
+- [ ] Doc exists at the path above
+
+#### S7R-067 Ready Brief
+
+**What:** Design visual identity for game characters. Sketch descriptions for: kid 6, kid 7, parent harvester, parent skimmer, firefly friend, hawk friend, center guardian.
+
+**Reference:** S7R-065 narrative brief (if done), Story Log entries.
+
+**Output format:** Write to `docs/research/S7R-067-character-design.md`. Per character: physical description, color palette, personality through appearance, size relative to others.
+
+**Done criteria:**
+- [ ] All 7+ characters described visually
+- [ ] Consistent art style defined
+- [ ] Size/scale relationships defined
+- [ ] Doc exists at the path above
+
+#### S7R-068 Ready Brief
+
+**What:** Brainstorm the alien ship (parents' minivan) personality and visuals. How does it hover? Does it honk? Send stern messages? What does escalation look like?
+
+**Output format:** Write to `docs/research/S7R-068-alien-ship.md`. Sections: Visual Description, Personality & Behavior, Escalation Stages, Sound/Visual Cue Ideas.
+
+**Done criteria:**
+- [ ] Visual description detailed enough to concept
+- [ ] At least 3 escalation stages described
+- [ ] Personality is distinct and funny
+- [ ] Doc exists at the path above
+
+#### S7R-069 Ready Brief
+
+**What:** Catalog all magic numbers in `src/main.js` that control scene tuning — parallax speeds, sky gradient stops, wave frequencies, screen shake, fence padding, spawn positions, etc.
+
+**Files to scan:** `src/main.js` (primary), `src/config/*.js` (what's already extracted)
+
+**Output format:** Write to `docs/research/S7R-069-magic-numbers.md`. Table: `| Line | Value | What it controls | Should extract? | Suggested constant name |`
+
+**Done criteria:**
+- [ ] All scene-tuning magic numbers in main.js cataloged
+- [ ] Each has a suggested constant name
+- [ ] Grouped by system (sky, parallax, shake, spawn, fence, etc.)
+- [ ] Doc exists at the path above
+- [ ] No code changes — research only
+
 ### Tooling tickets (no blockers, can start now)
 
 | Ticket | TL;DR | Status | Available to |

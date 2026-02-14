@@ -128,6 +128,9 @@ Run silently, fix before merge, never skip:
 2. `npm run test:unit` — all pass
 3. `npx vite build` — succeeds
 4. Diff review — every changed line intentional, no debug code
+5. Ready brief check — read the ticket's Ready Brief in TICKETS.md, verify every acceptance criterion
+6. Scope check — no files modified outside the "Files to modify" list, no files in "DO NOT modify" touched
+7. Pattern check — code matches existing conventions per reference files listed in brief
 
 ### Self-check filter (all platforms)
 
