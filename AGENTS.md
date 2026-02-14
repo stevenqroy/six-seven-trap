@@ -38,14 +38,15 @@ Every session, before writing any code:
 ## Stop protocol
 
 When the ticket is complete:
-1. **Commit all code changes first** — no uncommitted work may remain
-2. Run the full QA gate (see below) — fix any failures
-3. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
-4. If you held the main.js lock, release it: set back to `nobody (unlocked)`
-5. Commit `TICKETS.md` as your final commit
-6. **Verify**: run `git status` — working tree must be clean. If not, you missed something.
-7. Output the TL;DR handoff (see "Completion handoff" below)
-8. **Stop. Do not start another ticket. Do not touch other files.**
+1. **Rebase onto latest main** — `git fetch origin && git rebase origin/main`. This ensures your branch has all recent merges. Re-run `npx vite build` after rebase to verify no conflicts.
+2. **Commit all code changes first** — no uncommitted work may remain
+3. Run the full QA gate (see below) — fix any failures
+4. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
+5. If you held the main.js lock, release it: set back to `nobody (unlocked)`
+6. Commit `TICKETS.md` as your final commit
+7. **Verify**: run `git status` — working tree must be clean. If not, you missed something.
+8. Output the TL;DR handoff (see "Completion handoff" below)
+9. **Stop. Do not start another ticket. Do not touch other files.**
 
 ## QA gate — run before every commit
 
