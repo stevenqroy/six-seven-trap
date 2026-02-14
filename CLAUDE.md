@@ -86,6 +86,13 @@ Breaking: [none / description]
 
 Do NOT include: test output, diff output, file contents, validation logs, or implementation details. QA reads the code directly.
 
+### Handoff format: research ticket complete
+
+Research tickets (🔍/🎭) produce a markdown doc, not code. Deliverable:
+1. Write findings to `docs/research/S7R-###-short-name.md`
+2. TL;DR handoff uses the same format as implementation, but `Files:` lists the doc and `Tests:` says `n/a — research`.
+3. "Done" means the doc exists, is referenced from the ticket brief, and answers all questions in the ticket spec.
+
 ### Handoff format: QA result → user
 
 ```
@@ -103,6 +110,13 @@ Prompts must include:
 4. Mandatory quality requirements
 5. Test requirements
 6. Rules (main.js policy, build gate, commit style)
+
+### Branch hygiene (mandatory for Claude)
+
+After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
+1. Run `git branch --show-current` — confirm you're on the expected branch.
+2. Run `git status` — confirm working tree matches expectations.
+3. Only then proceed with edits or commits.
 
 ### QA gate (mandatory before merge)
 

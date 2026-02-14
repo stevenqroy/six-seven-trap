@@ -95,7 +95,7 @@
 ## Rules
 1. **Claim before you start**: set status to `wip:yourname` and fill in branch + owner.
 2. **One owner per ticket**: no two workers on the same ticket.
-3. **main.js lock**: only one worker modifies `src/main.js` at a time. Current lock holder noted below.
+3. **main.js lock**: only one worker modifies `src/main.js` at a time. Before editing main.js, check the lock below. If held, work on something else or ask Steven to coordinate. Update the lock when you claim/release.
 4. **Update on completion**: set to `review` when PR is ready, `done` when merged.
 5. **Dependency check**: before starting, verify all `Depends` tickets are `done` on main.
 6. **QA rule**: every `review` ticket gets QA'd by Claude Code before merging to main.
@@ -110,6 +110,8 @@
 
 ## main.js Lock
 **Currently held by**: _nobody (unlocked)_
+**Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
+**Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
 > When you need main.js, write your name here. When done, clear it and notify the next in queue.
 
