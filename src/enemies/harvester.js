@@ -43,6 +43,8 @@ const instance = {
   activeBeams: [],
   activeTargets: [],
 };
+const targetCandidates = [];
+const selectedTargets = [];
 
 function toFinite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -183,21 +185,28 @@ function isGoodTarget(numberEntity) {
 
 function selectTargets(state, shipPosition, beamCount) {
   const numbers = Array.isArray(state?.nums) ? state.nums : [];
-  const candidates = [];
+  targetCandidates.length = 0;
+  selectedTargets.length = 0;
 
   for (let i = 0; i < numbers.length; i++) {
     const candidate = numbers[i];
     if (!isGoodTarget(candidate)) continue;
-    const dx = shipPosition.x - candidate.x;
-    const dy = shipPosition.y - candidate.y;
-    candidates.push({
-      candidate,
-      distSq: dx * dx + dy * dy,
-    });
+    targetCandidates.push(candidate);
   }
 
-  candidates.sort((a, b) => a.distSq - b.distSq);
-  return candidates.slice(0, beamCount).map((item) => item.candidate);
+  targetCandidates.sort((a, b) => {
+    const aDx = shipPosition.x - a.x;
+    const aDy = shipPosition.y - a.y;
+    const bDx = shipPosition.x - b.x;
+    const bDy = shipPosition.y - b.y;
+    return aDx * aDx + aDy * aDy - (bDx * bDx + bDy * bDy);
+  });
+
+  const targetCount = Math.min(Math.max(0, beamCount), targetCandidates.length);
+  for (let i = 0; i < targetCount; i++) {
+    selectedTargets.push(targetCandidates[i]);
+  }
+  return selectedTargets;
 }
 
 function pullTargetTowardShip(target, shipPosition, dtSeconds) {

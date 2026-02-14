@@ -1219,10 +1219,10 @@ import { createRunRngTracker } from './core/run-rng.js';
       life: ttl,
       maxLife: ttl,
     });
-    if (scorePopups.length > POLISH.SCORE_POPUP_MAX) {
-      scorePopups.splice(0, scorePopups.length - POLISH.SCORE_POPUP_MAX);
-    }
+    if (scorePopups.length > POLISH.SCORE_POPUP_MAX) scorePopups.splice(0, scorePopups.length - POLISH.SCORE_POPUP_MAX);
   }
+
+  function removeBySwapPop(list, index) { list[index] = list[list.length - 1]; list.pop(); }
 
   function updateScorePopups(dt) {
     for (let i = scorePopups.length - 1; i >= 0; i--) {
@@ -1231,7 +1231,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       p.y += p.vy * dt;
       p.vy += 96 * dt;
       p.life -= dt;
-      if (p.life <= 0) scorePopups.splice(i, 1);
+      if (p.life <= 0) removeBySwapPop(scorePopups, i);
     }
   }
 
@@ -1294,7 +1294,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       p.life -= 0.02;
 
       if (p.life <= 0) {
-        particles.splice(i, 1);
+        removeBySwapPop(particles, i);
       }
     }
   }
@@ -2555,7 +2555,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       s.y += s.vy * dt;
       s.r += s.grow * dt;
       s.life -= dt;
-      if (s.life <= 0) laserStorm.smokePuffs.splice(i, 1);
+      if (s.life <= 0) removeBySwapPop(laserStorm.smokePuffs, i);
     }
   }
 
@@ -3074,7 +3074,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       // Keep embers below the spacecraft/beam origin region.
       if (e.y < e.ceilingY) {
         if (e.vy < 0) {
-          dangerEmbers.splice(i, 1);
+          removeBySwapPop(dangerEmbers, i);
           continue;
         }
         e.y = e.ceilingY;
@@ -3121,7 +3121,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       }
 
       if (e.life <= 0 || e.y > hCSS + 42 || e.x < -42 || e.x > wCSS + 42 || e.bounce > 8) {
-        dangerEmbers.splice(i, 1);
+        removeBySwapPop(dangerEmbers, i);
       }
     }
 
@@ -3133,7 +3133,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       s.x += s.vx * dt;
       s.y += s.vy * dt;
       s.life -= dt;
-      if (s.life <= 0) dangerSizzles.splice(i, 1);
+      if (s.life <= 0) removeBySwapPop(dangerSizzles, i);
     }
   }
 

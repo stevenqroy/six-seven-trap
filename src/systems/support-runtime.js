@@ -193,7 +193,7 @@ export function createSupportRuntime({
     let transitions = 0;
     let despawns = 0;
     let cleanups = 0;
-    const nextUnits = [];
+    let writeIndex = 0;
 
     for (let i = 0; i < units.length; i++) {
       const unit = units[i];
@@ -215,10 +215,11 @@ export function createSupportRuntime({
         transitions += 1;
         unit.lastTransitionReason = 'timed-transition';
       }
-      nextUnits.push(unit);
+      units[writeIndex] = unit;
+      writeIndex += 1;
     }
 
-    units = nextUnits;
+    units.length = writeIndex;
     metrics.lastTickAtMs = safeNow;
     refreshMaxConcurrent();
 

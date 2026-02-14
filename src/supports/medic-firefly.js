@@ -56,6 +56,22 @@ function normalizeState(state) {
   return state && typeof state === 'object' ? state : S;
 }
 
+function isDebugPanelVisible() {
+  if (typeof window === 'undefined') return false;
+  if (typeof window.__debugPanelVisible === 'boolean') {
+    return window.__debugPanelVisible;
+  }
+  if (!window.document || typeof window.document.getElementById !== 'function') {
+    return false;
+  }
+  const panel = window.document.getElementById('s7r-debug-panel');
+  return Boolean(panel && panel.style.display !== 'none');
+}
+
+function maybeSerializeDebug() {
+  return isDebugPanelVisible() ? serializeDebug() : null;
+}
+
 function normalizeAngle(value) {
   if (!Number.isFinite(value)) return 0;
   const turn = Math.PI * 2;
@@ -252,7 +268,7 @@ export function spawn(ctx = {}) {
   positionNearGuardian(instance.boundState);
 
   if (!getFlag('supportMedicFirefly')) {
-    return serializeDebug();
+    return maybeSerializeDebug();
   }
 
   instance.runtime = createSupportRuntime({
@@ -263,7 +279,7 @@ export function spawn(ctx = {}) {
   });
 
   spawnRuntimeUnit();
-  return serializeDebug();
+  return maybeSerializeDebug();
 }
 
 export function update(dt, state = S) {
@@ -273,7 +289,7 @@ export function update(dt, state = S) {
 
   if (!getFlag('supportMedicFirefly')) {
     instance.lifecycleState = 'disabled';
-    return serializeDebug();
+    return maybeSerializeDebug();
   }
 
   if (!instance.runtime) {
@@ -283,7 +299,7 @@ export function update(dt, state = S) {
     });
   }
 
-  if (!instance.runtime) return serializeDebug();
+  if (!instance.runtime) return maybeSerializeDebug();
 
   ensureHealingState(safeState);
   const frameMs = dtSeconds * 1000;
@@ -295,8 +311,8 @@ export function update(dt, state = S) {
   updateOrbit(dtSeconds, safeState);
   updatePulseVisual(frameMs);
 
-  if (!runtimeUnit) return serializeDebug();
-  if (instance.lifecycleState !== SUPPORT_LIFECYCLE_STATES.ACTIVE) return serializeDebug();
+  if (!runtimeUnit) return maybeSerializeDebug();
+  if (instance.lifecycleState !== SUPPORT_LIFECYCLE_STATES.ACTIVE) return maybeSerializeDebug();
 
   instance.healCooldownMs -= frameMs;
   while (instance.healCooldownMs <= 0) {
@@ -304,7 +320,7 @@ export function update(dt, state = S) {
     instance.healCooldownMs += instance.profile.healIntervalMs;
   }
 
-  return serializeDebug();
+  return maybeSerializeDebug();
 }
 
 export function draw(ctx) {
