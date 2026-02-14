@@ -37,12 +37,14 @@ Every session, before writing any code:
 ## Stop protocol
 
 When the ticket is complete:
-1. Run the full QA gate (see below) — fix any failures
-2. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
-3. If you held the main.js lock, release it: set back to `nobody (unlocked)`
-4. Commit `TICKETS.md` as your final commit
-5. Output the TL;DR handoff (see "Completion handoff" below)
-6. **Stop. Do not start another ticket. Do not touch other files.**
+1. **Commit all code changes first** — no uncommitted work may remain
+2. Run the full QA gate (see below) — fix any failures
+3. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
+4. If you held the main.js lock, release it: set back to `nobody (unlocked)`
+5. Commit `TICKETS.md` as your final commit
+6. **Verify**: run `git status` — working tree must be clean. If not, you missed something.
+7. Output the TL;DR handoff (see "Completion handoff" below)
+8. **Stop. Do not start another ticket. Do not touch other files.**
 
 ## QA gate — run before every commit
 
@@ -152,6 +154,7 @@ Before emitting any response:
 ## Pre-commit sanity check (quick — after QA gate passes)
 
 - [ ] On correct branch (`git branch --show-current`)
+- [ ] All code committed — `git status` shows clean working tree
 - [ ] QA gate already passed (don't re-run — just confirm)
 - [ ] No files outside Ready Brief scope
 - [ ] TICKETS.md updated (status, branch, owner)
