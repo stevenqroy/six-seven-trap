@@ -94,6 +94,7 @@ After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
 - Finish current branch work, commit, and push before switching.
 - No interleaving grooming (main) with QA (feature branch).
 - If QA reveals a grooming fix needed on main, note it and finish QA first.
+- **Always return to main** when done with any task. Claude's home branch is main.
 
 ## Session handoff
 
