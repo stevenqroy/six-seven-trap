@@ -859,6 +859,7 @@
       { label: 'Enemy runtime', tickets: ['S7R-010','S7R-011','S7R-015','S7R-018'] },
       { label: 'Commands + supports', tickets: ['S7R-046','S7R-047','S7R-048','S7R-050','S7R-051','S7R-053'] },
       { label: 'PWA', tickets: ['S7R-038'] },
+      { label: 'Ability VFX', tickets: ['S7R-071','S7R-072','S7R-073'] },
       { label: 'Gate-1 Playtest', names: ['V1-PLAYTEST-GATE-1'] },
       { label: 'Polish pass', tickets: ['S7R-054'] },
       { label: 'Launch prep', tickets: ['S7R-055'] },
@@ -959,6 +960,26 @@
         title: 'Magic numbers cleanup',
         summary: 'main.js has about 30 hardcoded scene-tuning values \u2014 parallax speeds, sky gradients, wave frequencies, screen shake amounts. This catalogs them all and moves them to a config module.',
         marker: '\u{1F50D}',
+      },
+      'S7R-070': {
+        title: 'Power bar \u2192 vertical left rail',
+        summary: 'Moved the power meter from a horizontal bar at the bottom to a vertical rail on the left side of the screen. Cleaner layout, less overlap with action buttons.',
+        marker: '\u26A1',
+      },
+      'S7R-071': {
+        title: 'Shield sparkle + electric effects',
+        summary: 'Overhaul the shield to sparkle with orbiting particles and crackling electric arcs. As it takes damage, the effects degrade \u2014 fewer sparks, dimmer arcs, color shifts from cyan to red. 4-second cooldown so it can\u2019t be spammed.',
+        marker: '\u26A1',
+      },
+      'S7R-072': {
+        title: 'Slam shockwave + push + haptic',
+        summary: 'The showstopper ability. Dual expanding shockwave rings with particle debris, screen shake, and haptic vibration on Android. Pushes the alien ship upward and sweeps non-6/7 numbers away like a brush. Worth saving power for.',
+        marker: '\u{1F4A5}',
+      },
+      'S7R-073': {
+        title: 'Projectile trails + color variety',
+        summary: 'Turn the boring bullet into an exciting energy bolt. Each shot gets a random color theme (cyan, magenta, gold, or green) with glowing orb head, long particle trail, and motion streak. 1.2-second cooldown between shots.',
+        marker: '\u26A1',
       },
     };
 
