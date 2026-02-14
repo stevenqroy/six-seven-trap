@@ -71,6 +71,7 @@ export function createActionRouter({
     if (telemetryRef && typeof telemetryRef.onAbilityUsed === 'function') {
       telemetryRef.onAbilityUsed('projectile');
     }
+    setButtonCooldown(readActionBar, 'projectile', 1.2);
     return true;
   }
 

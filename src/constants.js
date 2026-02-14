@@ -25,7 +25,7 @@ export const POWER = {
   PER_BOUNCE: 3,
   COMBO_BONUS: 0.5,
   SHIELD_COST: 25,
-  PROJECTILE_COST: 15,
+  PROJECTILE_COST: 20,
   MAGNET_DRAIN: 12,
   SLAM_COST: 40,
   ULTIMATE_COST: 100,
@@ -44,7 +44,7 @@ export const PROJECTILE = {
   DAMAGE: 5,
   MAX_ACTIVE: 3,
   RADIUS_PX: 8,
-  TRAIL_LENGTH: 6,
+  TRAIL_LENGTH: 12,
 };
 
 // Powered swat tuning
