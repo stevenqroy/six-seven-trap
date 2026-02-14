@@ -9,6 +9,21 @@ function toFinite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+const DEFAULT_SHADOW_BLUR_CAPS = Object.freeze({
+  high: Object.freeze({
+    shadowBlurEnabled: true,
+    maxShadowBlur: 18,
+  }),
+  medium: Object.freeze({
+    shadowBlurEnabled: true,
+    maxShadowBlur: 10,
+  }),
+  low: Object.freeze({
+    shadowBlurEnabled: false,
+    maxShadowBlur: 0,
+  }),
+});
+
 function cloneCaps(caps) {
   return {
     ...caps,
@@ -102,6 +117,16 @@ export function createAdaptiveQualityGovernor({
     const caps = cloneCaps(tierCaps);
     if (caps.maxDangerEmbers > 300) caps.maxDangerEmbers = 300;
     if (caps.maxDangerSizzles > 150) caps.maxDangerSizzles = 150;
+    const fallback = DEFAULT_SHADOW_BLUR_CAPS[currentTier] || DEFAULT_SHADOW_BLUR_CAPS[safeDefaultTier];
+    if (typeof caps.shadowBlurEnabled !== 'boolean') {
+      caps.shadowBlurEnabled = fallback.shadowBlurEnabled;
+    }
+    if (!Number.isFinite(caps.maxShadowBlur)) {
+      caps.maxShadowBlur = fallback.maxShadowBlur;
+    }
+    if (!caps.shadowBlurEnabled) {
+      caps.maxShadowBlur = 0;
+    }
     return caps;
   }
 

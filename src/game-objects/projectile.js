@@ -54,8 +54,17 @@ export function updateProjectiles(state, dt, shipRect) {
 /**
  * Draw active projectiles with glow + short trail.
  */
-export function drawProjectiles(ctx, state) {
+export function drawProjectiles(ctx, state, qualityCaps = null) {
   if (!state.projectiles.length) return;
+
+  const maxShadowBlur = Number.isFinite(qualityCaps?.maxShadowBlur)
+    ? Math.max(0, qualityCaps.maxShadowBlur)
+    : 18;
+  const shadowBlurEnabled =
+    typeof qualityCaps?.shadowBlurEnabled === 'boolean'
+      ? qualityCaps.shadowBlurEnabled
+      : maxShadowBlur > 0;
+  const projectileShadowBlur = shadowBlurEnabled ? Math.min(18, maxShadowBlur) : 0;
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -83,7 +92,7 @@ export function drawProjectiles(ctx, state) {
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.shadowColor = 'rgba(255,230,130,0.9)';
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = projectileShadowBlur;
     ctx.beginPath();
     ctx.moveTo(p.x, topY);
     ctx.lineTo(p.x, p.y + 4);

@@ -156,6 +156,8 @@ import { createRunRngTracker } from './core/run-rng.js';
         merged[key] = Math.min(currentValue, lowValue);
       }
     }
+    merged.shadowBlurEnabled = false;
+    merged.maxShadowBlur = 0;
     return merged;
   }
 
@@ -163,6 +165,21 @@ import { createRunRngTracker } from './core/run-rng.js';
     const caps = getAdaptiveQualityCaps();
     if (!caps) return fallback;
     return Number.isFinite(caps[name]) ? caps[name] : fallback;
+  }
+
+  function getAdaptiveShadowBlurCaps() {
+    const caps = getAdaptiveQualityCaps();
+    const maxShadowBlur = Number.isFinite(caps?.maxShadowBlur)
+      ? Math.max(0, caps.maxShadowBlur)
+      : 18;
+    const shadowBlurEnabled =
+      typeof caps?.shadowBlurEnabled === 'boolean'
+        ? caps.shadowBlurEnabled
+        : maxShadowBlur > 0;
+    return {
+      enabled: shadowBlurEnabled && maxShadowBlur > 0,
+      maxShadowBlur,
+    };
   }
 
   function updateAdaptiveQuality(frameMs, now) {
@@ -480,6 +497,39 @@ import { createRunRngTracker } from './core/run-rng.js';
   let wCSS = 0,
     hCSS = 0;
   let worldStars = [];
+  const WORLD_GRADIENT_STEP_MS = 500;
+  const LASER_GRADIENT_POS_STEP_PX = 6;
+  const LASER_GRADIENT_HUE_STEP = 12;
+  const LASER_GRADIENT_ALPHA_STEP = 0.05;
+  const DANGER_BEAM_OSC_STEP_MS = 33;
+
+  const worldGradientCache = {
+    key: '',
+    sky: null,
+    hillFar: null,
+    hillMid: null,
+    hillNear: null,
+    barnBody: null,
+    doorGlow: null,
+    ground: null,
+    groundTop: 0,
+    barnW: 0,
+    barnH: 0,
+    barnX: 0,
+    barnY: 0,
+    doorW: 0,
+    doorH: 0,
+    doorX: 0,
+    doorY: 0,
+  };
+  const laserBeamGradientCache = [];
+  const laserSourceGradientCache = [];
+
+  function quantize(value, step) {
+    if (!Number.isFinite(value)) return 0;
+    if (!Number.isFinite(step) || step <= 0) return value;
+    return Math.round(value / step) * step;
+  }
 
   function rebuildWorldStars() {
     const count = Math.max(36, Math.min(96, Math.floor((wCSS * hCSS) / 18000)));
@@ -496,6 +546,92 @@ import { createRunRngTracker } from './core/run-rng.js';
     }
   }
 
+  function getWorldGradients(elapsedMs) {
+    const stepMs = Math.floor(Math.max(0, elapsedMs) / WORLD_GRADIENT_STEP_MS) * WORLD_GRADIENT_STEP_MS;
+    const cacheKey = `${wCSS}x${hCSS}@${stepMs}`;
+    if (worldGradientCache.key === cacheKey) return worldGradientCache;
+
+    const dayProgress = Math.max(0, Math.min(1, stepMs / 180000));
+    const skyTopR = Math.round(20 + dayProgress * 22);
+    const skyTopG = Math.round(14 + dayProgress * 12);
+    const skyTopB = Math.round(58 + dayProgress * 48);
+    const skyBottomR = Math.round(255 - dayProgress * 28);
+    const skyBottomG = Math.round(160 - dayProgress * 38);
+    const skyBottomB = Math.round(110 - dayProgress * 16);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, hCSS);
+    sky.addColorStop(0, `rgb(${skyTopR}, ${skyTopG}, ${skyTopB})`);
+    sky.addColorStop(
+      0.52,
+      `rgba(${Math.round(skyTopR + 8)}, ${Math.round(skyTopG + 6)}, ${Math.round(skyTopB + 16)}, 0.98)`
+    );
+    sky.addColorStop(1, `rgb(${skyBottomR}, ${skyBottomG}, ${skyBottomB})`);
+
+    const farBaseY = hCSS * 0.67;
+    const midBaseY = hCSS * 0.74;
+    const nearBaseY = hCSS * 0.8;
+    const hillFar = ctx.createLinearGradient(0, farBaseY - 31.2, 0, hCSS + 8);
+    hillFar.addColorStop(0, 'rgba(95, 132, 88, 0.72)');
+    hillFar.addColorStop(1, 'rgba(58, 88, 60, 0.92)');
+
+    const hillMid = ctx.createLinearGradient(0, midBaseY - 40.8, 0, hCSS + 8);
+    hillMid.addColorStop(0, 'rgba(112, 154, 94, 0.82)');
+    hillMid.addColorStop(1, 'rgba(65, 100, 62, 0.98)');
+
+    const hillNear = ctx.createLinearGradient(0, nearBaseY - 21.6, 0, hCSS + 8);
+    hillNear.addColorStop(0, 'rgba(124, 168, 88, 0.86)');
+    hillNear.addColorStop(1, 'rgba(78, 116, 58, 0.98)');
+
+    const groundTop = hCSS - 108;
+    const barnW = Math.max(180, Math.min(260, wCSS * 0.3));
+    const barnH = barnW * 0.62;
+    const barnX = wCSS * 0.5 - barnW * 0.5;
+    const barnY = groundTop - barnH + 8;
+    const barnBody = ctx.createLinearGradient(0, barnY, 0, barnY + barnH);
+    barnBody.addColorStop(0, '#b34f42');
+    barnBody.addColorStop(1, '#7f2f2b');
+
+    const doorW = barnW * 0.28;
+    const doorH = barnH * 0.52;
+    const doorX = barnX + barnW * 0.5 - doorW * 0.5;
+    const doorY = barnY + barnH - doorH;
+    const doorGlow = ctx.createRadialGradient(
+      doorX + doorW * 0.5,
+      doorY + doorH * 0.68,
+      0,
+      doorX + doorW * 0.5,
+      doorY + doorH * 0.68,
+      doorW * 0.95
+    );
+    doorGlow.addColorStop(0, 'rgba(255, 224, 140, 0.85)');
+    doorGlow.addColorStop(1, 'rgba(255, 190, 95, 0)');
+
+    const ground = ctx.createLinearGradient(0, groundTop, 0, hCSS);
+    ground.addColorStop(0, '#3f7d3f');
+    ground.addColorStop(0.46, '#2f5f2e');
+    ground.addColorStop(1, '#1f3821');
+
+    worldGradientCache.key = cacheKey;
+    worldGradientCache.sky = sky;
+    worldGradientCache.hillFar = hillFar;
+    worldGradientCache.hillMid = hillMid;
+    worldGradientCache.hillNear = hillNear;
+    worldGradientCache.barnBody = barnBody;
+    worldGradientCache.doorGlow = doorGlow;
+    worldGradientCache.ground = ground;
+    worldGradientCache.groundTop = groundTop;
+    worldGradientCache.barnW = barnW;
+    worldGradientCache.barnH = barnH;
+    worldGradientCache.barnX = barnX;
+    worldGradientCache.barnY = barnY;
+    worldGradientCache.doorW = doorW;
+    worldGradientCache.doorH = doorH;
+    worldGradientCache.doorX = doorX;
+    worldGradientCache.doorY = doorY;
+
+    return worldGradientCache;
+  }
+
   function resize() {
     wCSS = window.innerWidth;
     hCSS = window.innerHeight;
@@ -504,6 +640,9 @@ import { createRunRngTracker } from './core/run-rng.js';
     canvas.height = Math.floor(hCSS * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     rebuildWorldStars();
+    worldGradientCache.key = '';
+    laserBeamGradientCache.length = 0;
+    laserSourceGradientCache.length = 0;
   }
   window.addEventListener('resize', resize);
   resize();
@@ -725,19 +864,9 @@ import { createRunRngTracker } from './core/run-rng.js';
     const elapsed = Math.max(0, now - S.gameStartTime);
     const dayProgress = Math.max(0, Math.min(1, elapsed / 180000));
     const parallax = ((cx - wCSS * 0.5) / Math.max(1, wCSS * 0.5)) * 14;
+    const gradients = getWorldGradients(elapsed);
 
-    const skyTopR = Math.round(20 + dayProgress * 22);
-    const skyTopG = Math.round(14 + dayProgress * 12);
-    const skyTopB = Math.round(58 + dayProgress * 48);
-    const skyBottomR = Math.round(255 - dayProgress * 28);
-    const skyBottomG = Math.round(160 - dayProgress * 38);
-    const skyBottomB = Math.round(110 - dayProgress * 16);
-
-    const sky = ctx.createLinearGradient(0, 0, 0, hCSS);
-    sky.addColorStop(0, `rgb(${skyTopR}, ${skyTopG}, ${skyTopB})`);
-    sky.addColorStop(0.52, `rgba(${Math.round(skyTopR + 8)}, ${Math.round(skyTopG + 6)}, ${Math.round(skyTopB + 16)}, 0.98)`);
-    sky.addColorStop(1, `rgb(${skyBottomR}, ${skyBottomG}, ${skyBottomB})`);
-    ctx.fillStyle = sky;
+    ctx.fillStyle = gradients.sky;
     ctx.fillRect(0, 0, wCSS, hCSS);
 
     ctx.save();
@@ -753,7 +882,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     }
     ctx.restore();
 
-    function drawHillLayer(baseY, amp, freq, phase, colorTop, colorBottom, px) {
+    function drawHillLayer(baseY, amp, freq, phase, px, fillStyle) {
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(-32, hCSS + 8);
@@ -766,10 +895,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       }
       ctx.lineTo(wCSS + 32, hCSS + 8);
       ctx.closePath();
-      const g = ctx.createLinearGradient(0, baseY - amp * 1.2, 0, hCSS + 8);
-      g.addColorStop(0, colorTop);
-      g.addColorStop(1, colorBottom);
-      ctx.fillStyle = g;
+      ctx.fillStyle = fillStyle;
       ctx.fill();
       ctx.restore();
     }
@@ -779,39 +905,33 @@ import { createRunRngTracker } from './core/run-rng.js';
       26,
       0.0082,
       now * 0.00016 + 1.4,
-      'rgba(95, 132, 88, 0.72)',
-      'rgba(58, 88, 60, 0.92)',
-      0.35
+      0.35,
+      gradients.hillFar
     );
     drawHillLayer(
       hCSS * 0.74,
       34,
       0.0106,
       now * 0.0002 + 0.2,
-      'rgba(112, 154, 94, 0.82)',
-      'rgba(65, 100, 62, 0.98)',
-      0.68
+      0.68,
+      gradients.hillMid
     );
     drawHillLayer(
       hCSS * 0.8,
       18,
       0.0124,
       now * 0.00024 + 2.2,
-      'rgba(124, 168, 88, 0.86)',
-      'rgba(78, 116, 58, 0.98)',
-      0.95
+      0.95,
+      gradients.hillNear
     );
 
-    const groundTop = hCSS - 108;
-    const barnW = Math.max(180, Math.min(260, wCSS * 0.3));
-    const barnH = barnW * 0.62;
-    const barnX = wCSS * 0.5 - barnW * 0.5;
-    const barnY = groundTop - barnH + 8;
+    const groundTop = gradients.groundTop;
+    const barnW = gradients.barnW;
+    const barnH = gradients.barnH;
+    const barnX = gradients.barnX;
+    const barnY = gradients.barnY;
 
-    const barnBody = ctx.createLinearGradient(0, barnY, 0, barnY + barnH);
-    barnBody.addColorStop(0, '#b34f42');
-    barnBody.addColorStop(1, '#7f2f2b');
-    ctx.fillStyle = barnBody;
+    ctx.fillStyle = gradients.barnBody;
     ctx.fillRect(barnX, barnY, barnW, barnH);
 
     ctx.strokeStyle = 'rgba(255, 220, 185, 0.35)';
@@ -826,21 +946,11 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.closePath();
     ctx.fill();
 
-    const doorW = barnW * 0.28;
-    const doorH = barnH * 0.52;
-    const doorX = barnX + barnW * 0.5 - doorW * 0.5;
-    const doorY = barnY + barnH - doorH;
-    const doorGlow = ctx.createRadialGradient(
-      doorX + doorW * 0.5,
-      doorY + doorH * 0.68,
-      0,
-      doorX + doorW * 0.5,
-      doorY + doorH * 0.68,
-      doorW * 0.95
-    );
-    doorGlow.addColorStop(0, 'rgba(255, 224, 140, 0.85)');
-    doorGlow.addColorStop(1, 'rgba(255, 190, 95, 0)');
-    ctx.fillStyle = doorGlow;
+    const doorW = gradients.doorW;
+    const doorH = gradients.doorH;
+    const doorX = gradients.doorX;
+    const doorY = gradients.doorY;
+    ctx.fillStyle = gradients.doorGlow;
     ctx.fillRect(doorX - doorW * 0.7, doorY - doorH * 0.6, doorW * 2.4, doorH * 1.9);
 
     ctx.fillStyle = '#3b2016';
@@ -849,11 +959,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.lineWidth = 1.4;
     ctx.strokeRect(doorX, doorY, doorW, doorH);
 
-    const ground = ctx.createLinearGradient(0, groundTop, 0, hCSS);
-    ground.addColorStop(0, '#3f7d3f');
-    ground.addColorStop(0.46, '#2f5f2e');
-    ground.addColorStop(1, '#1f3821');
-    ctx.fillStyle = ground;
+    ctx.fillStyle = gradients.ground;
     ctx.fillRect(0, groundTop, wCSS, hCSS - groundTop);
 
     ctx.save();
@@ -2213,23 +2319,63 @@ import { createRunRngTracker } from './core/run-rng.js';
     }
   }
 
+  function getCachedLaserSourceGradient(index, x, y, radius, srcGlow, hue) {
+    const qX = quantize(x, LASER_GRADIENT_POS_STEP_PX);
+    const qY = quantize(y, LASER_GRADIENT_POS_STEP_PX);
+    const qRadius = Math.max(2, quantize(radius, 2));
+    const qGlow = clamp(quantize(srcGlow, LASER_GRADIENT_ALPHA_STEP), 0, 1);
+    const qHue = ((quantize(hue, LASER_GRADIENT_HUE_STEP) % 360) + 360) % 360;
+    const key = `${qX}|${qY}|${qRadius}|${qGlow}|${qHue}`;
+
+    let cached = laserSourceGradientCache[index];
+    if (!cached || cached.key !== key) {
+      const gradient = ctx.createRadialGradient(qX, qY, 0, qX, qY, qRadius);
+      gradient.addColorStop(0, `rgba(255,255,255,${0.9 * qGlow})`);
+      gradient.addColorStop(0.5, `hsla(${qHue},100%,70%,${0.46 * qGlow})`);
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      cached = { key, gradient };
+      laserSourceGradientCache[index] = cached;
+    }
+    return cached.gradient;
+  }
+
+  function getCachedLaserBeamGradient(index, srcX, srcY, endX, endY, hue, alpha, inertFactor) {
+    const qSrcX = quantize(srcX, LASER_GRADIENT_POS_STEP_PX);
+    const qSrcY = quantize(srcY, LASER_GRADIENT_POS_STEP_PX);
+    const qEndX = quantize(endX, LASER_GRADIENT_POS_STEP_PX);
+    const qEndY = quantize(endY, LASER_GRADIENT_POS_STEP_PX);
+    const qHue = ((quantize(hue, LASER_GRADIENT_HUE_STEP) % 360) + 360) % 360;
+    const qAlpha = clamp(quantize(alpha, LASER_GRADIENT_ALPHA_STEP), 0, 1);
+    const qInert = clamp(quantize(inertFactor, LASER_GRADIENT_ALPHA_STEP), 0, 1);
+    const key = `${qSrcX}|${qSrcY}|${qEndX}|${qEndY}|${qHue}|${qAlpha}|${qInert}`;
+
+    let cached = laserBeamGradientCache[index];
+    if (!cached || cached.key !== key) {
+      const gradient = ctx.createLinearGradient(qSrcX, qSrcY, qEndX, qEndY);
+      gradient.addColorStop(0, `hsla(${qHue},100%,90%,${0.94 * qAlpha * qInert})`);
+      gradient.addColorStop(0.25, `hsla(${(qHue + 28) % 360},100%,70%,${0.7 * qAlpha * qInert})`);
+      gradient.addColorStop(1, `hsla(${(qHue + 55) % 360},100%,62%,${0.22 * qAlpha * qInert})`);
+      cached = { key, gradient };
+      laserBeamGradientCache[index] = cached;
+    }
+    return cached.gradient;
+  }
+
   function drawLaserStorm(now) {
     if (!laserStorm.enabled || !badguysRender.ready) return;
     if (!laserStorm.beams.length && laserStorm.sourceBurst <= 0.01) return;
 
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    const blurCaps = getAdaptiveShadowBlurCaps();
 
     const pulse = 0.45 + 0.55 * Math.sin(now * 0.018);
     const srcGlow = laserStorm.sourceBurst > 0 ? laserStorm.sourceBurst : 0.16 + pulse * 0.22;
     for (let i = 0; i < badguysLightAnchors.length; i++) {
       const p = getBadguysScreenPoint(badguysLightAnchors[i]);
       const glowR = 5 + srcGlow * 16;
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
-      g.addColorStop(0, `rgba(255,255,255,${0.9 * srcGlow})`);
-      g.addColorStop(0.5, `hsla(${(now * 0.2 + i * 41) % 360},100%,70%,${0.46 * srcGlow})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g;
+      const hue = (now * 0.2 + i * 41) % 360;
+      ctx.fillStyle = getCachedLaserSourceGradient(i, p.x, p.y, glowR, srcGlow, hue);
       ctx.beginPath();
       ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
       ctx.fill();
@@ -2246,16 +2392,22 @@ import { createRunRngTracker } from './core/run-rng.js';
       const drawPts = b.inert ? getInertBeamPolylinePoints(b) : null;
       const endX = drawPts ? drawPts[drawPts.length - 1].x : b.tipX;
       const endY = drawPts ? drawPts[drawPts.length - 1].y : b.tipY;
-      const grad = ctx.createLinearGradient(srcX, srcY, endX, endY);
-      grad.addColorStop(0, `hsla(${hue},100%,90%,${0.94 * alpha * inertFactor})`);
-      grad.addColorStop(0.25, `hsla(${(hue + 28) % 360},100%,70%,${0.7 * alpha * inertFactor})`);
-      grad.addColorStop(1, `hsla(${(hue + 55) % 360},100%,62%,${0.22 * alpha * inertFactor})`);
-
-      ctx.strokeStyle = grad;
+      ctx.strokeStyle = getCachedLaserBeamGradient(
+        i,
+        srcX,
+        srcY,
+        endX,
+        endY,
+        hue,
+        alpha,
+        inertFactor
+      );
       ctx.lineWidth = b.width * (b.inert ? 0.8 : 1.45);
       ctx.lineCap = 'round';
       ctx.shadowColor = `hsla(${hue},100%,72%,${0.65 * alpha * inertFactor})`;
-      ctx.shadowBlur = 14 + b.width * 5;
+      ctx.shadowBlur = blurCaps.enabled
+        ? Math.min(blurCaps.maxShadowBlur, 14 + b.width * 5)
+        : 0;
       ctx.beginPath();
       ctx.moveTo(srcX, srcY);
       if (drawPts) {
@@ -2508,26 +2660,38 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.restore();
   }
 
-  function drawDangerBeam(now) {
-    if (!badguysRender.ready || !dangerBeam.enabled) return;
-
-    const originX = badguysRender.x + badguysRender.w * 0.5 + dangerBeam.offsetX;
-    const originY = badguysRender.y + badguysRender.h * 0.61 + dangerBeam.offsetY;
-    const t = now;
+  function getDangerBeamOscillation(now) {
+    const quantizedNow = quantize(now, DANGER_BEAM_OSC_STEP_MS);
     const widthMod =
       1 +
-      Math.sin(t * dangerBeam.speedA + dangerBeam.phaseA) * dangerBeam.widthAmp * 0.65 +
-      Math.sin(t * dangerBeam.speedB + dangerBeam.phaseB) * dangerBeam.widthAmp * 0.35;
+      Math.sin(quantizedNow * dangerBeam.speedA + dangerBeam.phaseA) * dangerBeam.widthAmp * 0.65 +
+      Math.sin(quantizedNow * dangerBeam.speedB + dangerBeam.phaseB) * dangerBeam.widthAmp * 0.35;
     const lenOsc =
       0.5 +
       0.5 *
-        (Math.sin(t * (dangerBeam.speedA * 0.72) + dangerBeam.phaseB) * 0.7 +
-          Math.sin(t * (dangerBeam.speedB * 0.53) + dangerBeam.phaseA) * 0.3);
+        (Math.sin(quantizedNow * (dangerBeam.speedA * 0.72) + dangerBeam.phaseB) * 0.7 +
+          Math.sin(quantizedNow * (dangerBeam.speedB * 0.53) + dangerBeam.phaseA) * 0.3);
     const lengthFactor = clamp(
       dangerBeam.lengthMin + (dangerBeam.lengthMax - dangerBeam.lengthMin) * lenOsc,
       dangerBeam.lengthMin,
       dangerBeam.lengthMax
     );
+    return {
+      widthMod,
+      lengthFactor,
+      tSec: quantizedNow * 0.001,
+      bottomWidthScale:
+        1.14 + 0.34 * (widthMod - 1) + 0.16 * Math.sin(quantizedNow * 0.0025 + 1.3),
+    };
+  }
+
+  function drawDangerBeam(now) {
+    if (!badguysRender.ready || !dangerBeam.enabled) return;
+
+    const originX = badguysRender.x + badguysRender.w * 0.5 + dangerBeam.offsetX;
+    const originY = badguysRender.y + badguysRender.h * 0.61 + dangerBeam.offsetY;
+    const oscillation = getDangerBeamOscillation(now);
+    const { lengthFactor, tSec } = oscillation;
     const beamBottom = originY + (hCSS - originY) * lengthFactor;
     const beamHeight = beamBottom - originY;
     if (beamHeight <= 0) return;
@@ -2537,8 +2701,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     const pulse = 0.8 + 0.2 * Math.sin(now * 0.006);
     // Keep top fixed to the ship; only bottom width/length breathe.
     const topWidth = badguysRender.w * dangerBeam.widthRatio;
-    const bottomWidth = topWidth * (1.14 + 0.34 * (widthMod - 1) + 0.16 * Math.sin(now * 0.0025 + 1.3));
-    const tSec = now * 0.001;
+    const bottomWidth = topWidth * oscillation.bottomWidthScale;
     const hueShift = 18 * Math.sin(tSec * 1.7 + dangerBeam.huePhase);
     const gBase = clamp(baseColor.g + hueShift, 0, 255);
     const bBase = clamp(baseColor.b + hueShift * 1.2, 0, 255);
@@ -2667,26 +2830,13 @@ import { createRunRngTracker } from './core/run-rng.js';
     if (!badguysRender.ready || !dangerBeam.enabled) return null;
     const originX = badguysRender.x + badguysRender.w * 0.5 + dangerBeam.offsetX;
     const originY = badguysRender.y + badguysRender.h * 0.61 + dangerBeam.offsetY;
-    const t = now;
-    const widthMod =
-      1 +
-      Math.sin(t * dangerBeam.speedA + dangerBeam.phaseA) * dangerBeam.widthAmp * 0.65 +
-      Math.sin(t * dangerBeam.speedB + dangerBeam.phaseB) * dangerBeam.widthAmp * 0.35;
-    const lenOsc =
-      0.5 +
-      0.5 *
-        (Math.sin(t * (dangerBeam.speedA * 0.72) + dangerBeam.phaseB) * 0.7 +
-          Math.sin(t * (dangerBeam.speedB * 0.53) + dangerBeam.phaseA) * 0.3);
-    const lengthFactor = clamp(
-      dangerBeam.lengthMin + (dangerBeam.lengthMax - dangerBeam.lengthMin) * lenOsc,
-      dangerBeam.lengthMin,
-      dangerBeam.lengthMax
-    );
+    const oscillation = getDangerBeamOscillation(now);
+    const lengthFactor = oscillation.lengthFactor;
     const beamBottom = originY + (hCSS - originY) * lengthFactor;
     const beamHeight = beamBottom - originY;
     if (beamHeight <= 0) return null;
     const topWidth = badguysRender.w * dangerBeam.widthRatio;
-    const bottomWidth = topWidth * (1.14 + 0.34 * (widthMod - 1) + 0.16 * Math.sin(now * 0.0025 + 1.3));
+    const bottomWidth = topWidth * oscillation.bottomWidthScale;
     return { originX, originY, beamBottom, beamHeight, topWidth, bottomWidth };
   }
 
@@ -2993,17 +3143,18 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.globalCompositeOperation = 'lighter';
     for (const e of dangerEmbers) {
       const glowR = e.r * (1.9 + e.bounce * 0.12);
-      const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, glowR);
       const alpha = clamp(e.life, 0, 1);
-      g.addColorStop(0, `hsla(${e.hue}, 100%, 88%, ${0.95 * alpha})`);
-      g.addColorStop(0.45, `hsla(${e.hue + 6}, 100%, 60%, ${0.72 * alpha})`);
-      g.addColorStop(1, `hsla(${e.hue + 12}, 100%, 35%, 0)`);
-      ctx.fillStyle = g;
+      ctx.fillStyle = `hsla(${e.hue + 6}, 100%, 56%, ${0.32 * alpha})`;
       ctx.beginPath();
       ctx.arc(e.x, e.y, glowR, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = `rgba(255,245,210,${0.9 * alpha})`;
+      ctx.fillStyle = `hsla(${e.hue}, 100%, 78%, ${0.72 * alpha})`;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, Math.max(1.2, e.r * 0.95), 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `rgba(255,245,210,${0.85 * alpha})`;
       ctx.beginPath();
       ctx.arc(e.x, e.y, Math.max(0.8, e.r * 0.45), 0, Math.PI * 2);
       ctx.fill();
@@ -3011,12 +3162,14 @@ import { createRunRngTracker } from './core/run-rng.js';
     for (const s of dangerSizzles) {
       const a = clamp(s.life * 6.5, 0, 1);
       const outer = s.r * 2.1;
-      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, outer);
-      g.addColorStop(0, `hsla(${s.hue},100%,90%,${0.85 * a})`);
-      g.addColorStop(1, `hsla(${s.hue + 8},100%,40%,0)`);
-      ctx.fillStyle = g;
+      ctx.fillStyle = `hsla(${s.hue + 8}, 100%, 52%, ${0.26 * a})`;
       ctx.beginPath();
       ctx.arc(s.x, s.y, outer, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `hsla(${s.hue}, 100%, 86%, ${0.75 * a})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, Math.max(0.8, s.r), 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
@@ -3826,7 +3979,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       drawSlamShockwave(now);
       drawLaserSmoke();
       drawRegularBeamEruptionNumbers();
-      drawProjectiles(ctx, S);
+      drawProjectiles(ctx, S, getAdaptiveQualityCaps());
       drawScorePopups();
       drawParticles();
       ctx.restore();
