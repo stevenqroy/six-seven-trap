@@ -1285,6 +1285,7 @@
         name: plain(r.Task || r.Ticket || ''),
         desc: plain(r['TL;DR'] || r.TL || ''),
         who: plain(r['Good for'] || r['Available to'] || ''),
+        status: normStatus(r.Status),
       })).filter(r => r.name);
     }
 
@@ -1395,7 +1396,7 @@
 
     /* Render: what's next (the action items) */
 
-    function renderWhatsNext(tickets) {
+    function renderWhatsNext(tickets, researchTasks) {
       const items = [];
 
       // Only show tickets NOT already on the board (wip/review/reviewing/blocked are on the board)
@@ -1404,6 +1405,16 @@
         const who = friendlyWho(t);
         const label = who ? `${who} can start this` : 'Ready for someone to pick up';
         items.push({ ticket: t, label, cls: 'item-ready' });
+      }
+
+      // Also include research tickets with next status
+      if (researchTasks) {
+        const nextResearch = researchTasks.filter(r => r.status === 'next');
+        for (const r of nextResearch) {
+          const fakeTicket = { ticket: r.name, name: r.desc, platform: r.who, status: 'next' };
+          const label = r.who ? `${r.who} can start this` : 'Ready for someone to pick up';
+          items.push({ ticket: fakeTicket, label, cls: 'item-ready' });
+        }
       }
 
       if (!items.length) {
@@ -1788,7 +1799,7 @@
       const groomed = buildGroomedSet(rnTables);
 
       renderGoal(tickets);
-      renderWhatsNext(tickets);
+      renderWhatsNext(tickets, researchTasks);
       renderKanban(tickets, groomed);
       renderResearch(researchTasks);
       renderDone(tickets);
