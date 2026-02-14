@@ -64,7 +64,7 @@
 | 23 | S7R-057 | Shared defensive helpers | — | no (new module) | codex/gemini | done | main | codex |
 | 24 | S7R-058 | Add missing destroy() methods | — | no | codex/gemini | done | main | codex |
 | 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | done | main | gemini |
-| 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | review | codex/S7R-060 | codex |
+| 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | reviewing | codex/S7R-060 | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
