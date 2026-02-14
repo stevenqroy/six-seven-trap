@@ -892,6 +892,71 @@
         summary: 'Add tracking so we can see how long people play, which abilities they use most, and where they get stuck. This tells us what to improve after launch.',
         marker: '\u{1F680}',
       },
+      'S7R-057': {
+        title: 'Clean up shared helper code',
+        summary: 'Several files had the same safety functions copy-pasted. Moved them into one shared file so there\u2019s only one copy to maintain.',
+        marker: '\u{1F9F9}',
+      },
+      'S7R-058': {
+        title: 'Add cleanup methods to modules',
+        summary: 'Some parts of the game don\u2019t clean up after themselves when they shut down. This adds destroy() methods so nothing leaks memory.',
+        marker: '\u{1F9F9}',
+      },
+      'S7R-059': {
+        title: 'Cap danger-mode particles',
+        summary: 'Danger mode can spawn unlimited fire and sizzle particles which tanks performance. This adds hard caps so the frame rate stays smooth even in the hardest fights.',
+        marker: '\u26A1',
+      },
+      'S7R-060': {
+        title: 'Reduce per-frame GPU allocations',
+        summary: 'Every frame the game creates dozens of gradient and shadow objects that get thrown away immediately. This caches them so the garbage collector isn\u2019t constantly running.',
+        marker: '\u26A1',
+      },
+      'S7R-061': {
+        title: 'Swap-and-pop + allocation cleanup',
+        summary: 'Removing items from the middle of arrays is slow when there are hundreds of particles. This switches to a faster removal pattern and cuts down on throwaway arrays.',
+        marker: '\u26A1',
+      },
+      'S7R-062': {
+        title: 'Tunable constants catalog',
+        summary: 'Before we can do the polish pass, someone needs to catalog every tunable number in the game \u2014 damage, cooldowns, speeds, costs. This creates the spreadsheet we\u2019ll use to balance gameplay.',
+        marker: '\u{1F50D}',
+      },
+      'S7R-063': {
+        title: 'main.js extraction research',
+        summary: 'main.js is over 3000 lines. This research identifies the top 5 chunks that should become their own files \u2014 what they do, how many lines they\u2019d save, and what order to extract them.',
+        marker: '\u{1F50D}',
+      },
+      'S7R-064': {
+        title: 'Test gap audit',
+        summary: 'Review every module for missing test coverage, untested edge cases, and pattern violations. The output is a gap report so we know what to write tests for.',
+        marker: '\u{1F50D}',
+      },
+      'S7R-065': {
+        title: 'Narrative design brief',
+        summary: '6 and 7 are alien kids at school recess. Their parents\u2019 ship is coming to pick them up but they don\u2019t want to leave. This writes the one-page story brief \u2014 characters, tone, and what everything represents.',
+        marker: '\u{1F3AD}',
+      },
+      'S7R-066': {
+        title: 'Sprite sheet research',
+        summary: 'Research what sprite formats and pixel art tools work best for small 2D canvas characters. How do we animate idle, walk, and hit states? What free tools exist?',
+        marker: '\u{1F50D}',
+      },
+      'S7R-067': {
+        title: 'Character design brief',
+        summary: 'Design the visual identity for the alien kids, the parent enemies, and the support friends. What do they look like? What makes them feel fun and playful?',
+        marker: '\u{1F3AD}',
+      },
+      'S7R-068': {
+        title: 'Alien ship lore',
+        summary: 'The alien ship is the parents\u2019 minivan. Does it hover impatiently? Honk? Send increasingly stern messages? This brainstorms personality and visual ideas for the ship.',
+        marker: '\u{1F3AD}',
+      },
+      'S7R-069': {
+        title: 'Magic numbers cleanup',
+        summary: 'main.js has about 30 hardcoded scene-tuning values \u2014 parallax speeds, sky gradients, wave frequencies, screen shake amounts. This catalogs them all and moves them to a config module.',
+        marker: '\u{1F50D}',
+      },
     };
 
     let lastText = '';
@@ -1051,7 +1116,7 @@
     function buildDispatchPrompt(ticket, platform) {
       const id = ticket.ticket || ticket.name;
       const name = ticket.name || '';
-      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\nRead TICKETS.md for the full spec.`;
+      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\nBEFORE writing any code, update TICKETS.md: set status to wip:${platform.toLowerCase()}, set Branch to ${platform.toLowerCase()}/${id}, set Owner to ${platform.toLowerCase()}.\nRead TICKETS.md for the full spec.`;
     }
 
     function statusLabel(s) {
