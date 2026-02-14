@@ -22,9 +22,10 @@ Every session, before writing any code:
 2. Read `TICKETS.md` — find your assigned ticket (your platform name in the Owner column)
 3. Search for your ticket's **Ready Brief** in `TICKETS.md` (search `S7R-### Ready Brief`)
 4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
-5. If the ready brief lists reference files, read them
-6. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
-7. Start work
+5. **Create or switch to YOUR branch** — `git checkout -b yourplatform/S7R-### main` (new) or `git checkout yourplatform/S7R-###` (existing). Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. STOP if it doesn't match.
+6. If the ready brief lists reference files, read them
+7. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
+8. Start work
 
 ## Claiming a ticket
 
