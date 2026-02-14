@@ -69,7 +69,7 @@
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
 | 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex/gemini | next | — | — |
-| 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push mechanic | — | no | codex/gemini | next | — | — |
+| 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | no | codex/gemini | next | — | — |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
@@ -89,7 +89,7 @@
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
 | S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | next | codex/gemini |
-| S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers away like a brush | next | codex/gemini |
+| S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers, haptic vibration on impact | next | codex/gemini |
 | S7R-073 | Projectile trails, color variety, energy bolt look, usage limiter | next | codex/gemini |
 
 ### Cleanup tickets (no blockers, can start now)
@@ -421,7 +421,7 @@
 
 #### S7R-072 Ready Brief
 
-**What:** Overhaul slam shockwave to be visually exciting with animated expansion, and add a push mechanic that physically shoves the alien ship and any non-6/7 numbers away from the blast origin like a brush stroke.
+**What:** Overhaul slam to be THE showstopper ability — worth saving power for. Visually wild expanding shockwave with haptic impact, screen shake, and a push mechanic that physically shoves the alien ship and any non-6/7 numbers away from the blast origin like a brush stroke. This must feel like dropping a bomb.
 
 **Reference files to read first:**
 - `src/main.js` lines 1022-1054 (slam shockwave update + render — expanding circle with hue-shifting stroke)
@@ -437,6 +437,7 @@
    - **Screen shake**: Add 3-4 frames of camera shake (±4px random offset on ctx.translate) when slam activates
    - **Ground ripple**: Concentric semi-transparent rings left behind as the wave passes (fade over 800ms)
    - **Flash**: Keep existing white flash but make it more dramatic (10% opacity, faster decay)
+   - **Haptic feedback**: On slam activation, call `navigator.vibrate([40, 20, 80])` (feature-detect first: `if ("vibrate" in navigator)`). When shockwave hits the alien ship, fire a second pulse `navigator.vibrate([60])`. iOS Safari doesn't support this — that's fine, visual effects carry the experience there
 2. `src/main.js` — Add push mechanic in the slam update logic (near line 1022):
    - **Push aliens**: When shockwave radius reaches the alien ship's y-position, push the ship upward by 40-60px over 500ms (smooth ease-out). Use `state.badguysFlight.y` or equivalent
    - **Push non-6/7 numbers**: Any active enemy/projectile that is NOT a 6 or 7 (check entity type) within the shockwave radius gets pushed outward from the slam origin. Apply a velocity impulse proportional to proximity (closer = stronger push, 200-400px/s)
@@ -458,6 +459,9 @@
 - [ ] Alien ship gets pushed upward when shockwave reaches it
 - [ ] Non-6/7 entities get pushed away from blast origin
 - [ ] 6 and 7 entities are NOT pushed (they're protected)
+- [ ] Haptic vibration fires on slam activation (Android Chrome) with feature detection
+- [ ] Second haptic pulse when shockwave hits alien ship
+- [ ] No errors on iOS/desktop (graceful feature detection)
 - [ ] Slam cost mismatch fixed (single source of truth in constants.js)
 - [ ] `npm run test:unit` passes
 - [ ] `npm run lint` passes
