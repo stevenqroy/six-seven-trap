@@ -18,7 +18,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**20 of 25 V1 tickets done (80%). 5 tickets + 2 gates remaining.**
+**21 of 26 V1 tickets done (81%). 5 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -66,6 +66,7 @@
 | 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | done | main | gemini |
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
+| 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
 
 ## What can run RIGHT NOW
 
@@ -376,14 +377,14 @@
 
 | # | Ticket | Name | Good for | Status | Branch | Owner |
 |---|--------|------|----------|--------|--------|-------|
-| 28 | S7R-062 | Tunable constants catalog (S7R-054 prep) | gemini | next | — | — |
-| 29 | S7R-063 | main.js extraction research | gemini | next | — | — |
-| 30 | S7R-064 | Test gap audit | codex | next | — | — |
-| 31 | S7R-065 | Narrative design brief | steven/claude | next | — | — |
-| 32 | S7R-066 | Sprite sheet research | gemini | next | — | — |
-| 33 | S7R-067 | Character design brief | steven/claude | next | — | — |
-| 34 | S7R-068 | Alien ship lore | anyone | next | — | — |
-| 35 | S7R-069 | Magic numbers cleanup | gemini | next | — | — |
+| 29 | S7R-062 | Tunable constants catalog (S7R-054 prep) | gemini | next | — | — |
+| 30 | S7R-063 | main.js extraction research | gemini | next | — | — |
+| 31 | S7R-064 | Test gap audit | codex | next | — | — |
+| 32 | S7R-065 | Narrative design brief | steven/claude | next | — | — |
+| 33 | S7R-066 | Sprite sheet research | gemini | next | — | — |
+| 34 | S7R-067 | Character design brief | steven/claude | next | — | — |
+| 35 | S7R-068 | Alien ship lore | anyone | next | — | — |
+| 36 | S7R-069 | Magic numbers cleanup | gemini | next | — | — |
 
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
@@ -452,3 +453,9 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-12 | S7R-053 | `src/supports/striker-hawk.js` — dive-strike support unit, threat-priority targeting, flag-gated | gemini |
 | 2026-02-13 | S7R-056 | `dashboard.html` — standalone project dashboard, parses TICKETS.md, zero dependencies | codex |
 | 2026-02-13 | S7R-057 | `src/utils/defensive.js` — extracted toFinite, toNonNegativeFinite, clamp from 11 files into shared module | codex |
+| 2026-02-14 | S7R-058 | `src/config/debug-panel.js` + 6 modules — added destroy() methods, fixed listener leaks | codex |
+| 2026-02-14 | S7R-059 | `src/main.js`, `src/systems/adaptive-quality.js` — hard-cap danger embers (300) and sizzles (150) | gemini |
+| 2026-02-14 | S7R-060 | `src/main.js`, `src/game-objects/projectile.js`, `src/systems/adaptive-quality.js` — gradient caching, shadow blur gating | codex |
+| 2026-02-14 | S7R-061 | `src/main.js`, medic/striker/support-runtime/harvester — swap-and-pop, debug gating, array reuse | codex |
+| 2026-02-14 | infra | GitHub Pages deployment, asset path fix, action bar flags enabled, mobile HUD redesign | claude |
+| 2026-02-14 | S7R-070 | `src/styles.css`, `src/ui/hud-updates.js` — power bar moved to vertical left rail (retroactive ticket) | codex |
