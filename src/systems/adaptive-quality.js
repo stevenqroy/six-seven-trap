@@ -211,9 +211,16 @@ export function createAdaptiveQualityGovernor({
     };
   }
 
+  function destroy() {
+    samples = [];
+    sampleDurationMs = 0;
+    lastEnabled = false;
+  }
+
   return {
     onFrame,
     reset,
+    destroy,
     getTier,
     getCaps,
     getDebugState,

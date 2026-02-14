@@ -378,6 +378,13 @@ export function createEnemyStateMachineRuntime({
     return getDebugState(safeNow);
   }
 
+  function destroy({ atMs = now() } = {}) {
+    const snapshot = reset({ atMs });
+    entities = [];
+    metrics = buildEmptyMetrics(toFinite(atMs, now()));
+    return snapshot;
+  }
+
   function onFrame(frameMs = 0, atMs = now()) {
     const safeNow = toFinite(atMs, now());
     const safeFrameMs = toNonNegativeFinite(frameMs, 0);
@@ -523,6 +530,7 @@ export function createEnemyStateMachineRuntime({
 
   return {
     reset,
+    destroy,
     onFrame,
     spawnEnemy,
     spawnFromRegistry,

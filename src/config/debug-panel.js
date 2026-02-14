@@ -8,7 +8,11 @@
 import { getAllFlags, toggleFlag, resetFlags, exportFlagURL, getFlagMetadata } from './flags.js';
 
 let panelElement = null;
+let panelStyleElement = null;
 let isPanelVisible = false;
+let keydownListener = null;
+let flagChangeListener = null;
+let flagsResetListener = null;
 
 /**
  * Create the debug panel DOM element
@@ -19,8 +23,10 @@ function createPanelElement() {
   panel.className = 's7r-debug-panel';
 
   // Add styles
-  const style = document.createElement('style');
-  style.textContent = `
+  if (!panelStyleElement) {
+    panelStyleElement = document.createElement('style');
+    panelStyleElement.id = 's7r-debug-panel-style';
+    panelStyleElement.textContent = `
     .s7r-debug-panel {
       position: fixed;
       top: 20px;
@@ -204,7 +210,8 @@ function createPanelElement() {
       background: #0ff;
     }
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(panelStyleElement);
+  }
 
   return panel;
 }
@@ -420,6 +427,40 @@ export function toggleDebugPanel() {
   }
 }
 
+function destroyDebugPanel() {
+  if (typeof document !== 'undefined' && keydownListener) {
+    document.removeEventListener('keydown', keydownListener);
+    keydownListener = null;
+  }
+
+  if (typeof window !== 'undefined') {
+    if (flagChangeListener) {
+      window.removeEventListener('flagchange', flagChangeListener);
+      flagChangeListener = null;
+    }
+    if (flagsResetListener) {
+      window.removeEventListener('flagsreset', flagsResetListener);
+      flagsResetListener = null;
+    }
+
+    window.showDebugPanel = undefined;
+    window.hideDebugPanel = undefined;
+    window.toggleDebugPanel = undefined;
+  }
+
+  if (panelElement) {
+    panelElement.remove();
+    panelElement = null;
+  }
+
+  if (panelStyleElement) {
+    panelStyleElement.remove();
+    panelStyleElement = null;
+  }
+
+  isPanelVisible = false;
+}
+
 /**
  * Initialize debug panel system
  */
@@ -432,25 +473,38 @@ export function initDebugPanel() {
   }
 
   // Keyboard shortcut: Ctrl+Shift+D
-  document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-      e.preventDefault();
-      toggleDebugPanel();
-    }
-  });
+  if (typeof document !== 'undefined' && !keydownListener) {
+    keydownListener = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        toggleDebugPanel();
+      }
+    };
+    document.addEventListener('keydown', keydownListener);
+  }
 
   // Listen for flag changes to update panel
-  window.addEventListener('flagchange', () => {
-    if (isPanelVisible) {
-      renderPanelContent();
-    }
-  });
+  if (typeof window !== 'undefined' && !flagChangeListener) {
+    flagChangeListener = () => {
+      if (isPanelVisible) {
+        renderPanelContent();
+      }
+    };
+    window.addEventListener('flagchange', flagChangeListener);
+  }
 
-  window.addEventListener('flagsreset', () => {
-    if (isPanelVisible) {
-      renderPanelContent();
-    }
-  });
+  if (typeof window !== 'undefined' && !flagsResetListener) {
+    flagsResetListener = () => {
+      if (isPanelVisible) {
+        renderPanelContent();
+      }
+    };
+    window.addEventListener('flagsreset', flagsResetListener);
+  }
 
   console.log('[DebugPanel] Initialized. Press Ctrl+Shift+D or call window.toggleDebugPanel()');
+
+  return {
+    destroy: destroyDebugPanel,
+  };
 }

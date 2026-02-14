@@ -38,42 +38,51 @@ export function createActionRouter({
   telemetry,
   usePower,
 } = {}) {
-  const readActionBar =
-    typeof getActionBar === 'function'
-      ? getActionBar
-      : () => actionBar;
+  let stateRef = S;
+  let actionBarRef = actionBar;
+  let getActionBarRef = getActionBar;
+  let activateShieldRef = activateShield;
+  let fireProjectileRef = fireProjectile;
+  let getGuardianPoseRef = getGuardianPose;
+  let telemetryRef = telemetry;
+  let usePowerRef = usePower;
+
+  function readActionBar() {
+    if (typeof getActionBarRef === 'function') return getActionBarRef();
+    return actionBarRef;
+  }
 
   function handleShield() {
     const now = performance.now();
-    if (typeof activateShield !== 'function' || !activateShield(S, now)) return false;
-    if (telemetry && typeof telemetry.onAbilityUsed === 'function') {
-      telemetry.onAbilityUsed('shield');
+    if (typeof activateShieldRef !== 'function' || !activateShieldRef(stateRef, now)) return false;
+    if (telemetryRef && typeof telemetryRef.onAbilityUsed === 'function') {
+      telemetryRef.onAbilityUsed('shield');
     }
     setButtonCooldown(readActionBar, 'shield', SHIELD.COOLDOWN_MS / 1000);
     return true;
   }
 
   function handleProjectile() {
-    if (typeof fireProjectile !== 'function' || typeof getGuardianPose !== 'function') return false;
-    const pose = getGuardianPose();
+    if (typeof fireProjectileRef !== 'function' || typeof getGuardianPoseRef !== 'function') return false;
+    const pose = getGuardianPoseRef();
     if (!isFiniteNumber(pose?.cx) || !isFiniteNumber(pose?.anchorY)) return false;
-    const fired = fireProjectile(S, pose.cx, pose.anchorY - PROJECTILE_Y_OFFSET_PX);
+    const fired = fireProjectileRef(stateRef, pose.cx, pose.anchorY - PROJECTILE_Y_OFFSET_PX);
     if (!fired) return false;
-    if (telemetry && typeof telemetry.onAbilityUsed === 'function') {
-      telemetry.onAbilityUsed('projectile');
+    if (telemetryRef && typeof telemetryRef.onAbilityUsed === 'function') {
+      telemetryRef.onAbilityUsed('projectile');
     }
     return true;
   }
 
   function handleSlam() {
-    if (typeof getGuardianPose !== 'function' || typeof usePower !== 'function') return false;
-    const pose = getGuardianPose();
+    if (typeof getGuardianPoseRef !== 'function' || typeof usePowerRef !== 'function') return false;
+    const pose = getGuardianPoseRef();
     if (!isFiniteNumber(pose?.cx) || !isFiniteNumber(pose?.anchorY)) return false;
-    if (!usePower(SLAM_POWER_COST)) return false;
+    if (!usePowerRef(SLAM_POWER_COST)) return false;
 
     const now = performance.now();
-    if (!S.slam || typeof S.slam !== 'object') S.slam = {};
-    S.slam.shockwave = {
+    if (!stateRef.slam || typeof stateRef.slam !== 'object') stateRef.slam = {};
+    stateRef.slam.shockwave = {
       x: pose.cx,
       y: pose.anchorY,
       startedAt: now,
@@ -84,8 +93,8 @@ export function createActionRouter({
       flash: 1,
     };
 
-    if (telemetry && typeof telemetry.onAbilityUsed === 'function') {
-      telemetry.onAbilityUsed('slam');
+    if (telemetryRef && typeof telemetryRef.onAbilityUsed === 'function') {
+      telemetryRef.onAbilityUsed('slam');
     }
     setButtonCooldown(readActionBar, 'slam', SLAM_COOLDOWN_SECONDS);
     return true;
@@ -93,8 +102,8 @@ export function createActionRouter({
 
   function handleActivation(buttonId) {
     if (!getFlag('buttonMappedPowers')) return false;
-    if (!S || typeof S !== 'object') return false;
-    if (!canUseButtons(S)) return false;
+    if (!stateRef || typeof stateRef !== 'object') return false;
+    if (!canUseButtons(stateRef)) return false;
 
     switch (buttonId) {
       case 'shield':
@@ -108,7 +117,19 @@ export function createActionRouter({
     }
   }
 
+  function destroy() {
+    stateRef = null;
+    actionBarRef = null;
+    getActionBarRef = null;
+    activateShieldRef = null;
+    fireProjectileRef = null;
+    getGuardianPoseRef = null;
+    telemetryRef = null;
+    usePowerRef = null;
+  }
+
   return {
     handleActivation,
+    destroy,
   };
 }

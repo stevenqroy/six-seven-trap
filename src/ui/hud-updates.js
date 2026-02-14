@@ -48,6 +48,7 @@ export function createHudUpdater({
       updatePowerBar: NOOP,
       syncBestDisplays: NOOP,
       setGameplayUiVisible: NOOP,
+      destroy: NOOP,
     };
   }
 
@@ -62,6 +63,7 @@ export function createHudUpdater({
       updatePowerBar: NOOP,
       syncBestDisplays: NOOP,
       setGameplayUiVisible: NOOP,
+      destroy: NOOP,
     };
   }
 
@@ -70,6 +72,7 @@ export function createHudUpdater({
    * @param {Object} state - Game state with lives property
    */
   function updateLivesDisplay(state) {
+    if (!livesEl) return;
     const full = state.lives;
     livesEl.textContent = '❤️'.repeat(full) + '🖤'.repeat(Math.max(0, MAX_LIVES - full));
   }
@@ -78,6 +81,7 @@ export function createHudUpdater({
    * Trigger life gain pulse animation
    */
   function triggerLifeGainPulse() {
+    if (!livesEl) return;
     livesEl.classList.remove('gain');
     void livesEl.offsetWidth; // Force reflow
     livesEl.classList.add('gain');
@@ -88,6 +92,7 @@ export function createHudUpdater({
    * @param {Object} state - Game state with shipHP
    */
   function updateShipHpBar(state) {
+    if (!shipHpFill || !shipHpText) return;
     const ratio = getShipHPRatio(state);
     shipHpFill.style.width = `${ratio * 100}%`;
 
@@ -109,6 +114,7 @@ export function createHudUpdater({
    * @param {Object} state - Game state with power
    */
   function updatePowerBar(state) {
+    if (!powerFill || !powerText) return;
     const ratio = getPowerRatio(state);
     powerFill.style.width = `${ratio * 100}%`;
     powerText.textContent = `POWER ${Math.round(ratio * 100)}%`;
@@ -138,6 +144,19 @@ export function createHudUpdater({
     if (powerBar) powerBar.style.display = display;
   }
 
+  function destroy() {
+    livesEl = null;
+    shipHpFill = null;
+    shipHpText = null;
+    powerFill = null;
+    powerText = null;
+    powerBar = null;
+    highScoreEl = null;
+    titleBest = null;
+    hudEl = null;
+    shipHpBar = null;
+  }
+
   return {
     updateLivesDisplay,
     triggerLifeGainPulse,
@@ -145,5 +164,6 @@ export function createHudUpdater({
     updatePowerBar,
     syncBestDisplays,
     setGameplayUiVisible,
+    destroy,
   };
 }

@@ -247,6 +247,13 @@ export function createSupportRuntime({
     return getDebugState(safeNow);
   }
 
+  function destroy({ atMs = now() } = {}) {
+    const snapshot = reset({ atMs });
+    units = [];
+    metrics = buildEmptyMetrics(toFinite(atMs, now()));
+    return snapshot;
+  }
+
   function getDebugState(nowMs = now()) {
     const safeNow = toFinite(nowMs, now());
     let oldestLifetimeMs = 0;
@@ -283,6 +290,7 @@ export function createSupportRuntime({
     onFrame,
     getActiveUnits,
     reset,
+    destroy,
     getDebugState,
   };
 }

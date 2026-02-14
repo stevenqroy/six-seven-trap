@@ -310,6 +310,11 @@ export function createTelemetrySystem({
     return lastCompletedRun ? { ...lastCompletedRun } : null;
   }
 
+  function destroy() {
+    currentRun = null;
+    lastCompletedRun = null;
+  }
+
   return {
     beginRun,
     onFrame,
@@ -324,5 +329,6 @@ export function createTelemetrySystem({
     dumpRun,
     getCurrentRun,
     getLastCompletedRun,
+    destroy,
   };
 }
