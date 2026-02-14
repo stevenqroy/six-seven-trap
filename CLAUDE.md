@@ -25,9 +25,9 @@ QA runs the AGENTS.md gate (lint, test, build, diff review) plus:
 6. Scope check — no files modified outside "Files to modify", nothing in "DO NOT modify" touched
 7. Pattern check — code matches conventions per reference files listed in the brief
 
-**Merge warning**: Agent branches often have stale TICKETS.md (branched from older main). When merging, always keep main's TICKETS.md and only apply the status change — never accept the branch's full TICKETS.md.
+**Merge method**: Cherry-pick code commits only — never `git merge` the full branch. Agent branches have stale TICKETS.md/AGENTS.md/CLAUDE.md that would regress main. After cherry-pick, update TICKETS.md status on main manually.
 
-On PASS: set to `done`, merge to main, output:
+On PASS: set to `done`, cherry-pick code to main, output:
 ```
 S7R-### QA: PASS
 Merged to main, tests N/N
