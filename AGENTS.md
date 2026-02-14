@@ -15,46 +15,55 @@ Identify yourself in branches and commits:
 
 Never work on another platform's branch. Never develop on `main`.
 
-## Ticket grooming (Claude only)
-
-Before a ticket moves to `next`, Claude grooms it:
-1. Read the spec, resolve ambiguities
-2. List reference files the implementer must read
-3. Identify which existing patterns to match
-4. Note dependency gotchas or shared-file risks
-5. Write a ready brief in the "What can run RIGHT NOW" TL;DR
-
-Groomed tickets have a TL;DR that tells the implementer exactly what to build and what to read. Ungroomed tickets say what the feature is but not how to approach it. **Platforms should not start ungroomed tickets.**
-
 ## Startup protocol
 
 Every session, before writing any code:
-1. Read `TICKETS.md` — find your assigned `wip` row (your platform name in the Owner column)
-2. Read the ticket's TL;DR in "What can run RIGHT NOW" for the ready brief
-3. Read the ticket spec in `docs/SIX_SEVEN_RANCH_IMPLEMENTATION_PLAN.md`
+1. Read this file (`AGENTS.md`) completely
+2. Read `TICKETS.md` — find your assigned ticket (your platform name in the Owner column)
+3. Search for your ticket's **Ready Brief** in `TICKETS.md` (search `S7R-### Ready Brief`)
 4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
-5. Read reference files listed in the ready brief and "Mandatory quality patterns" below
-6. Start work
+5. If the ready brief lists reference files, read them
+6. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
+7. Start work
+
+## Claiming a ticket
+
+**MANDATORY FIRST STEP** — before writing any code:
+1. Update your ticket row in `TICKETS.md`: set Status to `wip:yourplatform`, Branch to `yourplatform/S7R-###`, Owner to `yourplatform`
+2. If the ticket touches `main.js`, update the main.js Lock: set to `wip:yourplatform (S7R-###)`
+3. Commit this TICKETS.md change as your first commit on your branch
+4. Then start coding
 
 ## Stop protocol
 
 When the ticket is complete:
-1. Update your row in `TICKETS.md`: set Status to `review`, fill in Branch
-2. Commit `TICKETS.md` as your final commit
-3. Output the TL;DR handoff (see "Completion handoff" below)
-4. **Stop. Do not start another ticket. Do not touch other files.**
+1. Run the full QA gate (see below) — fix any failures
+2. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
+3. If you held the main.js lock, release it: set back to `nobody (unlocked)`
+4. Commit `TICKETS.md` as your final commit
+5. Output the TL;DR handoff (see "Completion handoff" below)
+6. **Stop. Do not start another ticket. Do not touch other files.**
+
+## Research tickets
+
+Research tickets (🔍/🎭) produce a markdown doc, not code.
+
+1. Write findings to `docs/research/S7R-###-short-name.md`
+2. Follow the output format specified in the ticket's Ready Brief
+3. TL;DR handoff uses the same format as implementation, but `Files:` lists the doc and `Tests:` says `n/a — research`
+4. "Done" means the doc exists and answers all questions in the Ready Brief's done criteria
+5. Do NOT create branches or modify source code for research tickets
 
 ## When no implementation ticket is assigned
 
-You always have work. If no `wip` ticket exists for you, do one of these (in priority order):
+If no `wip` ticket exists for you, do one of these (in priority order):
 
-1. **Research for an upcoming ticket** — read the spec, read dependencies, catalog tunables, identify risks. Output findings as a markdown table or bullet list. Do not create branches or modify files.
-2. **Identify refactoring opportunities** — read `src/main.js` and other large files. List extraction candidates: function/block, line range, what it does, estimated lines saved, target module. Output as markdown table.
-3. **Identify improvements** — review existing modules for missing edge cases, inconsistent patterns, dead code, or test gaps. Output as a prioritized list with file locations.
-4. **Catalog technical debt** — scan for TODOs, FIXMEs, hardcoded values, or pattern violations. Output as markdown table.
+1. **Research for an upcoming ticket** — read the spec, read dependencies, catalog tunables, identify risks. Write to `docs/research/`.
+2. **Identify refactoring opportunities** — list extraction candidates with line ranges and estimated lines saved.
+3. **Catalog technical debt** — scan for TODOs, FIXMEs, hardcoded values, or pattern violations.
 
-Rules for research tasks:
-- Do NOT create branches, modify files, or commit anything
+Rules for unassigned research:
+- Do NOT create branches, modify source files, or commit anything
 - Output research as structured markdown (tables preferred)
 - Keep output under 200 lines
 - Flag anything urgent (bugs, security, data loss risks) at the top
@@ -63,7 +72,7 @@ Rules for research tasks:
 
 - One ticket per branch. One logical change per commit.
 - Read `TICKETS.md` for current status, dependencies, and ownership.
-- Read `docs/SIX_SEVEN_RANCH_IMPLEMENTATION_PLAN.md` for ticket definitions.
+- Implement exactly what the ticket Ready Brief says. No bonus features, no "while I'm here" refactors.
 
 ## Code quality rules
 
@@ -99,6 +108,16 @@ Run silently, fix before committing, never skip:
 2. `npm run test:unit` — all pass
 3. `npx vite build` — succeeds
 4. Diff review — every changed line intentional, no debug code
+5. Scope check — no files modified outside the Ready Brief's "Files to modify" list
+6. Pattern check — code matches existing conventions per reference files in the brief
+
+## main.js rules
+
+- No changes to `main.js` unless the ticket explicitly requires it.
+- If the ticket touches `main.js`, it must leave the file shorter (net lines ≤ 0). Extract, don't add.
+- **Lock protocol**: check the main.js Lock section in `TICKETS.md` before editing. If locked by another platform, do not edit — work on something else or ask Steven to coordinate.
+- Claim the lock in your first commit. Release it when your branch is merged to main.
+- All features gated behind flags in `src/config/flags.js` (default `false`).
 
 ## Commit style
 
@@ -127,13 +146,12 @@ Breaking: [none / description]
 
 Do NOT include: test output, diff output, file contents, validation logs, or implementation details. QA reads the code directly.
 
-## Rules
+## Git safety
 
-- No changes to `main.js` unless the ticket explicitly requires it.
-- If the ticket touches `main.js`, it must leave the file shorter (progressive extraction).
-- All features gated behind flags in `src/config/flags.js` (default `false`).
 - Never force push. Never amend unless explicitly asked.
 - Never revert changes you didn't make.
+- Never develop on `main`. One branch per ticket.
+- If your branch has merge conflicts with main, rebase onto latest main and re-run `npx vite build` before marking `review`.
 
 ## Self-check filter
 
