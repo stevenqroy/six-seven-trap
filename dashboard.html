@@ -3,530 +3,919 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Six Seven Ranch Dashboard</title>
+  <title>Six Seven Ranch — Dashboard</title>
   <style>
     :root {
-      --bg: #0f1118;
-      --surface: #171b26;
-      --surface-soft: #1f2533;
-      --text: #eef2ff;
-      --muted: #a8b1c7;
-      --line: #2e354a;
-      --done: #31c471;
-      --wip: #f2bd45;
-      --review: #4f90ff;
-      --blocked: #ef5a5a;
-      --next: #dce2f2;
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --text: #1a1d23;
+      --secondary: #5e6478;
+      --muted: #8b91a3;
+      --border: #e2e5eb;
+      --border-light: #eef0f4;
+      --done: #1a8a4a;
+      --done-bg: #e6f5ed;
+      --wip: #b8860b;
+      --wip-bg: #fef8e7;
+      --review: #2563eb;
+      --review-bg: #eff4ff;
+      --blocked: #d93025;
+      --blocked-bg: #fef0ef;
+      --next: #6b46c1;
+      --next-bg: #f3f0ff;
       --skip: #9a9fb2;
-      --unknown: #8f96ab;
-      --accent: #7bd4ff;
-      --radius: 14px;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      --skip-bg: #f5f5f7;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; }
 
     body {
-      margin: 0;
-      background: radial-gradient(1200px 700px at 10% 10%, #1a2338 0%, var(--bg) 50%);
+      background: var(--bg);
       color: var(--text);
-      font: 14px/1.45 "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
       min-height: 100vh;
     }
 
     .wrap {
-      width: min(1400px, calc(100% - 24px));
-      margin: 12px auto 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
       display: grid;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
       gap: 12px;
     }
 
-    .panel {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.14)), var(--surface);
-      border: 1px solid var(--line);
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-controls .source-info {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: var(--bg); }
+
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    input[type="file"] { display: none; }
+
+    .error-text { color: var(--blocked); font-size: 12px; }
+
+    /* Goal tracker */
+    .goal-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px;
+    }
+
+    .goal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .goal-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .goal-pct {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--done);
+    }
+
+    .goal-track {
+      width: 100%;
+      height: 10px;
+      background: #e8ecf1;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .goal-track > span {
+      display: block;
+      height: 100%;
+      background: var(--done);
+      border-radius: 999px;
+      transition: width 0.3s;
+    }
+
+    .goal-subtitle {
+      font-size: 13px;
+      color: var(--secondary);
+      line-height: 1.5;
+    }
+
+    /* What's next section */
+    .whats-next { display: grid; gap: 8px; }
+
+    .next-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+
+    .next-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    .next-item.item-ready {
+      border-left: 4px solid var(--next);
+    }
+
+    .next-item.item-blocked {
+      border-left: 4px solid var(--blocked);
+      opacity: 0.7;
+    }
+
+    .next-item.item-wip {
+      border-left: 4px solid var(--wip);
+    }
+
+    .next-item.item-review {
+      border-left: 4px solid var(--review);
+    }
+
+    .next-marker {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+
+    .next-body {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .next-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .next-subtitle {
+      font-size: 13px;
+      color: var(--secondary);
+    }
+
+    .next-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-dispatch {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--surface);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-dispatch:hover { background: var(--bg); }
+
+    .btn-dispatch.copied {
+      background: var(--done-bg);
+      border-color: #c3e3d0;
+      color: var(--done);
+    }
+
+    /* Lightbox */
+    .lightbox-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .lightbox-overlay.show {
+      display: flex;
+    }
+
+    .lightbox {
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      max-width: 520px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+    }
+
+    .lb-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .lb-close:hover { background: var(--bg); color: var(--text); }
+
+    .lb-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .lb-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      padding-right: 32px;
+    }
+
+    .lb-summary {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--secondary);
+      margin-bottom: 20px;
+    }
+
+    .lb-meta {
+      display: grid;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+      margin-bottom: 20px;
+    }
+
+    .lb-meta-row {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .lb-meta-label {
+      color: var(--muted);
+      font-weight: 600;
+      min-width: 80px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .lb-meta-value { color: var(--text); }
+
+    .lb-dispatch {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .lb-dispatch-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .btn-dispatch-lg {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-dispatch-lg:hover { background: var(--bg); border-color: var(--text); }
+
+    .btn-dispatch-lg.copied {
+      background: var(--done-bg);
+      border-color: #c3e3d0;
+      color: var(--done);
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
     }
 
-    .panel-head {
+    .card-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(0, 0, 0, 0.14);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-light);
     }
 
-    .panel-head h1,
-    .panel-head h2,
-    .panel-head h3 {
-      margin: 0;
+    .card-head h2 {
       font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+      font-weight: 600;
     }
 
-    .panel-body {
-      padding: 12px 14px;
+    .card-body { padding: 16px 20px; }
+
+    /* View toggle */
+    .toggle-group {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    .kicker {
-      color: var(--muted);
+    .toggle-group button {
+      border: none;
+      border-radius: 0;
+      padding: 5px 14px;
       font-size: 12px;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
     }
 
-    .topbar {
+    .toggle-group button + button { border-left: 1px solid var(--border); }
+
+    .toggle-group button.active {
+      background: var(--text);
+      color: white;
+    }
+
+    /* Kanban */
+    .kanban {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: center;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
     }
 
-    .title {
+    .kanban-col { display: flex; flex-direction: column; gap: 8px; }
+
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .col-header .col-ct {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0.6;
+    }
+
+    .col-wip { background: var(--wip-bg); color: var(--wip); }
+    .col-review { background: var(--review-bg); color: var(--review); }
+    .col-next { background: var(--next-bg); color: var(--next); }
+    .col-blocked { background: var(--blocked-bg); color: var(--blocked); }
+
+    .k-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
       display: grid;
       gap: 4px;
-    }
-
-    .title h1 {
-      margin: 0;
-      font-size: 20px;
-      line-height: 1.2;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    button,
-    input[type="file"] {
-      border: 1px solid var(--line);
-      background: var(--surface-soft);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 12px;
       cursor: pointer;
+      transition: box-shadow 0.15s;
     }
 
-    button:hover {
-      border-color: #4b5675;
-    }
+    .k-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
-    .source-row {
+    .k-card-top {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
       align-items: center;
+      justify-content: space-between;
+      gap: 6px;
     }
+
+    .k-id { font-size: 11px; font-weight: 600; color: var(--muted); }
+    .k-name { font-size: 13px; font-weight: 500; line-height: 1.35; }
+
+    .k-meta {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--secondary);
+    }
+
+    .groomed-yes { color: var(--done); font-size: 13px; }
+    .groomed-no { color: var(--border); font-size: 13px; }
+
+    /* Done summary */
+    .done-summary {
+      background: var(--done-bg);
+      border: 1px solid #c3e3d0;
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .done-summary .done-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--done);
+    }
+
+    .done-detail { display: none; }
+    .done-detail.show { display: block; }
+
+    .done-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 6px;
+      padding: 12px 20px 16px;
+    }
+
+    .done-chip {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: var(--done-bg);
+      border: 1px solid #c3e3d0;
+      color: var(--done);
+      font-weight: 500;
+    }
+
+    /* Backlog table */
+    .table-wrap { overflow: auto; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: #fafbfc;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    tr.backlog-row { cursor: pointer; }
+    tr.backlog-row:hover { background: var(--bg); }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      border-radius: 999px;
       padding: 2px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      border: 1px solid transparent;
-    }
-
-    .status-done { background: rgba(49, 196, 113, 0.18); color: #7ff0b0; border-color: rgba(49, 196, 113, 0.35); }
-    .status-wip { background: rgba(242, 189, 69, 0.18); color: #ffd77c; border-color: rgba(242, 189, 69, 0.35); }
-    .status-review { background: rgba(79, 144, 255, 0.2); color: #8eb8ff; border-color: rgba(79, 144, 255, 0.35); }
-    .status-blocked { background: rgba(239, 90, 90, 0.2); color: #ff9f9f; border-color: rgba(239, 90, 90, 0.35); }
-    .status-next { background: rgba(220, 226, 242, 0.15); color: #edf2ff; border-color: rgba(220, 226, 242, 0.25); }
-    .status-skip { background: rgba(154, 159, 178, 0.2); color: #c8cee0; border-color: rgba(154, 159, 178, 0.35); }
-    .status-unknown { background: rgba(143, 150, 171, 0.2); color: #c8cee0; border-color: rgba(143, 150, 171, 0.35); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .span-12 { grid-column: span 12; }
-    .span-8 { grid-column: span 8; }
-    .span-6 { grid-column: span 6; }
-    .span-4 { grid-column: span 4; }
-
-    .progress-metric {
-      display: grid;
-      gap: 10px;
-    }
-
-    .progress-value {
-      display: flex;
-      gap: 8px;
-      align-items: baseline;
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-    }
-
-    .progress-value small {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .bar {
-      width: 100%;
-      height: 14px;
       border-radius: 999px;
-      background: #293149;
-      overflow: hidden;
-      border: 1px solid #37405c;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
     }
 
-    .bar > span {
-      display: block;
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, #2bbf6a, #7ee3a5);
-      transition: width 0.3s ease;
+    .badge-done { background: var(--done-bg); color: var(--done); }
+    .badge-wip { background: var(--wip-bg); color: var(--wip); }
+    .badge-review { background: var(--review-bg); color: var(--review); }
+    .badge-blocked { background: var(--blocked-bg); color: var(--blocked); }
+    .badge-next { background: var(--next-bg); color: var(--next); }
+    .badge-skip { background: var(--skip-bg); color: var(--skip); }
+    .badge-unknown { background: var(--skip-bg); color: var(--skip); }
+
+    .groomed-cell { text-align: center; }
+
+    .backlog-divider td {
+      background: var(--bg);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 8px 14px;
+      border-bottom: 2px solid var(--border);
     }
 
-    .phase-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .phase-item {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
+    /* Collapsible */
+    details.card > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.01);
+      justify-content: space-between;
     }
 
-    .phase-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--unknown);
-    }
+    details.card > summary::-webkit-details-marker { display: none; }
 
-    .phase-item.phase-current {
-      border-color: rgba(123, 212, 255, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(123, 212, 255, 0.24);
-    }
-
-    .phase-item.phase-done .phase-dot { background: var(--done); }
-    .phase-item.phase-wip .phase-dot { background: var(--wip); }
-    .phase-item.phase-review .phase-dot { background: var(--review); }
-    .phase-item.phase-blocked .phase-dot { background: var(--blocked); }
-    .phase-item.phase-next .phase-dot { background: var(--next); }
-
-    .ticket-wrap,
-    .merge-wrap {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 720px;
-    }
-
-    th,
-    td {
-      text-align: left;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
+    details.card > summary::after {
+      content: '\25B8';
       font-size: 12px;
+      color: var(--muted);
+      transition: transform 0.2s;
     }
 
-    th {
-      background: #1e2535;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      font-weight: 700;
-      letter-spacing: 0.02em;
+    details[open] > summary::after { transform: rotate(90deg); }
+
+    /* Fallback (hidden by default) */
+    .fallback-section { display: none; }
+    .fallback-section.show { display: block; }
+
+    .fallback-section textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      background: #fafbfc;
+      color: var(--text);
     }
 
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .right-now {
-      display: grid;
-      gap: 10px;
-    }
-
-    .right-now-group {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .right-now-group h3 {
-      margin: 0;
-      padding: 9px 10px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--line);
-      background: #1d2434;
-    }
-
-    .right-now-group table {
-      min-width: 0;
-    }
-
-    .owner-bars {
-      display: grid;
-      gap: 8px;
-    }
+    /* Ownership */
+    .owner-bars { display: grid; gap: 8px; }
 
     .owner-row {
       display: grid;
-      grid-template-columns: 110px 1fr 36px;
+      grid-template-columns: 100px 1fr 30px;
       gap: 8px;
       align-items: center;
-      font-size: 12px;
+      font-size: 13px;
     }
 
     .owner-row .rail {
-      height: 10px;
+      height: 8px;
       border-radius: 999px;
-      background: #293149;
-      border: 1px solid #38425d;
+      background: #e8ecf1;
       overflow: hidden;
     }
 
     .owner-row .fill {
       height: 100%;
-      background: linear-gradient(90deg, #73b5ff, #7ee3ff);
-      width: 0;
+      background: var(--review);
+      border-radius: 999px;
     }
 
-    .timeline {
-      display: grid;
-      gap: 8px;
-    }
+    /* Merge timeline */
+    .timeline { display: grid; gap: 10px; }
 
-    .timeline-item {
-      border-left: 2px solid #39415b;
-      padding: 0 0 8px 10px;
-    }
-
-    .timeline-item:last-child {
-      padding-bottom: 0;
-    }
-
-    .timeline-item .top {
+    .tl-item {
       display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
+      gap: 10px;
+      align-items: baseline;
+      font-size: 13px;
     }
 
-    .fallback {
-      margin-top: 10px;
-      display: grid;
-      gap: 8px;
+    .tl-item .tl-date {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      min-width: 80px;
     }
 
-    textarea {
-      width: 100%;
-      min-height: 140px;
-      resize: vertical;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #101521;
+    .tl-item strong { font-weight: 600; }
+    .tl-item .tl-desc { color: var(--secondary); }
+
+    /* Story log */
+    .story-entries { display: grid; gap: 16px; }
+
+    .story-entry {
+      padding-left: 16px;
+      border-left: 3px solid var(--border);
+    }
+
+    .story-entry .story-date {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+
+    .story-entry .story-text {
+      font-size: 14px;
+      line-height: 1.55;
       color: var(--text);
-      padding: 10px;
-      font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, "Liberation Mono", monospace;
     }
 
-    .error {
-      color: #ffb4b4;
+    /* Research cards */
+    .research-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+
+    .research-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+
+    .research-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    .research-card .rc-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .research-card .rc-desc {
       font-size: 12px;
+      color: var(--secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    .hidden {
-      display: none !important;
+    .research-card .rc-who {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
     }
 
-    @media (max-width: 980px) {
-      .span-8,
-      .span-6,
-      .span-4 {
-        grid-column: span 12;
-      }
+    .btn-groom {
+      background: var(--next-bg);
+      border: 1px solid #d4ccf0;
+      color: #4c2d99;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
 
-      .topbar {
-        grid-template-columns: 1fr;
-      }
+    .btn-groom:hover { background: #e8e0f5; }
 
-      .controls {
-        justify-content: flex-start;
-      }
+    .btn-groom.copied {
+      background: var(--done-bg);
+      border-color: #c3e3d0;
+      color: var(--done);
+    }
 
-      .owner-row {
-        grid-template-columns: 90px 1fr 30px;
-      }
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .kanban { grid-template-columns: 1fr; }
+      .goal-bar { padding: 16px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .done-grid { grid-template-columns: 1fr 1fr; }
+      .lightbox { margin: 10px; padding: 20px; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <section class="panel">
-      <div class="panel-body">
-        <div class="topbar">
-          <div class="title">
-            <div class="kicker">Six Seven Ranch</div>
-            <h1>Project Dashboard</h1>
-            <div class="muted">Parses <code>TICKETS.md</code> directly. No build step, no dependencies.</div>
-          </div>
-          <div class="controls">
-            <button id="loadBtn" type="button">Load TICKETS.md</button>
-            <button id="reloadBtn" type="button">Manual Refresh</button>
-            <label>
-              <input id="fileInput" type="file" accept=".md,text/markdown,text/plain">
-            </label>
-          </div>
-        </div>
+    <!-- Header -->
+    <div class="header">
+      <h1>Six Seven Ranch</h1>
+      <div class="header-controls">
+        <span id="sourceInfo" class="source-info"></span>
+        <span id="errorText" class="error-text"></span>
+        <button id="loadBtn" class="btn-sm" type="button">Load</button>
+        <button id="reloadBtn" class="btn-sm" type="button">Refresh</button>
+        <label><input id="fileInput" type="file" accept=".md,text/markdown,text/plain"><button id="fileBtn" class="btn-sm" type="button">Upload</button></label>
+        <button id="pasteToggle" class="btn-sm" type="button">Paste</button>
+      </div>
+    </div>
 
-        <div class="source-row">
-          <span id="sourceBadge" class="badge status-next">No data loaded</span>
-          <span id="updatedAt" class="muted"></span>
-          <span id="errorText" class="error"></span>
-        </div>
-
-        <div id="fallbackPanel" class="fallback">
-          <div class="muted">If local fetch is blocked, paste <code>TICKETS.md</code> below and render.</div>
-          <textarea id="pasteArea" placeholder="Paste TICKETS.md here..."></textarea>
-          <div>
-            <button id="renderPasteBtn" type="button">Render Pasted Markdown</button>
-          </div>
+    <!-- Paste fallback (hidden) -->
+    <div id="fallbackSection" class="fallback-section">
+      <div class="card">
+        <div class="card-body" style="display:grid;gap:8px">
+          <textarea id="pasteArea" placeholder="Paste TICKETS.md content here..."></textarea>
+          <div><button id="renderPasteBtn" type="button">Render</button></div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="grid">
-      <article class="panel span-4">
-        <div class="panel-head">
-          <h2>Progress</h2>
-        </div>
-        <div class="panel-body" id="progressCard"></div>
-      </article>
+    <!-- Goal tracker -->
+    <div class="goal-bar" id="goalBar">
+      <div class="goal-top">
+        <span class="goal-title">Loading...</span>
+        <span class="goal-pct" id="goalPct"></span>
+      </div>
+      <div class="goal-track" id="goalTrack"><span style="width:0%"></span></div>
+      <div class="goal-subtitle" id="goalSub"></div>
+    </div>
 
-      <article class="panel span-4">
-        <div class="panel-head">
-          <h2>Phase Timeline</h2>
-        </div>
-        <div class="panel-body" id="phaseCard"></div>
-      </article>
+    <!-- What's next -->
+    <div id="whatsNext" class="whats-next"></div>
 
-      <article class="panel span-4">
-        <div class="panel-head">
-          <h2>Ownership</h2>
+    <!-- Board -->
+    <div class="card">
+      <div class="card-head">
+        <h2>Board</h2>
+        <div class="toggle-group">
+          <button id="viewBoard" class="active" type="button">Board</button>
+          <button id="viewBacklog" type="button">Backlog</button>
         </div>
-        <div class="panel-body" id="ownerCard"></div>
-      </article>
+      </div>
+      <div class="card-body">
+        <div id="kanbanBoard" class="kanban"></div>
+        <div id="backlogList" class="hidden"></div>
+      </div>
+    </div>
 
-      <article class="panel span-12">
-        <div class="panel-head">
-          <h2>V1 Ticket Status</h2>
-        </div>
-        <div class="panel-body" id="ticketTable"></div>
-      </article>
+    <!-- Research -->
+    <div id="researchSection"></div>
 
-      <article class="panel span-12">
-        <div class="panel-head">
-          <h2>What Can Run RIGHT NOW</h2>
-        </div>
-        <div class="panel-body" id="rightNow"></div>
-      </article>
+    <!-- Done -->
+    <div id="doneSection"></div>
 
-      <article class="panel span-12">
-        <div class="panel-head">
-          <h2>Merge Log Timeline</h2>
-        </div>
-        <div class="panel-body" id="mergeTimeline"></div>
-      </article>
-    </section>
+    <!-- Story -->
+    <details class="card" id="storyCard" open>
+      <summary>The Story So Far</summary>
+      <div class="card-body" id="storyBody"></div>
+    </details>
+
+    <!-- Extras -->
+    <details class="card" id="mergeCard">
+      <summary>Merge Log</summary>
+      <div class="card-body" id="mergeTimeline"></div>
+    </details>
+
+    <details class="card" id="ownerCard">
+      <summary>Ownership</summary>
+      <div class="card-body" id="ownerBody"></div>
+    </details>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox-overlay" id="lightboxOverlay">
+    <div class="lightbox" id="lightboxContent"></div>
   </div>
 
   <script>
-    const STATUS_CLASS = {
-      done: 'status-done',
-      wip: 'status-wip',
-      review: 'status-review',
-      blocked: 'status-blocked',
-      next: 'status-next',
-      skip: 'status-skip',
-      unknown: 'status-unknown',
+    const BADGE_CLASS = {
+      done: 'badge-done', wip: 'badge-wip', review: 'badge-review',
+      blocked: 'badge-blocked', next: 'badge-next', skip: 'badge-skip', unknown: 'badge-unknown',
     };
 
     const PHASES = [
-      { label: 'Phase 0: Infrastructure', tickets: ['S7R-001', 'S7R-002', 'S7R-003', 'S7R-004'] },
-      { label: 'Phase 1: Mobile baseline', tickets: ['S7R-005', 'S7R-007', 'S7R-008'] },
-      { label: 'Phase 2: Enemy runtime', tickets: ['S7R-010', 'S7R-011', 'S7R-015', 'S7R-018'] },
-      { label: 'Phase 6 subset: Commands + supports', tickets: ['S7R-046', 'S7R-047', 'S7R-048', 'S7R-050', 'S7R-051', 'S7R-053'] },
-      { label: 'PWA foundation', tickets: ['S7R-038'] },
+      { label: 'Infrastructure', tickets: ['S7R-001','S7R-002','S7R-003','S7R-004'] },
+      { label: 'Mobile baseline', tickets: ['S7R-005','S7R-007','S7R-008'] },
+      { label: 'Enemy runtime', tickets: ['S7R-010','S7R-011','S7R-015','S7R-018'] },
+      { label: 'Commands + supports', tickets: ['S7R-046','S7R-047','S7R-048','S7R-050','S7R-051','S7R-053'] },
+      { label: 'PWA', tickets: ['S7R-038'] },
       { label: 'Gate-1 Playtest', names: ['V1-PLAYTEST-GATE-1'] },
-      { label: 'S7R-054: Polish pass', tickets: ['S7R-054'] },
-      { label: 'S7R-055: Launch prep', tickets: ['S7R-055'] },
+      { label: 'Polish pass', tickets: ['S7R-054'] },
+      { label: 'Launch prep', tickets: ['S7R-055'] },
       { label: 'Gate-2 Playtest', names: ['V1-PLAYTEST-GATE-2'] },
     ];
+
+    const BOARD_COLUMNS = [
+      { key: 'wip', label: 'In Progress', cls: 'col-wip' },
+      { key: 'review', label: 'In Review', cls: 'col-review' },
+      { key: 'next', label: 'Up Next', cls: 'col-next' },
+      { key: 'blocked', label: 'Blocked', cls: 'col-blocked' },
+    ];
+
+    /* Bedtime-story summaries: plain language a PM (or grandma) can read.
+       Keys: ticket ID or gate name. Each has a one-liner + what it means. */
+    const FRIENDLY = {
+      'V1-PLAYTEST-GATE-1': {
+        title: 'First playtest',
+        summary: 'Someone needs to play the game on their phone for a few minutes. Does it feel fun? Are the buttons working? Do the enemies show up? Write down what feels good and what feels broken.',
+        marker: '\u{1F3AE}',
+      },
+      'V1-PLAYTEST-GATE-2': {
+        title: 'Final playtest',
+        summary: 'Play the game for a longer session \u2014 15+ minutes. Does it keep you coming back? Are the support abilities useful? This is the last quality check before launch.',
+        marker: '\u{1F3C1}',
+      },
+      'S7R-054': {
+        title: 'Polish pass',
+        summary: 'After the first playtest, we\u2019ll adjust the numbers \u2014 how much damage enemies do, how long you wait between abilities, how fast things move. The goal is to make it feel just right.',
+        marker: '\u2728',
+      },
+      'S7R-055': {
+        title: 'Launch prep',
+        summary: 'Add tracking so we can see how long people play, which abilities they use most, and where they get stuck. This tells us what to improve after launch.',
+        marker: '\u{1F680}',
+      },
+    };
 
     let lastText = '';
     let sourceMode = 'none';
     let pollTimer = null;
+    let allTickets = [];
 
-    const sourceBadge = document.getElementById('sourceBadge');
-    const updatedAt = document.getElementById('updatedAt');
-    const errorText = document.getElementById('errorText');
-    const fallbackPanel = document.getElementById('fallbackPanel');
     const pasteArea = document.getElementById('pasteArea');
 
-    document.getElementById('loadBtn').addEventListener('click', () => {
-      loadFromFetch(true);
-    });
+    /* Events */
+
+    document.getElementById('loadBtn').addEventListener('click', () => loadFromFetch(true));
 
     document.getElementById('reloadBtn').addEventListener('click', () => {
-      if (sourceMode === 'fetch') {
-        loadFromFetch(true);
-        return;
-      }
-      if (pasteArea.value.trim()) {
-        applyMarkdown(pasteArea.value, 'paste');
-      }
+      if (sourceMode === 'fetch') { loadFromFetch(true); return; }
+      if (pasteArea.value.trim()) applyMarkdown(pasteArea.value, 'paste');
     });
 
-    document.getElementById('renderPasteBtn').addEventListener('click', () => {
-      if (!pasteArea.value.trim()) {
-        setError('Paste TICKETS.md content first.');
-        return;
-      }
-      setError('');
-      applyMarkdown(pasteArea.value, 'paste');
+    document.getElementById('fileBtn').addEventListener('click', () => {
+      document.getElementById('fileInput').click();
     });
 
-    document.getElementById('fileInput').addEventListener('change', (event) => {
-      const [file] = event.target.files || [];
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const [file] = e.target.files || [];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
@@ -534,432 +923,859 @@
         pasteArea.value = text;
         applyMarkdown(text, 'file');
       };
-      reader.onerror = () => {
-        setError('Failed to read selected file.');
-      };
+      reader.onerror = () => setError('Failed to read file.');
       reader.readAsText(file);
     });
 
-    function setBadge(label, status) {
-      sourceBadge.className = `badge ${STATUS_CLASS[status] || STATUS_CLASS.unknown}`;
-      sourceBadge.textContent = label;
+    document.getElementById('pasteToggle').addEventListener('click', () => {
+      document.getElementById('fallbackSection').classList.toggle('show');
+    });
+
+    document.getElementById('renderPasteBtn').addEventListener('click', () => {
+      if (!pasteArea.value.trim()) { setError('Paste content first.'); return; }
+      setError('');
+      applyMarkdown(pasteArea.value, 'paste');
+    });
+
+    document.getElementById('viewBoard').addEventListener('click', () => {
+      document.getElementById('kanbanBoard').classList.remove('hidden');
+      document.getElementById('backlogList').classList.add('hidden');
+      document.getElementById('viewBoard').classList.add('active');
+      document.getElementById('viewBacklog').classList.remove('active');
+    });
+
+    document.getElementById('viewBacklog').addEventListener('click', () => {
+      document.getElementById('kanbanBoard').classList.add('hidden');
+      document.getElementById('backlogList').classList.remove('hidden');
+      document.getElementById('viewBacklog').classList.add('active');
+      document.getElementById('viewBoard').classList.remove('active');
+    });
+
+    // Lightbox close
+    document.getElementById('lightboxOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    /* Utilities */
+
+    function setError(msg) { document.getElementById('errorText').textContent = msg; }
+
+    function setSource(msg) { document.getElementById('sourceInfo').textContent = msg; }
+
+    function esc(v) {
+      return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+        .replaceAll('"','&quot;').replaceAll("'",'&#39;');
     }
 
-    function setError(message) {
-      errorText.textContent = message;
+    function plain(v) {
+      return String(v ?? '').replace(/`/g,'').replace(/\*\*/g,'').replace(/\*/g,'')
+        .replace(/_/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').trim();
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-
-    function plainText(value) {
-      return String(value ?? '')
-        .replace(/`/g, '')
-        .replace(/\*\*/g, '')
-        .replace(/\*/g, '')
-        .replace(/_/g, '')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .trim();
-    }
-
-    function normalizeStatus(statusRaw) {
-      const status = plainText(statusRaw).toLowerCase();
-      if (status.startsWith('done')) return 'done';
-      if (status.startsWith('wip')) return 'wip';
-      if (status.startsWith('review')) return 'review';
-      if (status.startsWith('blocked')) return 'blocked';
-      if (status.startsWith('next')) return 'next';
-      if (status.startsWith('skip')) return 'skip';
+    function normStatus(raw) {
+      const s = plain(raw).toLowerCase();
+      if (s.startsWith('done')) return 'done';
+      if (s.startsWith('wip')) return 'wip';
+      if (s.startsWith('review')) return 'review';
+      if (s.startsWith('blocked')) return 'blocked';
+      if (s.startsWith('next')) return 'next';
+      if (s.startsWith('skip')) return 'skip';
       return 'unknown';
     }
 
-    function splitRow(line) {
-      return line
-        .trim()
-        .replace(/^\|/, '')
-        .replace(/\|$/, '')
-        .split('|')
-        .map((cell) => cell.trim());
+    /* Friendly name helpers */
+
+    function friendlyTitle(ticket) {
+      const id = ticket.ticket || ticket.name || '';
+      const f = FRIENDLY[id] || FRIENDLY[ticket.name];
+      if (f) return f.title;
+      return ticket.name || id;
     }
 
-    function parseMarkdownTable(lines) {
-      if (!Array.isArray(lines) || lines.length < 2) return null;
-      const headers = splitRow(lines[0]);
-      const separator = lines[1];
-      if (!/\|\s*-{3,}/.test(separator)) return null;
+    function friendlySummary(ticket) {
+      const id = ticket.ticket || ticket.name || '';
+      const f = FRIENDLY[id] || FRIENDLY[ticket.name];
+      if (f) return f.summary;
+      return `This task is called "${ticket.name || id}."`;
+    }
 
-      const rows = [];
-      const objects = [];
-      for (let i = 2; i < lines.length; i += 1) {
-        const line = lines[i];
-        if (!line.trim() || /^\|\s*-/.test(line.trim())) continue;
-        const row = splitRow(line);
-        rows.push(row);
-        const obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = row[index] ?? '';
-        });
-        objects.push(obj);
+    function friendlyMarker(ticket) {
+      const id = ticket.ticket || ticket.name || '';
+      const f = FRIENDLY[id] || FRIENDLY[ticket.name];
+      if (f) return f.marker;
+      if (ticket.status === 'next') return '\u{1F449}';
+      if (ticket.status === 'blocked') return '\u23F3';
+      if (ticket.status === 'wip') return '\u{1F6E0}\uFE0F';
+      if (ticket.status === 'review') return '\u{1F50D}';
+      return '\u{1F4CB}';
+    }
+
+    function friendlyWho(ticket) {
+      const o = ticket.owner;
+      if (o && o !== '\u2014' && o !== '-') return o;
+      const p = ticket.platform || '';
+      if (p.includes('steven')) return 'Steven';
+      if (p.includes('claude')) return 'Claude';
+      if (p.includes('codex')) return 'Codex';
+      if (p.includes('gemini')) return 'Gemini';
+      return null;
+    }
+
+    function friendlyBlockerName(raw, tickets) {
+      const norm = raw.trim();
+      for (const t of tickets) {
+        const id = t.ticket || t.name;
+        if (id === norm || id === 'S7R-' + norm || t.name === norm) {
+          return friendlyTitle(t).toLowerCase();
+        }
+      }
+      if (norm.toLowerCase().includes('gate')) return 'the playtest';
+      return norm;
+    }
+
+    function getDispatchPlatforms(ticket) {
+      const p = (ticket.platform || '').toLowerCase();
+      const platforms = [];
+      if (p.includes('claude')) platforms.push('Claude');
+      if (p.includes('codex')) platforms.push('Codex');
+      if (p.includes('gemini')) platforms.push('Gemini');
+      if (p.includes('steven')) platforms.push('Steven');
+      if (!platforms.length) platforms.push('Claude', 'Codex');
+      return platforms;
+    }
+
+    function buildDispatchPrompt(ticket, platform) {
+      const id = ticket.ticket || ticket.name;
+      const name = ticket.name || '';
+      return `${platform}: please start ${id} \u2014 ${name}.\nBranch: ${platform.toLowerCase()}/${id}\nRead TICKETS.md for the full spec.`;
+    }
+
+    function statusLabel(s) {
+      if (s === 'done') return 'Done';
+      if (s === 'wip') return 'In Progress';
+      if (s === 'review') return 'In Review';
+      if (s === 'next') return 'Ready';
+      if (s === 'blocked') return 'Waiting';
+      if (s === 'skip') return 'Skipped';
+      return s;
+    }
+
+    /* Lightbox */
+
+    function openLightbox(ticket) {
+      const id = ticket.ticket || ticket.name;
+      const title = friendlyTitle(ticket);
+      const summary = friendlySummary(ticket);
+      const status = ticket.status;
+      const platforms = getDispatchPlatforms(ticket);
+
+      const badgeCls = BADGE_CLASS[status] || BADGE_CLASS.unknown;
+      const who = friendlyWho(ticket);
+
+      let metaHtml = '';
+      if (ticket.ticket && ticket.ticket !== '\u2014' && ticket.ticket !== '-')
+        metaHtml += `<div class="lb-meta-row"><span class="lb-meta-label">Ticket</span><span class="lb-meta-value">${esc(ticket.ticket)}</span></div>`;
+      if (who)
+        metaHtml += `<div class="lb-meta-row"><span class="lb-meta-label">Assigned to</span><span class="lb-meta-value">${esc(who)}</span></div>`;
+      if (ticket.depends && ticket.depends !== '\u2014' && ticket.depends !== '-')
+        metaHtml += `<div class="lb-meta-row"><span class="lb-meta-label">Waiting for</span><span class="lb-meta-value">${esc(ticket.depends)}</span></div>`;
+      if (ticket.platform)
+        metaHtml += `<div class="lb-meta-row"><span class="lb-meta-label">Best for</span><span class="lb-meta-value">${esc(ticket.platform)}</span></div>`;
+
+      let dispatchHtml = '';
+      if (status === 'next' || status === 'wip' || status === 'review' || status === 'blocked') {
+        dispatchHtml = `<div class="lb-dispatch">
+          <div class="lb-dispatch-label">Send to a worker</div>
+          ${platforms.map(p =>
+            `<button class="btn-dispatch-lg" data-lb-dispatch="${esc(id)}" data-lb-platform="${esc(p)}">\u{1F4CB} Copy for ${esc(p)}</button>`
+          ).join('')}
+        </div>`;
       }
 
+      document.getElementById('lightboxContent').innerHTML = `
+        <button class="lb-close" id="lbClose">\u00D7</button>
+        <span class="lb-badge ${badgeCls}">${esc(statusLabel(status))}</span>
+        <div class="lb-title">${esc(title)}</div>
+        <div class="lb-summary">${esc(summary)}</div>
+        ${metaHtml ? `<div class="lb-meta">${metaHtml}</div>` : ''}
+        ${dispatchHtml}
+      `;
+
+      document.getElementById('lightboxOverlay').classList.add('show');
+      document.getElementById('lbClose').addEventListener('click', closeLightbox);
+
+      // Wire dispatch buttons inside lightbox
+      document.querySelectorAll('[data-lb-dispatch]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const tid = btn.getAttribute('data-lb-dispatch');
+          const platform = btn.getAttribute('data-lb-platform');
+          const t = allTickets.find(t => (t.ticket || t.name) === tid);
+          if (!t) return;
+          const prompt = buildDispatchPrompt(t, platform);
+          navigator.clipboard.writeText(prompt).then(() => {
+            btn.classList.add('copied');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '\u2705 Copied!';
+            setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+          });
+        });
+      });
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxOverlay').classList.remove('show');
+    }
+
+    /* Markdown parsing */
+
+    function splitRow(line) {
+      return line.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c => c.trim());
+    }
+
+    function parseMdTable(lines) {
+      if (!Array.isArray(lines) || lines.length < 2) return null;
+      const headers = splitRow(lines[0]);
+      if (!/\|\s*-{3,}/.test(lines[1])) return null;
+      const rows = [], objects = [];
+      for (let i = 2; i < lines.length; i++) {
+        const l = lines[i];
+        if (!l.trim() || /^\|\s*-/.test(l.trim())) continue;
+        const row = splitRow(l);
+        rows.push(row);
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = row[idx] ?? ''; });
+        objects.push(obj);
+      }
       return { headers, rows, objects };
     }
 
-    function parseTablesWithHeadings(sectionText) {
-      const lines = sectionText.split(/\r?\n/);
+    function parseTablesWithHeadings(text) {
+      const lines = text.split(/\r?\n/);
       const tables = [];
-      let currentHeading = '';
-
-      for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i];
-        const headingMatch = line.match(/^###\s+(.+)$/);
-        if (headingMatch) {
-          currentHeading = headingMatch[1].trim();
-          continue;
-        }
-
-        if (!line.trim().startsWith('|')) continue;
+      let heading = '';
+      for (let i = 0; i < lines.length; i++) {
+        const hm = lines[i].match(/^###\s+(.+)$/);
+        if (hm) { heading = hm[1].trim(); continue; }
+        if (!lines[i].trim().startsWith('|')) continue;
         const block = [];
-        while (i < lines.length && lines[i].trim().startsWith('|')) {
-          block.push(lines[i]);
-          i += 1;
-        }
-        i -= 1;
-
-        const parsed = parseMarkdownTable(block);
-        if (parsed) {
-          parsed.heading = currentHeading || 'Overview';
-          tables.push(parsed);
-        }
+        while (i < lines.length && lines[i].trim().startsWith('|')) { block.push(lines[i]); i++; }
+        i--;
+        const t = parseMdTable(block);
+        if (t) { t.heading = heading || 'Overview'; tables.push(t); }
       }
-
       return tables;
     }
 
-    function escapeRegExp(text) {
-      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function escRx(t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    function getSection(md, heading) {
+      const lines = md.split(/\r?\n/);
+      let capturing = false;
+      const out = [];
+      for (const line of lines) {
+        if (capturing) {
+          // Stop at the next ## heading that isn't ### (same-level or higher)
+          if (/^## (?!#)/.test(line)) break;
+          out.push(line);
+        } else if (line.startsWith(heading)) {
+          capturing = true;
+        }
+      }
+      return out.join('\n');
     }
 
-    function getSection(markdown, heading) {
-      const rx = new RegExp(`^${escapeRegExp(heading)}.*\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`, 'm');
-      const match = markdown.match(rx);
-      return match ? match[1] : '';
-    }
-
-    function parseV1Tickets(markdown) {
-      const section = getSection(markdown, '## V1 Track');
+    function parseV1(md) {
+      const section = getSection(md, '## V1 Track');
       const tables = parseTablesWithHeadings(section);
-      const table = tables.find((item) => item.headers.includes('Ticket') && item.headers.includes('Status'));
-      if (!table) return [];
-
-      return table.objects.map((row) => ({
-        number: plainText(row['#']),
-        ticket: plainText(row.Ticket),
-        name: plainText(row.Name),
-        depends: plainText(row.Depends),
-        touchesMain: plainText(row['Touches main.js?']),
-        platform: plainText(row['Best platform']),
-        statusRaw: plainText(row.Status),
-        status: normalizeStatus(row.Status),
-        branch: plainText(row.Branch),
-        owner: plainText(row.Owner),
+      const t = tables.find(t => t.headers.includes('Ticket') && t.headers.includes('Status'));
+      if (!t) return [];
+      return t.objects.map(r => ({
+        number: plain(r['#']), ticket: plain(r.Ticket), name: plain(r.Name),
+        depends: plain(r.Depends), platform: plain(r['Best platform']),
+        statusRaw: plain(r.Status), status: normStatus(r.Status),
+        branch: plain(r.Branch), owner: plain(r.Owner),
       }));
     }
 
-    function parseWhatCanRun(markdown) {
-      const section = getSection(markdown, '## What can run RIGHT NOW');
-      return parseTablesWithHeadings(section);
+    function parseRightNow(md) {
+      return parseTablesWithHeadings(getSection(md, '## What can run RIGHT NOW'));
     }
 
-    function parseMergeLog(markdown) {
-      const section = getSection(markdown, '## Merge Log');
-      const tables = parseTablesWithHeadings(section);
-      const table = tables.find((item) => item.headers.includes('Date') && item.headers.includes('Ticket'));
-      if (!table) return [];
+    function parseResearchTasks(rnTables) {
+      // Find the table under "Research tasks" heading
+      const t = rnTables.find(t => (t.heading || '').toLowerCase().includes('research'));
+      if (!t) return [];
+      return t.objects.map(r => ({
+        name: plain(r.Task || r.Ticket || ''),
+        desc: plain(r['TL;DR'] || r.TL || ''),
+        who: plain(r['Good for'] || r['Available to'] || ''),
+      })).filter(r => r.name);
+    }
 
-      return table.objects.map((row) => ({
-        date: plainText(row.Date),
-        ticket: plainText(row.Ticket),
-        change: plainText(row['What changed']),
-        who: plainText(row.Who),
+    function parseMergeLog(md) {
+      const tables = parseTablesWithHeadings(getSection(md, '## Merge Log'));
+      const t = tables.find(t => t.headers.includes('Date') && t.headers.includes('Ticket'));
+      if (!t) return [];
+      return t.objects.map(r => ({
+        date: plain(r.Date), ticket: plain(r.Ticket),
+        change: plain(r['What changed']), who: plain(r.Who),
       }));
     }
 
-    function renderProgress(tickets) {
-      const total = tickets.length;
-      const done = tickets.filter((ticket) => ticket.status === 'done').length;
-      const percent = total ? Math.round((done / total) * 100) : 0;
-
-      document.getElementById('progressCard').innerHTML = `
-        <div class="progress-metric">
-          <div class="progress-value">${done}<small>of ${total} done</small></div>
-          <div class="bar"><span style="width:${percent}%"></span></div>
-          <div class="muted">${percent}% complete</div>
-        </div>
-      `;
+    function parseStoryLog(md) {
+      const section = getSection(md, '## Story Log');
+      if (!section.trim()) return [];
+      const entries = [];
+      const lines = section.split(/\r?\n/);
+      let currentDate = '';
+      let currentText = [];
+      for (const line of lines) {
+        const dateMatch = line.match(/^###\s+(.+)$/);
+        if (dateMatch) {
+          if (currentDate && currentText.length) {
+            entries.push({ date: currentDate, text: currentText.join(' ').trim() });
+          }
+          currentDate = dateMatch[1].trim();
+          currentText = [];
+          continue;
+        }
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('>')) currentText.push(trimmed);
+      }
+      if (currentDate && currentText.length) {
+        entries.push({ date: currentDate, text: currentText.join(' ').trim() });
+      }
+      return entries;
     }
 
-    function summarizePhaseStatus(rows) {
+    function buildGroomedSet(tables) {
+      const set = new Set();
+      for (const t of tables) {
+        const ti = t.headers.findIndex(h => h.toLowerCase() === 'ticket' || h.toLowerCase() === 'task');
+        const di = t.headers.findIndex(h => h.toLowerCase().includes('tl;dr') || h.toLowerCase().includes('tldr'));
+        if (ti < 0) continue;
+        for (const r of t.rows) {
+          const id = plain(r[ti]);
+          const desc = di >= 0 ? plain(r[di]) : '';
+          if (id && desc) set.add(id);
+        }
+      }
+      return set;
+    }
+
+    /* Phase helpers */
+
+    function phaseStatus(rows) {
       if (!rows.length) return 'unknown';
-      const statuses = rows.map((row) => row.status);
-      if (statuses.every((status) => status === 'done')) return 'done';
-      if (statuses.some((status) => status === 'wip' || status === 'review')) return 'wip';
-      if (statuses.some((status) => status === 'next')) return 'next';
-      if (statuses.some((status) => status === 'blocked')) return 'blocked';
-      if (statuses.some((status) => status === 'skip')) return 'skip';
+      const s = rows.map(r => r.status);
+      if (s.every(x => x === 'done')) return 'done';
+      if (s.some(x => x === 'wip' || x === 'review')) return 'wip';
+      if (s.some(x => x === 'next')) return 'next';
+      if (s.some(x => x === 'blocked')) return 'blocked';
       return 'unknown';
     }
 
-    function renderPhaseTimeline(tickets) {
-      const byTicket = new Map(tickets.map((ticket) => [ticket.ticket, ticket]));
-      const byName = new Map(tickets.map((ticket) => [ticket.name, ticket]));
-
-      const phaseStates = PHASES.map((phase) => {
+    function getCurrentPhase(tickets) {
+      const byTicket = new Map(tickets.map(t => [t.ticket, t]));
+      const byName = new Map(tickets.map(t => [t.name, t]));
+      for (const phase of PHASES) {
         const rows = [];
-        (phase.tickets || []).forEach((ticketId) => {
-          if (byTicket.has(ticketId)) rows.push(byTicket.get(ticketId));
-        });
-        (phase.names || []).forEach((name) => {
-          if (byName.has(name)) rows.push(byName.get(name));
-        });
-
-        return {
-          label: phase.label,
-          status: summarizePhaseStatus(rows),
-          rows,
-        };
-      });
-
-      const currentIndex = phaseStates.findIndex((phase) => phase.status !== 'done');
-
-      document.getElementById('phaseCard').innerHTML = `
-        <div class="phase-list">
-          ${phaseStates.map((phase, index) => `
-            <div class="phase-item phase-${phase.status} ${index === currentIndex ? 'phase-current' : ''}">
-              <span class="phase-dot"></span>
-              <span>${escapeHtml(phase.label)}</span>
-              <span class="badge ${STATUS_CLASS[phase.status] || STATUS_CLASS.unknown}">${escapeHtml(phase.status)}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
+        (phase.tickets || []).forEach(id => { if (byTicket.has(id)) rows.push(byTicket.get(id)); });
+        (phase.names || []).forEach(n => { if (byName.has(n)) rows.push(byName.get(n)); });
+        if (phaseStatus(rows) !== 'done') return phase.label;
+      }
+      return null;
     }
 
-    function renderOwnership(tickets) {
-      const doneRows = tickets.filter((ticket) => ticket.status === 'done');
-      const counts = {};
-      doneRows.forEach((row) => {
-        const owner = row.owner;
-        if (!owner || owner === '—' || owner === '-') return;
-        counts[owner] = (counts[owner] || 0) + 1;
-      });
+    /* Render: goal tracker */
 
-      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    function renderGoal(tickets) {
+      const total = tickets.length;
+      const done = tickets.filter(t => t.status === 'done').length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+
+      const remaining = total - done;
+      const active = tickets.filter(t => t.status === 'wip' || t.status === 'review');
+      const nextUp = tickets.filter(t => t.status === 'next');
+
+      // Subtitle: what's happening right now
+      let sub = '';
+      if (pct >= 100) {
+        sub = 'All steps are complete. Ready to ship!';
+      } else if (active.length) {
+        sub = `${remaining} steps left. Currently working on ${friendlyTitle(active[0]).toLowerCase()}.`;
+      } else if (nextUp.length) {
+        sub = `${remaining} steps left. ${friendlyTitle(nextUp[0])} is ready to start.`;
+      } else {
+        sub = `${remaining} steps left. Waiting for a blocker to clear.`;
+      }
+
+      const bar = document.getElementById('goalBar');
+      bar.querySelector('.goal-title').textContent = 'Launch Version 1';
+      document.getElementById('goalPct').textContent = pct + '%';
+      document.getElementById('goalTrack').innerHTML = `<span style="width:${pct}%"></span>`;
+      document.getElementById('goalSub').textContent = sub;
+    }
+
+    /* Render: what's next (the action items) */
+
+    function renderWhatsNext(tickets) {
+      const items = [];
+
+      // Active work (wip, review)
+      const active = tickets.filter(t => t.status === 'wip' || t.status === 'review');
+      for (const t of active) {
+        const label = t.status === 'review' ? 'Being reviewed' : 'In progress';
+        items.push({ ticket: t, label, cls: t.status === 'review' ? 'item-review' : 'item-wip' });
+      }
+
+      // Ready to pick up
+      const nextUp = tickets.filter(t => t.status === 'next');
+      for (const t of nextUp) {
+        const who = friendlyWho(t);
+        const label = who ? `${who} can start this` : 'Ready for someone to pick up';
+        items.push({ ticket: t, label, cls: 'item-ready' });
+      }
+
+      // Blocked — only first-level (blocker is active/next/gate, not another blocked item)
+      const activeIds = new Set(tickets.filter(t =>
+        t.status === 'next' || t.status === 'wip' || t.status === 'review'
+      ).map(t => t.ticket || t.name));
+
+      const blocked = tickets.filter(t => t.status === 'blocked');
+      for (const t of blocked) {
+        const blocker = t.statusRaw.replace(/blocked:?/i, '').trim();
+        if (blocker.includes('gate') || activeIds.has(blocker) || activeIds.has('S7R-' + blocker)) {
+          const blockerName = friendlyBlockerName(blocker, tickets);
+          items.push({ ticket: t, label: `Waiting for ${blockerName}`, cls: 'item-blocked' });
+        }
+      }
+
       if (!items.length) {
-        document.getElementById('ownerCard').innerHTML = '<div class="muted">No completed ownership data.</div>';
+        document.getElementById('whatsNext').innerHTML = '';
         return;
       }
 
-      const maxValue = Math.max(...items.map((item) => item[1]));
-      document.getElementById('ownerCard').innerHTML = `
-        <div class="owner-bars">
-          ${items.map(([owner, count]) => {
-            const width = Math.max(4, Math.round((count / maxValue) * 100));
-            return `
-              <div class="owner-row">
-                <strong>${escapeHtml(owner)}</strong>
-                <div class="rail"><div class="fill" style="width:${width}%"></div></div>
-                <span>${count}</span>
+      document.getElementById('whatsNext').innerHTML = items.map(({ ticket: t, label, cls }) => {
+        const id = t.ticket || t.name;
+        const title = friendlyTitle(t);
+        const marker = friendlyMarker(t);
+        const platforms = getDispatchPlatforms(t);
+        const dispatchBtns = platforms.map(p =>
+          `<button class="btn-sm btn-dispatch" data-ni-dispatch="${esc(id)}" data-ni-platform="${esc(p)}" title="Copy task for ${esc(p)}">\u{1F4CB} ${esc(p)}</button>`
+        ).join('');
+
+        return `<div class="next-item ${cls}" data-ni-open="${esc(id)}">
+          <span class="next-marker">${marker}</span>
+          <div class="next-body">
+            <div class="next-title">${esc(title)}</div>
+            <div class="next-subtitle">${esc(label)}</div>
+          </div>
+          <div class="next-actions" onclick="event.stopPropagation()">
+            ${dispatchBtns}
+          </div>
+        </div>`;
+      }).join('');
+
+      // Wire card clicks → lightbox
+      document.querySelectorAll('[data-ni-open]').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.getAttribute('data-ni-open');
+          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          if (t) openLightbox(t);
+        });
+      });
+
+      // Wire dispatch buttons
+      document.querySelectorAll('[data-ni-dispatch]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-ni-dispatch');
+          const platform = btn.getAttribute('data-ni-platform');
+          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          if (!t) return;
+          const prompt = buildDispatchPrompt(t, platform);
+          navigator.clipboard.writeText(prompt).then(() => {
+            btn.classList.add('copied');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '\u2705 Copied';
+            setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+          });
+        });
+      });
+    }
+
+    /* Render: kanban (active tickets only, no done) */
+
+    function renderKanban(tickets, groomedSet) {
+      const grouped = {};
+      BOARD_COLUMNS.forEach(c => { grouped[c.key] = []; });
+      for (const t of tickets) {
+        if (grouped[t.status]) grouped[t.status].push(t);
+      }
+
+      const renderCard = (t) => {
+        const id = t.ticket || t.name;
+        const title = friendlyTitle(t);
+        const isGroomed = groomedSet.has(id);
+        const gi = isGroomed
+          ? '<span class="groomed-yes" title="Groomed">\u2713</span>'
+          : '<span class="groomed-no" title="Not groomed">\u25CB</span>';
+        const owner = (t.owner && t.owner !== '\u2014' && t.owner !== '-')
+          ? `<span class="pill">${esc(t.owner)}</span>` : '';
+        const plat = t.platform ? `<span class="pill">${esc(t.platform)}</span>` : '';
+        const showId = t.ticket && t.ticket !== '\u2014' && t.ticket !== '-';
+
+        return `<div class="k-card" data-kcard="${esc(id)}">
+          <div class="k-card-top">${showId ? `<span class="k-id">${esc(t.ticket)}</span>` : '<span></span>'}${gi}</div>
+          <div class="k-name">${esc(title)}</div>
+          ${(owner || plat) ? `<div class="k-meta">${owner}${plat}</div>` : ''}
+        </div>`;
+      };
+
+      document.getElementById('kanbanBoard').innerHTML = BOARD_COLUMNS.map(col => {
+        const cards = grouped[col.key];
+        return `<div class="kanban-col">
+          <div class="col-header ${col.cls}">
+            <span>${esc(col.label)}</span>
+            <span class="col-ct">${cards.length}</span>
+          </div>
+          ${cards.map(renderCard).join('')}
+        </div>`;
+      }).join('');
+
+      // Wire board card clicks → lightbox
+      document.querySelectorAll('[data-kcard]').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.getAttribute('data-kcard');
+          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          if (t) openLightbox(t);
+        });
+      });
+    }
+
+    /* Render: done summary */
+
+    function renderDone(tickets) {
+      const done = tickets.filter(t => t.status === 'done');
+      if (!done.length) { document.getElementById('doneSection').innerHTML = ''; return; }
+
+      document.getElementById('doneSection').innerHTML = `
+        <div class="done-summary" id="doneSummaryBar">
+          <span class="done-label">\u2705 ${done.length} steps completed</span>
+          <button class="btn-sm" id="doneToggle" type="button">Show all</button>
+        </div>
+        <div class="done-detail" id="doneDetail">
+          <div class="done-grid">
+            ${done.map(t => `<div class="done-chip">${esc(friendlyTitle(t))}</div>`).join('')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('doneToggle').addEventListener('click', () => {
+        const detail = document.getElementById('doneDetail');
+        const btn = document.getElementById('doneToggle');
+        detail.classList.toggle('show');
+        btn.textContent = detail.classList.contains('show') ? 'Hide' : 'Show all';
+      });
+    }
+
+    /* Render: research tasks */
+
+    function renderResearch(tasks) {
+      const el = document.getElementById('researchSection');
+      if (!tasks.length) { el.innerHTML = ''; return; }
+
+      el.innerHTML = `<div class="card">
+        <div class="card-head"><h2>Research &amp; Ideas</h2></div>
+        <div class="card-body">
+          <div class="research-grid">
+            ${tasks.map((t, i) => `<div class="research-card" data-rcard="${i}">
+              <div class="rc-name">${esc(t.name)}</div>
+              <div class="rc-desc">${esc(t.desc)}</div>
+              <div class="rc-who">${esc(t.who)}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+
+      // Wire clicks → lightbox with full description
+      document.querySelectorAll('[data-rcard]').forEach(card => {
+        card.addEventListener('click', () => {
+          const idx = parseInt(card.getAttribute('data-rcard'), 10);
+          const t = tasks[idx];
+          if (!t) return;
+          document.getElementById('lightboxContent').innerHTML = `
+            <button class="lb-close" id="lbClose">\u00D7</button>
+            <span class="lb-badge badge-next">Research</span>
+            <div class="lb-title">${esc(t.name)}</div>
+            <div class="lb-summary">${esc(t.desc)}</div>
+            <div class="lb-meta">
+              <div class="lb-meta-row"><span class="lb-meta-label">Good for</span><span class="lb-meta-value">${esc(t.who)}</span></div>
+            </div>
+          `;
+          document.getElementById('lightboxOverlay').classList.add('show');
+          document.getElementById('lbClose').addEventListener('click', closeLightbox);
+        });
+      });
+    }
+
+    /* Render: backlog table — ALL remaining work (V1 tickets + research) */
+
+    function buildGroomPrompt(name, desc) {
+      return `Claude: please groom "${name}" for implementation.\n\nContext: ${desc || 'See TICKETS.md for details.'}\n\nWrite a ready brief: reference files to read, patterns to match, gotchas, acceptance criteria, and test requirements. Update TICKETS.md with the brief.`;
+    }
+
+    function renderBacklog(tickets, groomedSet, researchTasks) {
+      // All remaining V1 tickets (not done)
+      const remaining = tickets.filter(t => t.status !== 'done');
+
+      // Convert research tasks to backlog-compatible rows
+      const researchRows = (researchTasks || []).map((r, i) => ({
+        number: '',
+        ticket: '',
+        name: r.name,
+        statusRaw: 'research',
+        status: 'research',
+        platform: r.who,
+        owner: '',
+        depends: '',
+        _desc: r.desc,
+        _isResearch: true,
+        _rIdx: i,
+      }));
+
+      const all = [...remaining, ...researchRows];
+
+      if (!all.length) {
+        document.getElementById('backlogList').innerHTML = '<p style="color:var(--muted)">No backlog items.</p>';
+        return;
+      }
+
+      const isGroomed = (t) => {
+        if (t._isResearch) return false;
+        if (t.status === 'done') return true;
+        return groomedSet.has(t.ticket || t.name);
+      };
+
+      const groomed = all.filter(t => isGroomed(t));
+      const ungroomed = all.filter(t => !isGroomed(t));
+
+      const statusBadge = (t) => {
+        if (t._isResearch) return '<span class="badge badge-next">Research</span>';
+        return `<span class="badge ${BADGE_CLASS[t.status] || BADGE_CLASS.unknown}">${esc(statusLabel(t.status))}</span>`;
+      };
+
+      const renderRow = (t, g) => {
+        const id = t.ticket || t.name;
+        const title = t._isResearch ? t.name : friendlyTitle(t);
+        const groomBtn = g ? '' : `<button class="btn-sm btn-groom" data-groom="${esc(id)}" title="Copy grooming prompt for Claude" onclick="event.stopPropagation()">\u{1F4DD} Groom</button>`;
+        return `<tr class="backlog-row" data-brow="${esc(id)}" data-is-research="${t._isResearch ? '1' : '0'}" data-ridx="${t._rIdx ?? ''}">
+          <td>${esc(t.number)}</td>
+          <td><strong>${esc(title)}</strong></td>
+          <td>${statusBadge(t)}</td>
+          <td class="groomed-cell">${g ? '<span class="groomed-yes">\u2713</span>' : '<span class="groomed-no">\u25CB</span>'}</td>
+          <td>${esc(t._isResearch ? t.platform : (friendlyWho(t) || '\u2014'))}</td>
+          <td>${groomBtn}</td>
+        </tr>`;
+      };
+
+      const divider = ungroomed.length && groomed.length
+        ? `<tr class="backlog-divider"><td colspan="6">Needs grooming</td></tr>`
+        : '';
+
+      document.getElementById('backlogList').innerHTML = `
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>#</th><th>Task</th><th>Status</th><th>Groomed</th><th>Who</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${groomed.map(t => renderRow(t, true)).join('')}
+            ${divider}
+            ${ungroomed.map(t => renderRow(t, false)).join('')}
+          </tbody>
+        </table></div>
+      `;
+
+      // Wire backlog row clicks → lightbox
+      document.querySelectorAll('[data-brow]').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = el.getAttribute('data-brow');
+          const isR = el.getAttribute('data-is-research') === '1';
+          const rIdx = parseInt(el.getAttribute('data-ridx'), 10);
+          if (isR && researchTasks && researchTasks[rIdx]) {
+            const r = researchTasks[rIdx];
+            document.getElementById('lightboxContent').innerHTML = `
+              <button class="lb-close" id="lbClose">\u00D7</button>
+              <span class="lb-badge badge-next">Research</span>
+              <div class="lb-title">${esc(r.name)}</div>
+              <div class="lb-summary">${esc(r.desc)}</div>
+              <div class="lb-meta">
+                <div class="lb-meta-row"><span class="lb-meta-label">Good for</span><span class="lb-meta-value">${esc(r.who)}</span></div>
               </div>
             `;
-          }).join('')}
-        </div>
-      `;
+            document.getElementById('lightboxOverlay').classList.add('show');
+            document.getElementById('lbClose').addEventListener('click', closeLightbox);
+          } else {
+            const t = allTickets.find(t => (t.ticket || t.name) === id);
+            if (t) openLightbox(t);
+          }
+        });
+      });
+
+      // Wire groom buttons
+      document.querySelectorAll('[data-groom]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-groom');
+          // Find the name and desc from either tickets or research
+          let name = id, desc = '';
+          const ticket = allTickets.find(t => (t.ticket || t.name) === id);
+          if (ticket) {
+            name = ticket.name || id;
+            desc = friendlySummary(ticket);
+          } else {
+            const r = (researchTasks || []).find(r => r.name === id);
+            if (r) { name = r.name; desc = r.desc; }
+          }
+          const prompt = buildGroomPrompt(name, desc);
+          navigator.clipboard.writeText(prompt).then(() => {
+            btn.classList.add('copied');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '\u2705 Copied';
+            setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+          });
+        });
+      });
     }
 
-    function renderTicketTable(tickets) {
-      if (!tickets.length) {
-        document.getElementById('ticketTable').innerHTML = '<div class="muted">No ticket table found.</div>';
+    /* Render: ownership */
+
+    function renderOwnership(tickets) {
+      const counts = {};
+      tickets.filter(t => t.status === 'done').forEach(t => {
+        if (!t.owner || t.owner === '\u2014' || t.owner === '-') return;
+        counts[t.owner] = (counts[t.owner] || 0) + 1;
+      });
+      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      if (!items.length) {
+        document.getElementById('ownerBody').innerHTML = '<p style="color:var(--muted)">No data.</p>';
         return;
       }
-
-      document.getElementById('ticketTable').innerHTML = `
-        <div class="ticket-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Ticket</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Branch</th>
-                <th>Owner</th>
-                <th>Depends</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tickets.map((ticket) => `
-                <tr>
-                  <td>${escapeHtml(ticket.number)}</td>
-                  <td><strong>${escapeHtml(ticket.ticket || '—')}</strong></td>
-                  <td>${escapeHtml(ticket.name)}</td>
-                  <td><span class="badge ${STATUS_CLASS[ticket.status] || STATUS_CLASS.unknown}">${escapeHtml(ticket.statusRaw)}</span></td>
-                  <td>${escapeHtml(ticket.branch || '—')}</td>
-                  <td>${escapeHtml(ticket.owner || '—')}</td>
-                  <td>${escapeHtml(ticket.depends || '—')}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
+      const mx = Math.max(...items.map(i => i[1]));
+      document.getElementById('ownerBody').innerHTML = `<div class="owner-bars">
+        ${items.map(([o, c]) => {
+          const w = Math.max(4, Math.round((c / mx) * 100));
+          return `<div class="owner-row">
+            <strong>${esc(o)}</strong>
+            <div class="rail"><div class="fill" style="width:${w}%"></div></div>
+            <span>${c}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
     }
 
-    function renderWhatCanRun(tables) {
-      if (!tables.length) {
-        document.getElementById('rightNow').innerHTML = '<div class="muted">No “What can run RIGHT NOW” tables detected.</div>';
-        return;
-      }
+    /* Render: merge log */
 
-      document.getElementById('rightNow').innerHTML = `
-        <div class="right-now">
-          ${tables.map((table) => `
-            <section class="right-now-group">
-              <h3>${escapeHtml(table.heading)}</h3>
-              <div class="ticket-wrap">
-                <table>
-                  <thead>
-                    <tr>${table.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
-                  </thead>
-                  <tbody>
-                    ${table.rows.map((row) => `
-                      <tr>
-                        ${row.map((cell, index) => {
-                          const header = table.headers[index] || '';
-                          if (header.toLowerCase().includes('status')) {
-                            const status = normalizeStatus(cell);
-                            return `<td><span class="badge ${STATUS_CLASS[status] || STATUS_CLASS.unknown}">${escapeHtml(plainText(cell))}</span></td>`;
-                          }
-                          return `<td>${escapeHtml(plainText(cell))}</td>`;
-                        }).join('')}
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    function renderMergeLog(entries) {
+    function renderMerge(entries) {
       if (!entries.length) {
-        document.getElementById('mergeTimeline').innerHTML = '<div class="muted">No merge log data found.</div>';
+        document.getElementById('mergeTimeline').innerHTML = '<p style="color:var(--muted)">No data.</p>';
         return;
       }
-
-      const latestFirst = [...entries].reverse();
-      document.getElementById('mergeTimeline').innerHTML = `
-        <div class="timeline">
-          ${latestFirst.map((entry) => `
-            <div class="timeline-item">
-              <div class="top">
-                <strong>${escapeHtml(entry.ticket)}</strong>
-                <span class="badge status-next">${escapeHtml(entry.date)}</span>
-                <span class="badge status-review">${escapeHtml(entry.who)}</span>
-              </div>
-              <div class="muted">${escapeHtml(entry.change)}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      const rev = [...entries].reverse();
+      document.getElementById('mergeTimeline').innerHTML = `<div class="timeline">
+        ${rev.map(e => `<div class="tl-item">
+          <span class="tl-date">${esc(e.date)}</span>
+          <strong>${esc(e.ticket)}</strong>
+          <span class="tl-desc">${esc(e.change)}</span>
+        </div>`).join('')}
+      </div>`;
     }
 
-    function applyMarkdown(markdown, mode) {
-      const text = String(markdown || '');
-      if (!text.trim()) {
-        setError('No markdown content to parse.');
+    /* Render: story log */
+
+    function renderStory(entries) {
+      if (!entries.length) {
+        document.getElementById('storyBody').innerHTML = '<p style="color:var(--muted)">No story entries yet.</p>';
         return;
       }
+      const rev = [...entries].reverse();
+      document.getElementById('storyBody').innerHTML = `<div class="story-entries">
+        ${rev.map(e => `<div class="story-entry">
+          <div class="story-date">${esc(e.date)}</div>
+          <div class="story-text">${esc(e.text)}</div>
+        </div>`).join('')}
+      </div>`;
+    }
 
-      const tickets = parseV1Tickets(text);
-      const rightNowTables = parseWhatCanRun(text);
+    /* Apply + fetch */
+
+    function applyMarkdown(md, mode) {
+      const text = String(md || '');
+      if (!text.trim()) { setError('No content.'); return; }
+
+      const tickets = parseV1(text);
+      allTickets = tickets;
+      const rnTables = parseRightNow(text);
+      const researchTasks = parseResearchTasks(rnTables);
       const mergeLog = parseMergeLog(text);
+      const storyLog = parseStoryLog(text);
+      const groomed = buildGroomedSet(rnTables);
 
-      renderProgress(tickets);
-      renderPhaseTimeline(tickets);
+      renderGoal(tickets);
+      renderWhatsNext(tickets);
+      renderKanban(tickets, groomed);
+      renderResearch(researchTasks);
+      renderDone(tickets);
+      renderBacklog(tickets, groomed, researchTasks);
+      renderStory(storyLog);
       renderOwnership(tickets);
-      renderTicketTable(tickets);
-      renderWhatCanRun(rightNowTables);
-      renderMergeLog(mergeLog);
+      renderMerge(mergeLog);
 
       lastText = text;
       sourceMode = mode;
       setError('');
-      updatedAt.textContent = `Updated ${new Date().toLocaleString()}`;
-      if (mode === 'fetch') {
-        setBadge('Loaded from TICKETS.md', 'done');
-      } else if (mode === 'file') {
-        setBadge('Loaded from file upload', 'review');
-      } else {
-        setBadge('Loaded from pasted markdown', 'wip');
-      }
-
-      fallbackPanel.classList.remove('hidden');
-      if (mode === 'fetch') {
-        startPolling();
-      } else {
-        stopPolling();
-      }
+      const now = new Date().toLocaleTimeString();
+      if (mode === 'fetch') { setSource(`Auto \u00b7 ${now}`); startPolling(); }
+      else if (mode === 'file') { setSource(`File \u00b7 ${now}`); stopPolling(); }
+      else { setSource(`Paste \u00b7 ${now}`); stopPolling(); }
     }
 
     async function fetchTickets() {
-      const response = await fetch(`TICKETS.md?ts=${Date.now()}`, { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      return response.text();
+      const r = await fetch(`TICKETS.md?ts=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.text();
     }
 
-    async function loadFromFetch(notifyOnError) {
+    async function loadFromFetch(notify) {
       try {
         const text = await fetchTickets();
         pasteArea.value = text;
         applyMarkdown(text, 'fetch');
-      } catch (error) {
+      } catch (e) {
         stopPolling();
-        setBadge('Fetch unavailable', 'blocked');
-        if (notifyOnError) {
-          setError(`Could not fetch TICKETS.md (${error.message}). Use paste or file upload fallback.`);
-        }
+        if (notify) setError(`Fetch failed (${e.message}). Use Upload or Paste.`);
       }
     }
 
     function startPolling() {
       stopPolling();
-      pollTimer = window.setInterval(async () => {
+      pollTimer = setInterval(async () => {
         try {
           const text = await fetchTickets();
-          if (text !== lastText) {
-            applyMarkdown(text, 'fetch');
-          }
-        } catch {
-          stopPolling();
-          setBadge('Polling stopped (fetch failed)', 'blocked');
-        }
+          if (text !== lastText) applyMarkdown(text, 'fetch');
+        } catch { stopPolling(); }
       }, 10000);
     }
 
     function stopPolling() {
       if (!pollTimer) return;
-      window.clearInterval(pollTimer);
+      clearInterval(pollTimer);
       pollTimer = null;
     }
 
