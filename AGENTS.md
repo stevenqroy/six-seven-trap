@@ -23,14 +23,19 @@ Every session, before writing any code:
 3. Search for your ticket's **Ready Brief** in `TICKETS.md` (search `S7R-### Ready Brief`)
 4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
 5. **Create or switch to YOUR branch:**
-   - New branch: `git fetch origin && git checkout -b yourplatform/S7R-### origin/main`
-   - Existing branch: `git checkout yourplatform/S7R-### && git fetch origin && git rebase origin/main`
+   ```bash
+   git fetch origin
+   # Try creating new branch; if it already exists, switch to it and rebase
+   git checkout -b yourplatform/S7R-### origin/main 2>/dev/null || \
+     (git checkout yourplatform/S7R-### && git rebase origin/main)
+   ```
    - **HARD GATE**: Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. If it doesn't match, **STOP IMMEDIATELY**. Do not write any code. Do not edit any file. Fix the branch first.
+   - **Common failure**: `git checkout -b` fails silently when the branch already exists locally (from a prior dispatch claim). The command above handles both cases. Never assume `-b` succeeded — always verify.
 6. If the ready brief lists reference files, read them
 7. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
 8. Start work
 
-**Branch verification is not optional.** Codex once wrote 400+ lines of shield code on the wrong branch. That work was discarded. Always verify.
+**Branch verification is not optional.** Codex has twice ended up on the wrong branch — once writing 400+ lines on someone else's branch, once falling back to main when `-b` failed because the branch already existed. Both times the work had to be recovered manually. Always verify.
 
 ## Claiming a ticket
 

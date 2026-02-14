@@ -65,7 +65,9 @@ The dispatch prompt must follow this exact template:
 Branch: <agent>/S7R-###
 
 STEP 1: Read AGENTS.md — follow the startup protocol exactly.
-STEP 2: Create your branch from latest main: git checkout -b <agent>/S7R-### origin/main
+STEP 2: Create your branch from latest main:
+        git fetch origin
+        git checkout -b <agent>/S7R-### origin/main 2>/dev/null || (git checkout <agent>/S7R-### && git rebase origin/main)
         Run git branch --show-current and confirm it says <agent>/S7R-###. STOP if it doesn't.
 STEP 3: Update TICKETS.md — set status to wip:<agent>, Branch to <agent>/S7R-###, Owner to <agent>. Commit this change first.
 STEP 4: Read your ticket's Ready Brief in TICKETS.md (search for "S7R-### Ready Brief").
