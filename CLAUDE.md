@@ -74,10 +74,13 @@ STEP 6: Before marking review — rebase onto latest main: git fetch origin && g
 STEP 7: Commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Output the TL;DR handoff from AGENTS.md.
 ```
 
-**After dispatching**, immediately sync main's TICKETS.md:
-- Set the ticket to `wip:<agent>`, fill Branch and Owner
-- If the ticket uses main.js, set the main.js Lock
-- Commit and push to main
+**After dispatching — MANDATORY SYNC (do not skip, do not defer):**
+- [ ] TICKETS.md on main: set ticket to `wip:<agent>`, fill Branch and Owner
+- [ ] If ticket touches main.js: set main.js Lock to `wip:<agent> (S7R-###)`
+- [ ] `git add TICKETS.md && git commit && git push`
+- [ ] Verify push succeeded
+
+**This sync must happen in the SAME response as the dispatch prompt.** Not later. Not next turn. Immediately. Claude forgot this step during S7R-072 dispatch and the dashboard showed stale data.
 
 **Why**: The agent will claim the ticket on its branch, but main must also reflect it to prevent double-assignment.
 
@@ -123,6 +126,20 @@ When context is getting heavy or a session is ending, add an entry to the TICKET
 - [ ] Confirmed branch with `git branch --show-current`
 - [ ] Working tree clean or as expected (`git status`)
 - [ ] Not interleaving branches — finish current work first
+
+## After QA — verify
+
+- [ ] Step 0 was done FIRST (reviewing status on main, committed and pushed)
 - [ ] QA gate passed (lint, test, build)
 - [ ] Ready Brief acceptance criteria — every checkbox verified
-- [ ] TICKETS.md status updated
+- [ ] Cherry-pick to main, tests pass on main
+- [ ] TICKETS.md status → done, merge log entry added
+- [ ] Deploy to GitHub Pages
+- [ ] Commit and push
+
+## After dispatch — verify
+
+- [ ] Dispatch prompt includes branch creation + verification + rebase steps
+- [ ] TICKETS.md on main: ticket set to `wip:<agent>`, Branch and Owner filled
+- [ ] main.js Lock updated if ticket touches main.js
+- [ ] Committed and pushed to main
