@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**24 of 29 V1 tickets done (83%). 5 tickets + 2 gates remaining.**
+**24 of 30 V1 tickets done (80%). 6 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -71,6 +71,7 @@
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
+| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -89,7 +90,7 @@
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
 | S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | done | codex |
-| S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers, haptic vibration on impact | next | codex/gemini |
+| S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers, haptic vibration on impact | done | — |
 | S7R-073 | Projectile trails, color variety, energy bolt look, usage limiter | done | gemini |
 
 ### Cleanup tickets (no blockers, can start now)
@@ -98,6 +99,7 @@
 |--------|-------|--------|-------------|
 | S7R-057 | Extract shared defensive helpers into `src/utils/defensive.js` | done | — |
 | S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
+| S7R-074 | Fix 2 failing flags-boot integration tests (assume all defaults false, but 4 are now true) | next | codex/gemini |
 | S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | done | — |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | done | — |
@@ -505,6 +507,34 @@
 - [ ] Fire button greys out for 1.2 seconds between shots (cooldown visible)
 - [ ] Power cost is 20 per shot (noticeable drain)
 - [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-074 Ready Brief
+
+**What:** Fix 2 failing integration tests in `tests/integration/flags-boot.test.js`. The tests assume all flag defaults are `false`, but 4 action-bar flags (`actionBar`, `actionInputArbitration`, `multiTouchAction`, `buttonMappedPowers`) were permanently enabled (defaulted to `true`) during S7R-046/047/048. The tests need to check against actual defaults instead of assuming all-false.
+
+**Reference files to read first:**
+- `tests/integration/flags-boot.test.js` lines 60-64 (test: "should boot with all flags disabled") — asserts `Object.values(flags).every(v => v === false)`
+- `tests/integration/flags-boot.test.js` lines 141-151 (test: "should maintain consistency after reset") — same all-false assumption
+- `src/config/flags.js` lines 64-67 — the 4 flags that default to `true`
+
+**Files to modify:**
+1. `tests/integration/flags-boot.test.js` — Fix the 2 failing tests to check actual defaults from `getAllFlags()` after `initFlags()` instead of assuming all values are `false`
+
+**DO NOT modify:** `src/config/flags.js`, any source files — this is a test-only fix
+
+**Gotchas:**
+- Don't hardcode the 4 true-default flags in the test — query them dynamically so the test survives future flag additions
+- The fix for "should boot with all flags disabled" should probably be renamed since not all flags are disabled by default anymore
+- `resetFlags()` should restore to the same defaults as `initFlags()` — verify this is the case
+
+**Acceptance criteria:**
+- [ ] Both previously failing tests now pass
+- [ ] No test names claim "all flags disabled" if that's no longer true
+- [ ] Tests validate defaults dynamically (not hardcoded false assumption)
+- [ ] All other tests in the file still pass (13 total)
+- [ ] `npm run test:unit` passes with 0 failures
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 
