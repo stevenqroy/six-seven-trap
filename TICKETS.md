@@ -65,7 +65,7 @@
 | 24 | S7R-058 | Add missing destroy() methods | — | no | codex/gemini | done | main | codex |
 | 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | done | main | gemini |
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
-| 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | wip:codex | codex/S7R-061 | codex |
+| 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | reviewing | codex/S7R-061 | codex |
 
 ## What can run RIGHT NOW
 
