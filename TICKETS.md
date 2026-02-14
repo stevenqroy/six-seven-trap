@@ -18,7 +18,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**18 of 22 V1 tickets done (82%). 2 tickets + 2 gates remaining.**
+**20 of 25 V1 tickets done (80%). 5 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -60,6 +60,11 @@
 | 20 | S7R-054 | Polish pass | gate-1 | yes | claude | next | — | — |
 | 21 | S7R-055 | Launch prep | gate-1 | yes | claude | blocked:054 | — | — |
 | 22 | — | V1-PLAYTEST-GATE-2 | 20-21 | — | steven | blocked:all | — | — |
+| 23 | S7R-057 | Shared defensive helpers | — | no (new module) | codex/gemini | done | main | codex |
+| 24 | S7R-058 | Add missing destroy() methods | — | no | codex/gemini | done | main | codex |
+| 25 | S7R-059 | Cap danger-mode particles | — | no | gemini | next | — | — |
+| 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | next | — | — |
+| 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -73,19 +78,200 @@
 | S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
 
+### Cleanup tickets (no blockers, can start now)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-057 | Extract shared defensive helpers into `src/utils/defensive.js` | done | — |
+| S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
+| S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | next | gemini |
+| S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | next | codex |
+| S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | next | codex |
+
+### Research tickets (no blockers, can start now)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-062 | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table for S7R-054 polish pass. | next | gemini |
+| S7R-063 | Identify top 5 blocks in main.js that should become standalone modules. Line ranges, what they do, lines saved. | next | gemini |
+| S7R-064 | Review all modules for missing test coverage, edge cases, pattern violations. Output gap report. | next | codex |
+| S7R-065 | Write a one-page story brief: who are the characters, what's the tone, what do enemies/supports represent in-story. 6 and 7 are alien kids at recess, the ship is their parents' minivan. | next | steven/claude |
+| S7R-066 | Research sprite sheet formats and tools for small 2D characters (16x16 or 32x32). What format works with canvas? How to animate idle/walk/hit? Free pixel art tools? | next | gemini |
+| S7R-067 | Design visual identity for alien kids — what do they look like? Sketch descriptions for all characters. | next | steven/claude |
+| S7R-068 | Brainstorm alien ship personality and visual ideas. Does it hover impatiently? Honk? Send stern messages? | next | anyone |
+| S7R-069 | Catalog ~30 hardcoded scene-tuning values in main.js (parallax, gradients, wave freq, etc.). Move to constants.js or scene-config module. | next | gemini |
+
+#### S7R-058 Ready Brief
+
+**What:** Add destroy()/cleanup methods to modules that create state, timers, or event listeners but lack teardown. Critical fix for debug-panel.js listener leak.
+
+**Reference files to read first:**
+- `src/ui/action-bar.js` lines 348–354 (good destroy() pattern — clears Maps, removes DOM)
+- `src/core/input.js` lines 49–62 (good destroy() pattern — removes all listeners, clears timers)
+- `src/config/accessibility-settings.js` lines 184–186 (minimal destroy — clears listener Set)
+
+**Files to modify (add destroy() export):**
+
+1. `src/config/debug-panel.js` — **CRITICAL**. `initDebugPanel()` adds 3 listeners that never get removed:
+   - `document.addEventListener('keydown', ...)` at line 435
+   - `window.addEventListener('flagchange', ...)` at line 443
+   - `window.addEventListener('flagsreset', ...)` at line 449
+   - Also: DOM panel element and `<style>` element appended to document
+   - Fix: store listener refs, return object with `destroy()` that removes them all and removes DOM
+   - Currently returns nothing — must change to return `{ destroy }`
+
+2. `src/systems/enemy-state-machine.js` — has `reset()` but no `destroy()`. Add `destroy()` that calls `reset()` and nulls out entity arrays + metrics.
+
+3. `src/systems/support-runtime.js` — has `reset()` but no `destroy()`. Same pattern: `destroy()` wraps `reset()` + nulls references.
+
+4. `src/ui/action-router.js` — holds callback references. Add `destroy()` that nulls them.
+
+5. `src/ui/hud-updates.js` — holds DOM element references. Add `destroy()` that nulls them.
+
+6. `src/systems/adaptive-quality.js` — holds `samples` array that grows during gameplay. Add `destroy()` that clears it.
+
+7. `src/systems/telemetry.js` — holds currentRun and lastCompletedRun data. Add `destroy()` that resets to empty state.
+
+**DO NOT modify:**
+- `src/systems/enemy-registry.js` — frozen immutable objects, no cleanup needed
+- `src/systems/support-registry.js` — frozen immutable objects, no cleanup needed
+- `src/core/run-rng.js` — pure function, no state
+- `src/ui/action-bar-config.js` — static config array
+- `src/main.js` — do not touch
+
+**Gotchas:**
+- `debug-panel.js` `initDebugPanel()` currently returns `undefined`. Changing it to return `{ destroy }` is safe — `main.js` calls `initDebugPanel()` but doesn't use the return value. Verify by searching for `initDebugPanel` call sites.
+- The 3 anonymous listeners in debug-panel (lines 435, 443, 449) must be refactored to named functions so they can be removed with `removeEventListener`.
+- `enemy-state-machine.js` and `support-runtime.js` already have `reset()` — do not duplicate logic. `destroy()` should call `reset()` internally then null remaining references.
+
+**Test requirements:**
+- All existing tests must pass (`npm run test:unit`)
+- No new tests needed — destroy() methods tested indirectly through module lifecycle
+- `npm run lint` and `npm run build` — zero errors
+
+**Acceptance criteria:**
+- [ ] All 7 files export a `destroy()` method
+- [ ] `debug-panel.js` destroy() removes all 3 event listeners and DOM elements
+- [ ] No anonymous event listeners remain in debug-panel.js listener setup
+- [ ] `npm run test:unit` passes (132/132)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-059 Ready Brief
+
+**What:** Hard-cap danger-mode particle arrays to prevent runaway memory growth. Currently `maxDangerEmbers` and `maxDangerSizzles` fall back to `Number.POSITIVE_INFINITY` when adaptive quality is off (lines 2881-2882 of main.js). Embers spawn at ~280/sec and each bounce creates 2-5 sizzles — arrays grow without bound.
+
+**Reference files to read first:**
+- `src/main.js` lines 2870-2900 (ember/sizzle cap definitions)
+- `src/main.js` lines 2893-2960 (ember spawn + update loop)
+- `src/main.js` lines 2953-2990 (sizzle spawn + update loop)
+- `src/systems/adaptive-quality.js` (tier definitions, `getQualityParams()`)
+
+**Files to modify:**
+1. `src/main.js` — Replace `Number.POSITIVE_INFINITY` fallbacks with hard caps (e.g. 300 embers, 150 sizzles). These caps should apply regardless of adaptive quality state.
+2. `src/systems/adaptive-quality.js` — Ensure tier-based caps remain lower than the hard caps for quality tiers that throttle.
+
+**DO NOT modify:** Any file not listed above.
+
+**Gotchas:**
+- The `POSITIVE_INFINITY` appears in a ternary: `adaptiveQuality ? tierCap : Infinity`. Replacing the fallback does NOT remove the adaptive quality branch — both paths must have finite values.
+- Smoke puffs already have a cap (420) — match that pattern.
+- Test with adaptive quality OFF to verify the hard cap works.
+
+**Acceptance criteria:**
+- [ ] `maxDangerEmbers` and `maxDangerSizzles` are finite in all code paths
+- [ ] Danger mode runs for 60+ seconds without array growth beyond caps
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-060 Ready Brief
+
+**What:** Reduce per-frame canvas gradient allocations and `shadowBlur` usage that cause GPU pressure and frame drops, especially during danger mode and laser storms.
+
+**Reference files to read first:**
+- `src/main.js` lines 2990-3020 (`drawDangerBeamEmbers` — per-ember gradient)
+- `src/main.js` lines 2220-2270 (`drawLaserStorm` — per-beam gradient + shadowBlur)
+- `src/main.js` lines 2540-2620 (`drawDangerBeam` — 4 gradients per frame)
+- `src/main.js` lines 730-860 (`drawWorld` — 6 static gradients recreated every frame)
+- `src/game-objects/projectile.js` lines 80-90 (shadowBlur = 18 per projectile)
+- `src/systems/adaptive-quality.js` (quality tiers)
+
+**Files to modify:**
+1. `src/main.js` — Cache `drawWorld()` gradients (sky, hills, barn, ground) and invalidate only when canvas size or dayProgress step changes. Cache or quantize `drawDangerBeam()` oscillation params to reduce gradient churn. Remove per-ember/sizzle `createRadialGradient` — use a single pre-built gradient or flat color with alpha.
+2. `src/game-objects/projectile.js` — Gate `shadowBlur` behind quality tier. At low quality, skip blur entirely. At mid quality, use reduced blur.
+3. `src/systems/adaptive-quality.js` — Add `shadowBlurEnabled` and `maxShadowBlur` to quality tier params if not already present.
+
+**DO NOT modify:** Any file not listed above.
+
+**Gotchas:**
+- `createRadialGradient` / `createLinearGradient` allocate native CanvasGradient objects that are GC'd. Hundreds per frame = GC pauses.
+- `shadowBlur` triggers a Gaussian blur pass on the GPU for each draw call. `shadowBlur = 0` is the only value that skips the blur entirely — even `shadowBlur = 1` is expensive.
+- Sky gradient colors change with `dayProgress` (180s cycle). Cache invalidation should use quantized time steps (e.g. every 0.5s) not exact float comparison.
+- Laser storm has up to 18 beams — that's 18+ gradients per frame. A pooled gradient per beam slot would eliminate all allocations.
+
+**Acceptance criteria:**
+- [ ] `drawWorld()` creates ≤1 gradient per frame on average (cached, invalidated on resize/time step)
+- [ ] Danger beam embers/sizzles use no per-entity gradient calls
+- [ ] `shadowBlur` is 0 at quality tier ≤ 2
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-061 Ready Brief
+
+**What:** Replace O(n) `splice` removals with O(1) swap-and-pop in all particle/ember/smoke/sizzle loops. Gate `serializeDebug()` calls behind debug panel visibility. Reduce per-frame allocations in support-runtime and harvester targeting.
+
+**Reference files to read first:**
+- `src/main.js` lines 1128, 1191 (particle/score popup splice loops)
+- `src/main.js` lines 2406, 2927, 2974, 2986 (smoke/ember/sizzle splice loops)
+- `src/supports/medic-firefly.js` lines 257-296, 352-373 (serializeDebug unconditional)
+- `src/supports/striker-hawk.js` lines 413-453, 508-526 (serializeDebug unconditional)
+- `src/systems/support-runtime.js` lines 188, 229-231 (per-frame array allocations)
+- `src/enemies/harvester.js` lines 176-193 (per-frame sort + allocation in selectTargets)
+
+**Files to modify:**
+1. `src/main.js` — In all reverse-iteration `splice(i, 1)` loops for particles, score popups, smoke puffs, embers, and sizzles: replace with swap-and-pop pattern (`arr[i] = arr[arr.length - 1]; arr.pop()`).
+2. `src/supports/medic-firefly.js` — Only call `serializeDebug()` when the debug panel is actually visible. Check `window.__debugPanelVisible` flag or similar before building the debug object.
+3. `src/supports/striker-hawk.js` — Same gating as medic-firefly.
+4. `src/systems/support-runtime.js` — Reuse `units` array in `onFrame()` instead of allocating `nextUnits = []` each frame. Filter in-place or use a swap pattern.
+5. `src/enemies/harvester.js` — Reuse a module-level `candidates` array in `selectTargets()` instead of allocating a new one each frame. Clear with `.length = 0` instead of `= []`.
+
+**DO NOT modify:** Any file not listed above.
+
+**Gotchas:**
+- Swap-and-pop changes iteration order — since these loops already iterate in reverse and entities are unordered, this is safe.
+- `serializeDebug()` gating: the debug panel visibility flag must be set by `debug-panel.js`. If S7R-058 hasn't merged yet, use a simple `typeof window.__debugPanelVisible !== 'undefined' && window.__debugPanelVisible` check.
+- `support-runtime.js` `nextUnits` is used because expired units are filtered out. In-place filtering with swap-and-pop is the right approach.
+- Harvester `candidates` reuse: clear with `.length = 0`, not `= []`, to avoid reallocating the backing store.
+
+**Acceptance criteria:**
+- [ ] Zero `splice(i, 1)` calls remain in particle/ember/smoke/sizzle/popup loops
+- [ ] `serializeDebug()` is not called when debug panel is hidden
+- [ ] `selectTargets()` does not allocate a new array each frame
+- [ ] `support-runtime.js` `onFrame()` does not allocate a new array each frame
+- [ ] `npm run test:unit` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
 ### Tooling tickets (no blockers, can start now)
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
 | S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | done | — |
 
-### Research tasks (no ticket needed)
+### Research & Ideas
 
-| Task | TL;DR | Good for |
-|------|-------|----------|
-| S7R-054 prep | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table. | codex or gemini |
-| main.js extraction | Identify top 5 blocks in main.js that should become standalone modules. Line ranges, what they do, lines saved. | gemini |
-| Test gap audit | Review all modules for missing test coverage, edge cases, pattern violations. | codex or gemini |
+| # | Ticket | Name | Good for | Status | Branch | Owner |
+|---|--------|------|----------|--------|--------|-------|
+| 28 | S7R-062 | Tunable constants catalog (S7R-054 prep) | gemini | next | — | — |
+| 29 | S7R-063 | main.js extraction research | gemini | next | — | — |
+| 30 | S7R-064 | Test gap audit | codex | next | — | — |
+| 31 | S7R-065 | Narrative design brief | steven/claude | next | — | — |
+| 32 | S7R-066 | Sprite sheet research | gemini | next | — | — |
+| 33 | S7R-067 | Character design brief | steven/claude | next | — | — |
+| 34 | S7R-068 | Alien ship lore | anyone | next | — | — |
+| 35 | S7R-069 | Magic numbers cleanup | gemini | next | — | — |
 
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
@@ -115,6 +301,19 @@
 **Queue**: _(empty)_
 > When you need main.js, write your name here. When done, clear it and notify the next in queue.
 
+## Story Log
+> The story of building Six Seven Ranch, told one chapter at a time. Add a new entry when something meaningful happens.
+
+### February 12, 2026
+We started building Six Seven Ranch — a mobile arcade game where you protect cute number creatures from an alien ship. In one day, three AI platforms (Claude, Codex, and Gemini) built the entire foundation: feature flags, a test harness, mobile-safe layout, enemy AI, an action button system, two support units (a healing firefly and a diving hawk), and made it installable as a phone app. 18 of 22 tasks done.
+
+### February 13, 2026
+Built a project dashboard so we can see where everything stands. The game is ready for its first playtest — Steven needs to play it on his phone and see if it's fun.
+
+The game found its story. The numbers aren't just numbers — they're alien kids at recess. The 6s and 7s are having the time of their lives, and the alien ship overhead? That's their parents coming to pick them up. But the kids don't want to go home yet. Your job is to help them stay out a little longer. The harvester's tractor beam is a parent scooping up a kid. The firefly is a friend helping someone hide. The hawk throws a distraction.
+
+We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Both passed all tests, but Codex won — cleaner diff, caught a gotcha Gemini missed, and didn't bloat TICKETS.md. Added three new rules to CLAUDE.md based on lessons learned.
+
 ## Merge Log
 > Every merge to main gets a one-liner here. Workers: read the last few entries when starting a session to see what changed since you last pulled.
 
@@ -140,3 +339,4 @@
 | 2026-02-12 | S7R-051 | `src/supports/medic-firefly.js` — healing pulse support unit, fractional heal progress, flag-gated | codex |
 | 2026-02-12 | S7R-053 | `src/supports/striker-hawk.js` — dive-strike support unit, threat-priority targeting, flag-gated | gemini |
 | 2026-02-13 | S7R-056 | `dashboard.html` — standalone project dashboard, parses TICKETS.md, zero dependencies | codex |
+| 2026-02-13 | S7R-057 | `src/utils/defensive.js` — extracted toFinite, toNonNegativeFinite, clamp from 11 files into shared module | codex |
