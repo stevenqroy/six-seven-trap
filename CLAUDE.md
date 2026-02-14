@@ -95,6 +95,9 @@ Research tickets (🔍/🎭) produce a markdown doc, not code. Deliverable:
 
 ### Handoff format: QA result → user
 
+Before starting QA, set ticket status to `reviewing` in TICKETS.md and commit.
+On PASS: set to `done`, merge to main. On FAIL: set back to `review` with notes.
+
 ```
 S7R-### QA: PASS / FAIL
 [If FAIL: what's wrong, 1-2 lines]

@@ -23,7 +23,8 @@
 ## Status Key
 - `done` — merged to main, verified
 - `wip:worker` — in progress (e.g. `wip:codex`, `wip:claude`, `wip:gemini`)
-- `review` — code written, needs QA before merge
+- `review` — code written, ready for QA
+- `reviewing` — QA in progress (Claude is actively reviewing)
 - `next` — ready to pick up
 - `blocked:XXX` — waiting on ticket XXX
 - `skip` — not needed for V1
@@ -284,7 +285,7 @@
 3. **main.js lock**: only one worker modifies `src/main.js` at a time. Before editing main.js, check the lock below. If held, work on something else or ask Steven to coordinate. Update the lock when you claim/release.
 4. **Update on completion**: set to `review` when PR is ready, `done` when merged.
 5. **Dependency check**: before starting, verify all `Depends` tickets are `done` on main.
-6. **QA rule**: every `review` ticket gets QA'd by Claude Code before merging to main.
+6. **QA rule**: every `review` ticket gets QA'd by Claude Code before merging to main. Claude sets status to `reviewing` when starting QA, then `done` on pass or back to `review` with notes on fail.
 7. **Build gate**: every branch must pass `npx vite build` before marking `review`. If it doesn't build, it's not ready.
 8. **Don't invent scope**: implement exactly what the ticket spec says. No bonus features, no "while I'm here" refactors. If you see something worth doing, note it in your PR description — don't do it.
 9. **Match existing patterns**: read `src/systems/power.js` and `src/config/flags.js` for module style. Use the same export conventions, JSDoc style, and error handling patterns.

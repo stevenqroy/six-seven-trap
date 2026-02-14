@@ -464,6 +464,8 @@
     .k-id { font-size: 11px; font-weight: 600; color: var(--muted); }
     .k-name { font-size: 13px; font-weight: 500; line-height: 1.35; }
 
+    .k-status { margin-top: 4px; }
+    .k-status .badge { font-size: 11px; padding: 2px 8px; }
     .k-meta {
       display: flex;
       gap: 5px;
@@ -566,6 +568,7 @@
     .badge-done { background: var(--done-bg); color: var(--done); }
     .badge-wip { background: var(--wip-bg); color: var(--wip); }
     .badge-review { background: var(--review-bg); color: var(--review); }
+    .badge-reviewing { background: var(--wip-bg); color: var(--wip); }
     .badge-blocked { background: var(--blocked-bg); color: var(--blocked); }
     .badge-next { background: var(--next-bg); color: var(--next); }
     .badge-skip { background: var(--skip-bg); color: var(--skip); }
@@ -846,7 +849,7 @@
 
   <script>
     const BADGE_CLASS = {
-      done: 'badge-done', wip: 'badge-wip', review: 'badge-review',
+      done: 'badge-done', wip: 'badge-wip', review: 'badge-review', reviewing: 'badge-reviewing',
       blocked: 'badge-blocked', next: 'badge-next', skip: 'badge-skip', unknown: 'badge-unknown',
     };
 
@@ -864,7 +867,7 @@
 
     const BOARD_COLUMNS = [
       { key: 'wip', label: 'In Progress', cls: 'col-wip' },
-      { key: 'review', label: 'In Review', cls: 'col-review' },
+      { key: 'review', label: 'Review', cls: 'col-review', statuses: ['review', 'reviewing'] },
       { key: 'next', label: 'Up Next', cls: 'col-next' },
       { key: 'blocked', label: 'Blocked', cls: 'col-blocked' },
     ];
@@ -1045,6 +1048,7 @@
       const s = plain(raw).toLowerCase();
       if (s.startsWith('done')) return 'done';
       if (s.startsWith('wip')) return 'wip';
+      if (s === 'reviewing') return 'reviewing';
       if (s.startsWith('review')) return 'review';
       if (s.startsWith('blocked')) return 'blocked';
       if (s.startsWith('next')) return 'next';
@@ -1076,6 +1080,7 @@
       if (ticket.status === 'blocked') return '\u23F3';
       if (ticket.status === 'wip') return '\u{1F6E0}\uFE0F';
       if (ticket.status === 'review') return '\u{1F50D}';
+      if (ticket.status === 'reviewing') return '\u{1F9D0}';
       return '\u{1F4CB}';
     }
 
@@ -1122,7 +1127,8 @@
     function statusLabel(s) {
       if (s === 'done') return 'Done';
       if (s === 'wip') return 'In Progress';
-      if (s === 'review') return 'In Review';
+      if (s === 'review') return 'Ready for review';
+      if (s === 'reviewing') return 'Reviewing';
       if (s === 'next') return 'Ready';
       if (s === 'blocked') return 'Waiting';
       if (s === 'skip') return 'Skipped';
@@ -1365,7 +1371,7 @@
       const pct = total ? Math.round((done / total) * 100) : 0;
 
       const remaining = total - done;
-      const active = tickets.filter(t => t.status === 'wip' || t.status === 'review');
+      const active = tickets.filter(t => t.status === 'wip' || t.status === 'review' || t.status === 'reviewing');
       const nextUp = tickets.filter(t => t.status === 'next');
 
       // Subtitle: what's happening right now
@@ -1392,33 +1398,12 @@
     function renderWhatsNext(tickets) {
       const items = [];
 
-      // Active work (wip, review)
-      const active = tickets.filter(t => t.status === 'wip' || t.status === 'review');
-      for (const t of active) {
-        const label = t.status === 'review' ? 'Being reviewed' : 'In progress';
-        items.push({ ticket: t, label, cls: t.status === 'review' ? 'item-review' : 'item-wip' });
-      }
-
-      // Ready to pick up
+      // Only show tickets NOT already on the board (wip/review/reviewing/blocked are on the board)
       const nextUp = tickets.filter(t => t.status === 'next');
       for (const t of nextUp) {
         const who = friendlyWho(t);
         const label = who ? `${who} can start this` : 'Ready for someone to pick up';
         items.push({ ticket: t, label, cls: 'item-ready' });
-      }
-
-      // Blocked — only first-level (blocker is active/next/gate, not another blocked item)
-      const activeIds = new Set(tickets.filter(t =>
-        t.status === 'next' || t.status === 'wip' || t.status === 'review'
-      ).map(t => t.ticket || t.name));
-
-      const blocked = tickets.filter(t => t.status === 'blocked');
-      for (const t of blocked) {
-        const blocker = t.statusRaw.replace(/blocked:?/i, '').trim();
-        if (blocker.includes('gate') || activeIds.has(blocker) || activeIds.has('S7R-' + blocker)) {
-          const blockerName = friendlyBlockerName(blocker, tickets);
-          items.push({ ticket: t, label: `Waiting for ${blockerName}`, cls: 'item-blocked' });
-        }
       }
 
       if (!items.length) {
@@ -1479,9 +1464,15 @@
 
     function renderKanban(tickets, groomedSet) {
       const grouped = {};
-      BOARD_COLUMNS.forEach(c => { grouped[c.key] = []; });
+      const statusToCol = {};
+      BOARD_COLUMNS.forEach(c => {
+        grouped[c.key] = [];
+        const statuses = c.statuses || [c.key];
+        statuses.forEach(s => { statusToCol[s] = c.key; });
+      });
       for (const t of tickets) {
-        if (grouped[t.status]) grouped[t.status].push(t);
+        const col = statusToCol[t.status];
+        if (col) grouped[col].push(t);
       }
 
       const renderCard = (t) => {
@@ -1496,9 +1487,13 @@
         const plat = t.platform ? `<span class="pill">${esc(t.platform)}</span>` : '';
         const showId = t.ticket && t.ticket !== '\u2014' && t.ticket !== '-';
 
+        const statusBadge = (t.status === 'review' || t.status === 'reviewing')
+          ? `<span class="badge ${BADGE_CLASS[t.status] || ''}">${esc(statusLabel(t.status))}</span>` : '';
+
         return `<div class="k-card" data-kcard="${esc(id)}">
           <div class="k-card-top">${showId ? `<span class="k-id">${esc(t.ticket)}</span>` : '<span></span>'}${gi}</div>
           <div class="k-name">${esc(title)}</div>
+          ${statusBadge ? `<div class="k-status">${statusBadge}</div>` : ''}
           ${(owner || plat) ? `<div class="k-meta">${owner}${plat}</div>` : ''}
         </div>`;
       };
