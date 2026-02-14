@@ -24,7 +24,7 @@ export const POWER = {
   MAX: 100,
   PER_BOUNCE: 3,
   COMBO_BONUS: 0.5,
-  SHIELD_COST: 25,
+  SHIELD_COST: 30,
   PROJECTILE_COST: 20,
   MAGNET_DRAIN: 12,
   SLAM_COST: 40,
@@ -35,7 +35,7 @@ export const POWER = {
 export const SHIELD = {
   DURATION_MS: 3000,
   RADIUS_PX: 140,
-  COOLDOWN_MS: 1000,
+  COOLDOWN_MS: 4000,
 };
 
 // Projectile ability tuning
