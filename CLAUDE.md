@@ -116,10 +116,31 @@ Prompts must include:
 
 ### Branch hygiene (mandatory for Claude)
 
-After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
+**Hard gate — no edits until branch is confirmed.**
+
+Before ANY file edit or commit:
 1. Run `git branch --show-current` — confirm you're on the expected branch.
-2. Run `git status` — confirm working tree matches expectations.
-3. Only then proceed with edits or commits.
+2. If wrong branch: stop. Switch first. Do not stash-and-switch.
+3. Run `git status` — confirm working tree matches expectations.
+4. Only then proceed.
+
+After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
+1. Run `git branch --show-current` — confirm branch.
+2. Run `git status` — confirm working tree.
+3. Verify key file content with a targeted grep (e.g. `grep -c "Story Log" TICKETS.md`).
+4. If anything is unexpected, stop and investigate before proceeding.
+
+### Stash policy (mandatory for Claude)
+
+- **Never stash to transfer work between branches.** Commit or discard.
+- Stash is only for pausing work on the CURRENT branch to resume later on the SAME branch.
+- If you need changes on a different branch, cherry-pick the commit — don't stash-pop across branches.
+
+### One branch at a time (mandatory for Claude)
+
+- Finish current branch work, commit, and push before switching.
+- No interleaving grooming (main) with QA (feature branch) in the same sequence.
+- If QA reveals a grooming fix needed on main, note it and finish QA first.
 
 ### QA gate (mandatory before merge)
 
