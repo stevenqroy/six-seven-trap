@@ -69,7 +69,7 @@
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
 | 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
-| 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | wip:codex | codex/S7R-072 | codex |
+| 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | reviewing | codex/S7R-072 | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
 
 ## What can run RIGHT NOW
