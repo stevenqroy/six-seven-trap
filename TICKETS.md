@@ -68,7 +68,7 @@
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
 | 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
-| 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex/gemini | next | — | — |
+| 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | reviewing | codex/S7R-071 | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | no | codex/gemini | next | — | — |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
 
