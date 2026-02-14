@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SHIELD } from '../../../src/constants.js';
+import { POWER, SHIELD } from '../../../src/constants.js';
 import { initFlags, resetFlags, setFlag } from '../../../src/config/flags.js';
 import { createActionRouter } from '../../../src/ui/action-router.js';
 
@@ -78,7 +78,7 @@ describe('Action Router (S7R-048)', () => {
     expect(telemetry.onAbilityUsed).toHaveBeenCalledWith('projectile');
   });
 
-  it('checks usePower(50) before slam and blocks when power is insufficient', () => {
+  it('checks usePower(POWER.SLAM_COST) before slam and blocks when power is insufficient', () => {
     setFlag('buttonMappedPowers', true);
     const usePower = vi.fn(() => false);
     const { router, S, actionBar } = createRouterContext({ usePower });
@@ -86,7 +86,7 @@ describe('Action Router (S7R-048)', () => {
     const handled = router.handleActivation('slam');
 
     expect(handled).toBe(false);
-    expect(usePower).toHaveBeenCalledWith(50);
+    expect(usePower).toHaveBeenCalledWith(POWER.SLAM_COST);
     expect(S.slam.shockwave).toBe(null);
     expect(actionBar.updateButton).not.toHaveBeenCalled();
   });

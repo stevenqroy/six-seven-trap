@@ -1,10 +1,9 @@
-import { SHIELD } from '../constants.js';
+import { POWER, SHIELD } from '../constants.js';
 import { getFlag } from '../config/flags.js';
 
-const SLAM_POWER_COST = 50;
 const PROJECTILE_Y_OFFSET_PX = 50;
-const SLAM_SHOCKWAVE_MAX_RADIUS_PX = 200;
-const SLAM_SHOCKWAVE_DURATION_MS = 600;
+const SLAM_MIN_SHOCKWAVE_RADIUS_PX = 200;
+const SLAM_SHOCKWAVE_DURATION_MS = 800;
 const SLAM_COOLDOWN_SECONDS = SLAM_SHOCKWAVE_DURATION_MS / 1000;
 
 function canUseButtons(state) {
@@ -13,6 +12,21 @@ function canUseButtons(state) {
 
 function isFiniteNumber(value) {
   return Number.isFinite(value);
+}
+
+function getSlamShockwaveMaxRadiusPx(state) {
+  const width = Number.isFinite(state?.wCSS) ? Math.max(0, state.wCSS) : 0;
+  const height = Number.isFinite(state?.hCSS) ? Math.max(0, state.hCSS) : 0;
+  return Math.max(SLAM_MIN_SHOCKWAVE_RADIUS_PX, Math.hypot(width, height));
+}
+
+function triggerHaptic(pattern) {
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+  try {
+    navigator.vibrate(pattern);
+  } catch (error) {
+    void error;
+  }
 }
 
 function setButtonCooldown(readActionBar, buttonId, cooldownSeconds) {
@@ -79,20 +93,23 @@ export function createActionRouter({
     if (typeof getGuardianPoseRef !== 'function' || typeof usePowerRef !== 'function') return false;
     const pose = getGuardianPoseRef();
     if (!isFiniteNumber(pose?.cx) || !isFiniteNumber(pose?.anchorY)) return false;
-    if (!usePowerRef(SLAM_POWER_COST)) return false;
+    if (!usePowerRef(POWER.SLAM_COST)) return false;
 
     const now = performance.now();
     if (!stateRef.slam || typeof stateRef.slam !== 'object') stateRef.slam = {};
+    const maxRadius = getSlamShockwaveMaxRadiusPx(stateRef);
     stateRef.slam.shockwave = {
       x: pose.cx,
       y: pose.anchorY,
       startedAt: now,
       startTime: now,
       radius: 10,
-      maxRadius: SLAM_SHOCKWAVE_MAX_RADIUS_PX,
+      maxRadius,
       duration: SLAM_SHOCKWAVE_DURATION_MS,
       flash: 1,
     };
+    stateRef.slam.shakeFrames = 4;
+    triggerHaptic([40, 20, 80]);
 
     if (telemetryRef && typeof telemetryRef.onAbilityUsed === 'function') {
       telemetryRef.onAbilityUsed('slam');

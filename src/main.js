@@ -811,8 +811,11 @@ import { createRunRngTracker } from './core/run-rng.js';
         radius: 10,
         maxRadius: Math.hypot(wCSS, hCSS),
         startedAt: now,
+        duration: 800,
         flash: 1,
       };
+      S.slam.shakeFrames = 4;
+      triggerHaptic([40, 20, 80]);
 
       const removed = clearAllTraps(12);
 
@@ -1016,12 +1019,142 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.restore();
   }
 
-  function updateSlamShockwave(dt) {
+  function triggerHaptic(pattern) {
+    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+    try {
+      navigator.vibrate(pattern);
+    } catch (error) {
+      void error;
+    }
+  }
+
+  function updateSlamShockwave(dt, now) {
     const shockwave = S.slam.shockwave;
     if (!shockwave) return;
-    shockwave.radius += 1320 * dt;
-    shockwave.flash = Math.max(0, shockwave.flash - dt * 3.2);
-    if (shockwave.radius >= shockwave.maxRadius) {
+
+    const duration = Number.isFinite(shockwave.duration) ? Math.max(250, shockwave.duration) : 800;
+    const maxRadius = Number.isFinite(shockwave.maxRadius) ? Math.max(120, shockwave.maxRadius) : Math.hypot(wCSS, hCSS);
+    const startedAt = Number.isFinite(shockwave.startedAt) ? shockwave.startedAt : now;
+
+    shockwave.id = Number.isFinite(shockwave.id) ? shockwave.id : startedAt;
+    shockwave.duration = duration;
+    shockwave.maxRadius = maxRadius;
+    shockwave.startedAt = startedAt;
+    shockwave.flash = Number.isFinite(shockwave.flash) ? shockwave.flash : 1;
+    if (!Array.isArray(shockwave.debris)) shockwave.debris = [];
+    if (!Array.isArray(shockwave.ripples)) shockwave.ripples = [];
+    shockwave.debrisCarry = Number.isFinite(shockwave.debrisCarry) ? shockwave.debrisCarry : 0;
+    shockwave.nextRippleAt = Number.isFinite(shockwave.nextRippleAt) ? shockwave.nextRippleAt : now;
+
+    const prevRadius = Number.isFinite(shockwave.radius) ? shockwave.radius : 0;
+    const progress = clamp((now - startedAt) / duration, 0, 1);
+    shockwave.radius = maxRadius * progress;
+    shockwave.flash = Math.max(0, shockwave.flash - dt * 4.8);
+
+    shockwave.debrisCarry += dt * 54;
+    while (shockwave.debrisCarry >= 1 && shockwave.debris.length < 30) {
+      shockwave.debrisCarry -= 1;
+      const angle = random() * Math.PI * 2;
+      const radius = shockwave.radius + (random() - 0.5) * 28;
+      const speed = 120 + random() * 200;
+      shockwave.debris.push({
+        x: shockwave.x + Math.cos(angle) * radius,
+        y: shockwave.y + Math.sin(angle) * radius,
+        vx: Math.cos(angle) * speed + (random() - 0.5) * 30,
+        vy: Math.sin(angle) * speed + (random() - 0.5) * 30,
+        life: 0.25 + random() * 0.35,
+        maxLife: 0.25 + random() * 0.35,
+        size: 1.8 + random() * 2.8,
+      });
+    }
+
+    for (let i = shockwave.debris.length - 1; i >= 0; i--) {
+      const d = shockwave.debris[i];
+      d.life -= dt;
+      if (d.life <= 0) {
+        shockwave.debris.splice(i, 1);
+        continue;
+      }
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      d.vx *= 0.94;
+      d.vy *= 0.94;
+    }
+
+    if (now >= shockwave.nextRippleAt) {
+      shockwave.ripples.push({
+        radius: shockwave.radius,
+        startedAt: now,
+      });
+      shockwave.nextRippleAt = now + 120;
+    }
+
+    for (let i = shockwave.ripples.length - 1; i >= 0; i--) {
+      if (now - shockwave.ripples[i].startedAt > 800) {
+        shockwave.ripples.splice(i, 1);
+      }
+    }
+
+    const pushBand = 52;
+    for (let i = 0; i < nums.length; i++) {
+      const n = nums[i];
+      if (!n || n.slamPushId === shockwave.id) continue;
+      if (!n.isTrap && (n.txt === '6' || n.txt === '7')) continue;
+
+      const dx = n.x - shockwave.x;
+      const dy = n.y - shockwave.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < Math.max(0, prevRadius - pushBand) || dist > shockwave.radius + pushBand) continue;
+
+      const edgeDistance = Math.abs(dist - shockwave.radius);
+      const proximity = Math.max(0, 1 - edgeDistance / pushBand);
+      const impulse = 200 + 200 * proximity;
+      const invDist = dist > 0.001 ? 1 / dist : 0;
+      const dirX = invDist > 0 ? dx * invDist : Math.cos(now * 0.01 + i);
+      const dirY = invDist > 0 ? dy * invDist : Math.sin(now * 0.01 + i);
+      n.dx += dirX * impulse;
+      n.dy += dirY * impulse;
+      n.slamPushId = shockwave.id;
+    }
+
+    const shipCenterX = badguysRender.ready ? badguysRender.x + badguysRender.w * 0.5 : badguysFlight.x + 120;
+    const shipCenterY = badguysRender.ready ? badguysRender.y + badguysRender.h * 0.55 : badguysFlight.y + 80;
+    const shipDist = Math.hypot(shipCenterX - shockwave.x, shipCenterY - shockwave.y);
+    if (!shockwave.shipHit && shockwave.radius >= shipDist) {
+      shockwave.shipHit = true;
+      shockwave.shipPush = {
+        startedAt: now,
+        pushDuration: 500,
+        returnDuration: 420,
+        distance: 40 + random() * 20,
+        previousOffset: 0,
+      };
+      S.cameraShake = Math.max(S.cameraShake, 12);
+      triggerHaptic([60]);
+    }
+
+    if (shockwave.shipPush) {
+      const elapsed = Math.max(0, now - shockwave.shipPush.startedAt);
+      const pushDuration = Math.max(1, shockwave.shipPush.pushDuration || 500);
+      const returnDuration = Math.max(1, shockwave.shipPush.returnDuration || 420);
+      let offset = 0;
+      if (elapsed <= pushDuration) {
+        const t = clamp(elapsed / pushDuration, 0, 1);
+        const easeOut = 1 - (1 - t) * (1 - t);
+        offset = shockwave.shipPush.distance * easeOut;
+      } else {
+        const t = clamp((elapsed - pushDuration) / returnDuration, 0, 1);
+        const easeIn = t * t;
+        offset = shockwave.shipPush.distance * (1 - easeIn);
+      }
+      badguysFlight.y += shockwave.shipPush.previousOffset - offset;
+      shockwave.shipPush.previousOffset = offset;
+      if (elapsed >= pushDuration + returnDuration) {
+        shockwave.shipPush = null;
+      }
+    }
+
+    if (progress >= 1 && shockwave.debris.length === 0 && shockwave.ripples.length === 0) {
       S.slam.shockwave = null;
     }
   }
@@ -1030,26 +1163,102 @@ import { createRunRngTracker } from './core/run-rng.js';
     const shockwave = S.slam.shockwave;
     if (!shockwave) return;
 
-    const age = Math.max(0, now - shockwave.startedAt);
-    const lifeRatio = Math.max(0, 1 - shockwave.radius / shockwave.maxRadius);
-    const alpha = Math.min(0.9, lifeRatio * 0.9);
-    if (alpha <= 0.01) return;
+    const maxRadius = Math.max(1, shockwave.maxRadius || 1);
+    const lifeRatio = Math.max(0, 1 - shockwave.radius / maxRadius);
+    const alpha = Math.min(0.95, lifeRatio * 1.05);
 
     ctx.save();
     if (shockwave.flash > 0.01) {
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.06 * shockwave.flash})`;
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * shockwave.flash})`;
       ctx.fillRect(0, 0, wCSS, hCSS);
     }
 
-    const lineWidth = Math.max(1.5, 14 * lifeRatio);
-    const hueShift = 180 + Math.sin(age * 0.02) * 26;
-    ctx.strokeStyle = `hsla(${hueShift}, 100%, 82%, ${alpha})`;
-    ctx.lineWidth = lineWidth;
-    ctx.shadowColor = `hsla(${hueShift + 20}, 100%, 72%, 0.95)`;
-    ctx.shadowBlur = 24 * lifeRatio + 8;
+    const outerRadius = Math.max(1, shockwave.radius);
+    const innerRadius = Math.max(1, outerRadius * 0.7);
+
+    const outerFill = ctx.createRadialGradient(
+      shockwave.x,
+      shockwave.y,
+      outerRadius * 0.28,
+      shockwave.x,
+      shockwave.y,
+      outerRadius
+    );
+    outerFill.addColorStop(0, 'rgba(255,255,255,0)');
+    outerFill.addColorStop(0.55, `rgba(255,176,92,${alpha * 0.28})`);
+    outerFill.addColorStop(1, `rgba(165,78,255,${alpha * 0.02})`);
+    ctx.fillStyle = outerFill;
     ctx.beginPath();
-    ctx.arc(shockwave.x, shockwave.y, shockwave.radius, 0, Math.PI * 2);
+    ctx.arc(shockwave.x, shockwave.y, outerRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    const innerFill = ctx.createRadialGradient(
+      shockwave.x,
+      shockwave.y,
+      innerRadius * 0.2,
+      shockwave.x,
+      shockwave.y,
+      innerRadius
+    );
+    innerFill.addColorStop(0, 'rgba(255,255,255,0)');
+    innerFill.addColorStop(0.6, `rgba(255,240,178,${alpha * 0.2})`);
+    innerFill.addColorStop(1, `rgba(138,192,255,${alpha * 0.04})`);
+    ctx.fillStyle = innerFill;
+    ctx.beginPath();
+    ctx.arc(shockwave.x, shockwave.y, innerRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.lineWidth = Math.max(1.2, 12 * lifeRatio + 2);
+    ctx.strokeStyle = `rgba(255, 226, 180, ${alpha})`;
+    ctx.shadowColor = 'rgba(182, 108, 255, 0.9)';
+    ctx.shadowBlur = 26 * lifeRatio + 8;
+    ctx.beginPath();
+    ctx.arc(shockwave.x, shockwave.y, outerRadius, 0, Math.PI * 2);
     ctx.stroke();
+
+    ctx.lineWidth = Math.max(1, 8 * lifeRatio + 1.2);
+    ctx.strokeStyle = `rgba(180, 230, 255, ${alpha * 0.85})`;
+    ctx.beginPath();
+    ctx.arc(shockwave.x, shockwave.y, innerRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    for (let i = 0; i < shockwave.ripples.length; i++) {
+      const ripple = shockwave.ripples[i];
+      const rippleAge = now - ripple.startedAt;
+      const rippleT = clamp(rippleAge / 800, 0, 1);
+      const rippleAlpha = (1 - rippleT) * 0.28;
+      if (rippleAlpha <= 0.01) continue;
+      ctx.strokeStyle = `rgba(210, 235, 255, ${rippleAlpha})`;
+      ctx.lineWidth = Math.max(1, 5 - rippleT * 3.4);
+      ctx.beginPath();
+      ctx.arc(shockwave.x, shockwave.y, ripple.radius + rippleT * 24, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (let i = 0; i < shockwave.debris.length; i++) {
+      const d = shockwave.debris[i];
+      const t = 1 - (d.life / Math.max(0.001, d.maxLife));
+      let r = 255;
+      let g = 255;
+      let b = 255;
+      if (t < 0.4) {
+        const k = t / 0.4;
+        g = Math.round(255 - 95 * k);
+        b = Math.round(255 - 255 * k);
+      } else {
+        const k = (t - 0.4) / 0.6;
+        r = Math.round(255 - 130 * k);
+        g = Math.round(160 - 120 * k);
+        b = Math.round(190 * k);
+      }
+      const debrisAlpha = Math.max(0, Math.min(1, d.life / Math.max(0.001, d.maxLife)));
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${debrisAlpha})`;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.size * (0.45 + debrisAlpha * 0.55), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 
@@ -1431,6 +1640,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     S.ultimate.explosionCarry = 0;
     S.magnet.active = false;
     S.slam.shockwave = null;
+    S.slam.shakeFrames = 0;
 
     S.power = 0;
     hudUpdater.updatePowerBar(S);
@@ -1539,6 +1749,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     S.swat.stretchUntil = 0;
     S.magnet.active = false;
     S.slam.shockwave = null;
+    S.slam.shakeFrames = 0;
     S.ultimate.active = false;
     S.ultimate.pendingTrigger = false;
     S.ultimate.startedAt = 0;
@@ -3372,8 +3583,15 @@ import { createRunRngTracker } from './core/run-rng.js';
       updateScorePopups(dt);
 
       const shakeAmplitude = S.cameraShake * getMotionScale();
-      const shakeX = (random() - 0.5) * shakeAmplitude;
-      const shakeY = (random() - 0.5) * shakeAmplitude;
+      let slamShakeX = 0;
+      let slamShakeY = 0;
+      if ((S.slam.shakeFrames || 0) > 0) {
+        slamShakeX = (random() - 0.5) * 8;
+        slamShakeY = (random() - 0.5) * 8;
+        S.slam.shakeFrames -= 1;
+      }
+      const shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
+      const shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
       ctx.clearRect(0, 0, wCSS, hCSS);
       ctx.save();
       ctx.translate(shakeX, shakeY);
@@ -3461,7 +3679,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       updateLaserStorm(now, dt);
       updateLaserSmoke(dt);
       updateShield(S, now);
-      updateSlamShockwave(dt);
+      updateSlamShockwave(dt, now);
       updateUltimate(now, dt);
       if (S.magnet.active) {
         const hasPower = drainPower(S, POWER.MAGNET_DRAIN, dt);
@@ -3487,8 +3705,15 @@ import { createRunRngTracker } from './core/run-rng.js';
       }
 
       const shakeAmplitude = S.cameraShake * getMotionScale();
-      const shakeX = (random() - 0.5) * shakeAmplitude;
-      const shakeY = (random() - 0.5) * shakeAmplitude;
+      let slamShakeX = 0;
+      let slamShakeY = 0;
+      if ((S.slam.shakeFrames || 0) > 0) {
+        slamShakeX = (random() - 0.5) * 8;
+        slamShakeY = (random() - 0.5) * 8;
+        S.slam.shakeFrames -= 1;
+      }
+      const shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
+      const shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
 
       ctx.clearRect(0, 0, wCSS, hCSS);
       ctx.save();
