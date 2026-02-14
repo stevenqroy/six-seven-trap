@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**22 of 29 V1 tickets done (76%). 7 tickets + 2 gates remaining.**
+**23 of 29 V1 tickets done (79%). 6 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -68,7 +68,7 @@
 | 26 | S7R-060 | Reduce per-frame GPU allocations | — | no | codex | done | main | codex |
 | 27 | S7R-061 | Swap-and-pop + allocation cleanup | — | no | codex | done | main | codex |
 | 28 | S7R-070 | Power bar → vertical left rail | — | no | codex | done | main | codex |
-| 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | reviewing | codex/S7R-071 | codex |
+| 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | no | codex/gemini | next | — | — |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
 
@@ -88,7 +88,7 @@
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
-| S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | next | codex/gemini |
+| S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | done | codex |
 | S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers, haptic vibration on impact | next | codex/gemini |
 | S7R-073 | Projectile trails, color variety, energy bolt look, usage limiter | done | gemini |
 
@@ -601,3 +601,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-14 | infra | GitHub Pages deployment, asset path fix, action bar flags enabled, mobile HUD redesign | claude |
 | 2026-02-14 | S7R-070 | `src/styles.css`, `src/ui/hud-updates.js` — power bar moved to vertical left rail (retroactive ticket) | codex |
 | 2026-02-14 | S7R-073 | `src/game-objects/projectile.js`, `src/constants.js`, `src/ui/action-router.js` — energy bolt orb + 4 color themes + trail VFX + 1.2s cooldown | gemini |
+| 2026-02-14 | S7R-071 | `src/game-objects/shield.js`, `src/constants.js`, `src/utils/defensive.js` — sparkle particles, electric arcs, degradation, impact bursts, 4s cooldown, cost 30 | codex |
