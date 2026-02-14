@@ -99,7 +99,10 @@ export function createAdaptiveQualityGovernor({
 
   function getCaps() {
     const tierCaps = tiers[currentTier] || tiers[safeDefaultTier] || {};
-    return cloneCaps(tierCaps);
+    const caps = cloneCaps(tierCaps);
+    if (caps.maxDangerEmbers > 300) caps.maxDangerEmbers = 300;
+    if (caps.maxDangerSizzles > 150) caps.maxDangerSizzles = 150;
+    return caps;
   }
 
   function evaluateWindows() {

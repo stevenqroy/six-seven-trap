@@ -2878,8 +2878,8 @@ import { createRunRngTracker } from './core/run-rng.js';
     if (!geo) return;
     const spawnCeiling = geo.originY + Math.max(6, geo.topWidth * 0.08);
     const emberSpawnRate = getAdaptiveCapValue('dangerEmberSpawnRate', 280);
-    const emberCap = Math.max(40, Math.floor(getAdaptiveCapValue('maxDangerEmbers', Number.POSITIVE_INFINITY)));
-    const sizzleCap = Math.max(20, Math.floor(getAdaptiveCapValue('maxDangerSizzles', Number.POSITIVE_INFINITY)));
+    const emberCap = Math.max(40, Math.floor(getAdaptiveCapValue('maxDangerEmbers', 300)));
+    const sizzleCap = Math.max(20, Math.floor(getAdaptiveCapValue('maxDangerSizzles', 150)));
 
     S.dangerEmberSpawnCarry += dt * emberSpawnRate;
     while (S.dangerEmberSpawnCarry >= 1 && dangerEmbers.length < emberCap) {
