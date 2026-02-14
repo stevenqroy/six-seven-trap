@@ -208,12 +208,10 @@ canvas {
 
 #fsBtn {
   position: absolute;
-  top: calc(10px + var(--s7r-safe-top));
+  top: calc(6px + var(--s7r-safe-top));
   left: calc(10px + var(--s7r-safe-left));
-  width: max(44px, var(--s7r-touch-target-min));
-  height: max(44px, var(--s7r-touch-target-min));
-  min-width: var(--s7r-touch-target-min);
-  min-height: var(--s7r-touch-target-min);
+  width: 40px;
+  height: 40px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
@@ -231,14 +229,14 @@ canvas {
   pointer-events: none;
 }
 
-/* Ship HP bar */
+/* Ship HP bar — top strip, right of fullscreen button */
 #shipHpBar {
   position: absolute;
-  top: calc(4px + var(--s7r-safe-top));
-  left: calc(56px + var(--s7r-safe-left));
-  right: calc(10px + var(--s7r-safe-right));
-  max-width: 300px;
-  height: 14px;
+  top: calc(8px + var(--s7r-safe-top));
+  left: calc(62px + var(--s7r-safe-left));
+  right: calc(14px + var(--s7r-safe-right));
+  max-width: 400px;
+  height: 16px;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 8px;
@@ -259,21 +257,21 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-/* Power bar */
+/* Power bar — below the HUD */
 #powerBar {
   position: absolute;
-  top: calc(70px + var(--s7r-safe-top));
+  top: calc(74px + var(--s7r-safe-top));
   left: 50%;
   transform: translateX(-50%);
-  width: min(280px, 60vw);
-  height: 12px;
+  width: min(260px, 55vw);
+  height: 10px;
   background: rgba(12, 8, 22, 0.62);
   border: 1px solid rgba(255, 215, 120, 0.35);
   border-radius: 7px;
@@ -323,7 +321,7 @@ canvas {
 
 #hud {
   position: absolute;
-  top: calc(22px + var(--s7r-safe-top));
+  top: calc(30px + var(--s7r-safe-top));
   left: 0;
   right: 0;
   display: flex;
@@ -334,10 +332,10 @@ canvas {
 #hudInner {
   pointer-events: auto;
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
-  padding: 8px 20px;
-  border-radius: 20px;
+  padding: 6px 16px;
+  border-radius: 16px;
   max-width: calc(100vw - var(--s7r-safe-left) - var(--s7r-safe-right) - 18px);
   background: var(--s7r-ui-panel-bg);
   backdrop-filter: blur(8px);
@@ -350,14 +348,14 @@ canvas {
   letter-spacing: 1px;
 }
 #highScore {
-  font-size: 14px;
-  opacity: 0.7;
-  margin-left: 10px;
-  padding-left: 10px;
-  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  opacity: 0.6;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
 }
 #combo {
-  font-size: 16px;
+  font-size: 14px;
   color: #ffd700;
   font-weight: 700;
   opacity: 0;
@@ -367,7 +365,7 @@ canvas {
   opacity: 1;
 }
 #lives {
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: 2px;
   transition: transform 0.2s;
 }
@@ -756,54 +754,63 @@ html.a11y-reduced-motion #victoryBox {
 }
 
 @media (max-width: 820px) {
-  #hud {
-    top: calc(10px + var(--s7r-safe-top));
+  /* Row 1: FS button (left) + Ship HP bar (right of it) */
+  #fsBtn {
+    top: calc(6px + var(--s7r-safe-top));
+    left: calc(6px + var(--s7r-safe-left));
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
   }
-  #hudInner {
-    gap: clamp(4px, 1.5vw, 8px);
-    padding: 5px 8px;
-    border-radius: 14px;
-    flex-wrap: nowrap;
-    justify-content: center;
-    max-width: calc(100vw - var(--s7r-safe-left) - var(--s7r-safe-right) - 16px);
-    overflow: hidden;
-  }
-  #score {
-    font-size: clamp(16px, 5vw, 21px);
-  }
-  #combo {
-    font-size: clamp(12px, 3.6vw, 15px);
-  }
-  #lives {
-    font-size: clamp(13px, 4.1vw, 16px);
-    letter-spacing: 1px;
-  }
-  #highScore {
-    font-size: clamp(11px, 2.9vw, 13px);
-    margin-left: 6px;
-    padding-left: 6px;
+  #fsBtn svg {
+    width: 18px;
+    height: 18px;
   }
   #shipHpBar {
-    top: calc(4px + var(--s7r-safe-top));
-    left: calc(50px + var(--s7r-safe-left));
-    right: calc(8px + var(--s7r-safe-right));
+    top: calc(6px + var(--s7r-safe-top));
+    left: calc(44px + var(--s7r-safe-left));
+    right: calc(6px + var(--s7r-safe-right));
     max-width: none;
+    height: 14px;
   }
-  #powerBar {
-    top: calc(62px + var(--s7r-safe-top));
-    width: min(252px, 72vw);
+
+  /* Row 2: Compact HUD — score, lives, pause only */
+  #hud {
+    top: calc(26px + var(--s7r-safe-top));
+  }
+  #hudInner {
+    gap: 10px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    flex-wrap: nowrap;
+  }
+  #score {
+    font-size: 18px;
+  }
+  #lives {
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+  /* Hide non-essential items on mobile */
+  #highScore,
+  #combo,
+  #phaseIndicator,
+  #resetBtn {
+    display: none;
   }
   .btn {
-    padding: 4px 8px;
-    font-size: 11px;
-    min-width: 36px;
-    min-height: 36px;
+    padding: 4px 10px;
+    font-size: 12px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 6px;
   }
-  #fsBtn {
-    top: calc(8px + var(--s7r-safe-top));
-    left: calc(8px + var(--s7r-safe-left));
-    width: 36px;
-    height: 36px;
+
+  /* Row 3: Power bar below HUD */
+  #powerBar {
+    top: calc(56px + var(--s7r-safe-top));
+    width: min(220px, 60vw);
+    height: 8px;
   }
   #titleBox {
     padding: 18px 14px 14px;
@@ -827,23 +834,21 @@ html.a11y-reduced-motion #victoryBox {
 
 @media (max-height: 500px) and (orientation: landscape) {
   #hud {
-    top: calc(6px + var(--s7r-safe-top));
+    top: calc(22px + var(--s7r-safe-top));
   }
   #hudInner {
     gap: 6px;
-    padding: 5px 8px;
-    border-radius: 12px;
-    max-width: calc(100vw - var(--s7r-safe-left) - var(--s7r-safe-right) - 12px);
+    padding: 4px 8px;
+    border-radius: 10px;
   }
   #shipHpBar {
     top: calc(4px + var(--s7r-safe-top));
-    width: min(230px, 46vw);
     height: 12px;
   }
   #powerBar {
-    top: calc(50px + var(--s7r-safe-top));
-    width: min(230px, 46vw);
-    height: 10px;
+    top: calc(44px + var(--s7r-safe-top));
+    width: min(200px, 40vw);
+    height: 8px;
   }
   #titleBox,
   #loadingBox,
