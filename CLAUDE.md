@@ -74,13 +74,18 @@ After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
 - No interleaving grooming (main) with QA (feature branch).
 - If QA reveals a grooming fix needed on main, note it and finish QA first.
 
-## Validation policy
+## Session handoff
 
-- During implementation, run targeted tests for touched modules.
-- Before merging a ticket PR, run: `npm run test:unit`, `npm run lint`, `npm run build`
-- Run `npm run test:all` when the ticket affects cross-system runtime behavior.
+When context is getting heavy or a session is ending, add an entry to the TICKETS.md Merge Log:
+- Decisions made this session
+- Open questions
+- Exact next action
+- What NOT to re-read next session
 
-## Asset/LFS policy
+## Before every action — verify
 
-- Git LFS tracks: `*.mp4`, `*.gif`, `src/assets/**/*-best.png`
-- Raw/intermediate assets are ignored via `.gitignore` and should not be committed.
+- [ ] Confirmed branch with `git branch --show-current`
+- [ ] Working tree clean or as expected (`git status`)
+- [ ] Not interleaving branches — finish current work first
+- [ ] QA gate + ready brief acceptance criteria checked
+- [ ] TICKETS.md status updated
