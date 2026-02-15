@@ -1206,15 +1206,12 @@
       document.getElementById('lightboxOverlay').classList.add('show');
       document.getElementById('lbClose').addEventListener('click', closeLightbox);
 
-      // Wire dispatch buttons inside lightbox
+      // Wire dispatch buttons inside lightbox (use ticket from closure — works for both V1 and research tickets)
       document.querySelectorAll('[data-lb-dispatch]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const tid = btn.getAttribute('data-lb-dispatch');
           const platform = btn.getAttribute('data-lb-platform');
-          const t = allTickets.find(t => (t.ticket || t.name) === tid);
-          if (!t) return;
-          const prompt = buildDispatchPrompt(t, platform);
+          const prompt = buildDispatchPrompt(ticket, platform);
           navigator.clipboard.writeText(prompt).then(() => {
             btn.classList.add('copied');
             const orig = btn.innerHTML;
