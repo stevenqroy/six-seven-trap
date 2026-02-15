@@ -22,7 +22,7 @@ Before marking a ticket `next`:
 1. Confirm you are on main (`git branch --show-current`)
 2. Set ticket status to `reviewing` in TICKETS.md on main
 3. Commit and push so the dashboard reflects the review is in progress
-4. THEN switch to the feature branch to begin QA
+4. THEN switch to the feature branch to begin QA (Claude may `git checkout` agent branches for read-only QA — agents use worktrees so this won't disrupt them)
 
 **Step 1 — QA gate on the feature branch:**
 Run the AGENTS.md gate (lint, test, build, diff review) plus:
@@ -64,11 +64,13 @@ The dispatch prompt must follow this exact template:
 <Agent>: please start S7R-### — <ticket name>.
 Branch: <agent>/S7R-###
 
-STEP 1: Read AGENTS.md — follow the startup protocol exactly.
-STEP 2: Create your branch from latest main:
+STEP 1: Read AGENTS.md — follow the startup protocol and worktree protocol exactly.
+STEP 2: Create a worktree for your branch:
         git fetch origin
-        git checkout -b <agent>/S7R-### origin/main 2>/dev/null || (git checkout <agent>/S7R-### && git rebase origin/main)
+        git worktree add ../six-seven-S7R-### -b <agent>/S7R-### origin/main 2>/dev/null || git worktree add ../six-seven-S7R-### <agent>/S7R-###
+        cd ../six-seven-S7R-###
         Run git branch --show-current and confirm it says <agent>/S7R-###. STOP if it doesn't.
+        ALL work happens in this directory. Do not cd back to the main workspace.
 STEP 3: Update TICKETS.md — set status to wip:<agent>, Branch to <agent>/S7R-###, Owner to <agent>. Commit this change first.
 STEP 4: Read your ticket's Ready Brief in TICKETS.md (search for "S7R-### Ready Brief").
 STEP 5: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.
@@ -113,7 +115,7 @@ After any `git merge`, `git checkout`, `git cherry-pick`, or `git stash pop`:
 - Finish current branch work, commit, and push before switching.
 - No interleaving grooming (main) with QA (feature branch).
 - If QA reveals a grooming fix needed on main, note it and finish QA first.
-- **Always return to main** when done with any task. Claude's home branch is main.
+- **Always return to main** when done with any task. Claude's home branch is main. The main workspace must be on main so the dashboard works and agents' worktrees aren't disrupted.
 
 ## Session handoff
 

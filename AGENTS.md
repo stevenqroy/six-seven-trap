@@ -22,20 +22,35 @@ Every session, before writing any code:
 2. Read `TICKETS.md` — find your assigned ticket (your platform name in the Owner column)
 3. Search for your ticket's **Ready Brief** in `TICKETS.md` (search `S7R-### Ready Brief`)
 4. Read the Merge Log at the bottom of `TICKETS.md` to see what changed since last pull
-5. **Create or switch to YOUR branch:**
-   ```bash
-   git fetch origin
-   # Try creating new branch; if it already exists, switch to it and rebase
-   git checkout -b yourplatform/S7R-### origin/main 2>/dev/null || \
-     (git checkout yourplatform/S7R-### && git rebase origin/main)
-   ```
-   - **HARD GATE**: Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. If it doesn't match, **STOP IMMEDIATELY**. Do not write any code. Do not edit any file. Fix the branch first.
-   - **Common failure**: `git checkout -b` fails silently when the branch already exists locally (from a prior dispatch claim). The command above handles both cases. Never assume `-b` succeeded — always verify.
+5. **Create a worktree for your ticket** (see Worktree protocol below)
 6. If the ready brief lists reference files, read them
 7. If the ticket touches `main.js`, check the **main.js Lock** section — claim it before editing
 8. Start work
 
-**Branch verification is not optional.** Codex has twice ended up on the wrong branch — once writing 400+ lines on someone else's branch, once falling back to main when `-b` failed because the branch already existed. Both times the work had to be recovered manually. Always verify.
+## Worktree protocol
+
+**All agent work happens in a dedicated worktree, never in the main workspace.** The main workspace (`/Users/steven/Documents/Six Seven`) stays on `main` at all times for the dashboard and Claude's QA work. Agents get their own isolated directory that can't be disrupted by branch switches in the main workspace.
+
+**Setup (run from the main workspace):**
+```bash
+git fetch origin
+# Create worktree with new branch from latest main
+git worktree add ../six-seven-S7R-### -b yourplatform/S7R-### origin/main 2>/dev/null || \
+  git worktree add ../six-seven-S7R-### yourplatform/S7R-###
+cd ../six-seven-S7R-###
+```
+
+**HARD GATE**: Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. If it doesn't, **STOP IMMEDIATELY**.
+
+**All work happens in `../six-seven-S7R-###`** — every file edit, every commit, every test run. Never `cd` back to the main workspace to edit files.
+
+**Cleanup (after ticket is merged to main):**
+```bash
+cd /Users/steven/Documents/Six Seven
+git worktree remove ../six-seven-S7R-###
+```
+
+**Why worktrees?** Claude, Codex, and Gemini share one local repo. Without worktrees, `git checkout` in one session kicks every other session off their branch. This caused repeated data loss and wasted hours. Worktrees eliminate the problem entirely — each agent's directory is independent.
 
 ## Claiming a ticket
 
@@ -99,10 +114,10 @@ Do NOT include: test output, diff output, file contents, validation logs, or imp
 
 - Never force push. Never amend unless explicitly asked.
 - Never revert changes you didn't make.
-- Never develop on `main`. One branch per ticket.
-- **Never write code without verifying your branch first.** Run `git branch --show-current` before every coding session and after every `git checkout`.
+- Never develop on `main`. One branch per ticket. Use worktrees (see above).
+- **Never write code without verifying your branch first.** Run `git branch --show-current` before every coding session.
 - If your branch has merge conflicts with main, rebase onto latest main and re-run `npx vite build` before marking `review`.
-- If you discover you're on the wrong branch with uncommitted changes: `git stash && git checkout correctbranch && git stash pop`. But this should never happen if you verify first.
+- If you find yourself on the wrong branch: **STOP**. Do not stash. Create or switch to your worktree directory.
 
 ## Research tickets
 
