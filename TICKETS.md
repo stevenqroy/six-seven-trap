@@ -71,7 +71,7 @@
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
-| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | next | — | — |
+| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | review | codex/S7R-074 | codex |
 
 ## What can run RIGHT NOW
 
@@ -99,7 +99,7 @@
 |--------|-------|--------|-------------|
 | S7R-057 | Extract shared defensive helpers into `src/utils/defensive.js` | done | — |
 | S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
-| S7R-074 | Fix 2 failing flags-boot integration tests (assume all defaults false, but 4 are now true) | next | codex/gemini |
+| S7R-074 | Fix 2 failing flags-boot integration tests (assume all defaults false, but 4 are now true) | review | codex |
 | S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | done | — |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | done | — |

@@ -11,6 +11,7 @@ coverage/
 .vite/
 .claude/
 .codex/
+.worktrees/
 
 # Raw / intermediate assets (keep repo lightweight)
 src/assets/**/*-raw.png
