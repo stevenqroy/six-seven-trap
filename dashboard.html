@@ -1864,7 +1864,7 @@
         applyMarkdown(text, 'fetch');
       } catch (e) {
         stopPolling();
-        if (notify) setError(`Fetch failed (${e.message}). Use Upload or Paste.`);
+        setError('Auto-load failed \u2014 click "Upload" to load TICKETS.md, or serve via: python3 -m http.server 8080');
       }
     }
 
@@ -1884,7 +1884,7 @@
       pollTimer = null;
     }
 
-    loadFromFetch(false);
+    loadFromFetch(true);
   </script>
 </body>
 </html>

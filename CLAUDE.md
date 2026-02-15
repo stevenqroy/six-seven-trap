@@ -140,6 +140,8 @@ When context is getting heavy or a session is ending, add an entry to the TICKET
 - [ ] TICKETS.md status → done, merge log entry added
 - [ ] Deploy to GitHub Pages
 - [ ] Commit and push
+- [ ] Clean up: remove agent worktree (`git worktree remove ...`) and delete local branch (`git branch -D ...`)
+- [ ] Confirm on main: `git branch --show-current` says `main`
 
 ## After dispatch — verify
 

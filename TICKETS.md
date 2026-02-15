@@ -544,19 +544,6 @@
 |--------|-------|--------|-------------|
 | S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | done | — |
 
-### Research & Ideas
-
-| # | Ticket | Name | Good for | Status | Branch | Owner |
-|---|--------|------|----------|--------|--------|-------|
-| 29 | S7R-062 | Tunable constants catalog (S7R-054 prep) | gemini | next | — | — |
-| 30 | S7R-063 | main.js extraction research | gemini | next | — | — |
-| 31 | S7R-064 | Test gap audit | codex | next | — | — |
-| 32 | S7R-065 | Narrative design brief | steven/claude | next | — | — |
-| 33 | S7R-066 | Sprite sheet research | gemini | next | — | — |
-| 34 | S7R-067 | Character design brief | steven/claude | next | — | — |
-| 35 | S7R-068 | Alien ship lore | anyone | next | — | — |
-| 36 | S7R-069 | Magic numbers cleanup | gemini | next | — | — |
-
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
 |--------|------|--------|-------|
