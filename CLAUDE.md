@@ -61,10 +61,12 @@ When the user shares a TL;DR handoff from Codex/Gemini:
 The dispatch prompt must follow this exact template:
 
 ```
+Read and strictly follow the updated AGENTS.md rules and checklists before doing anything else.
+
 <Agent>: please start S7R-### — <ticket name>.
 Branch: <agent>/S7R-###
 
-STEP 1: Read AGENTS.md — follow the startup protocol and worktree protocol exactly.
+STEP 1: Read AGENTS.md completely — follow the startup protocol and worktree protocol exactly.
 STEP 2: Create a worktree for your branch:
         git fetch origin
         git worktree add ../six-seven-S7R-### -b <agent>/S7R-### origin/main 2>/dev/null || git worktree add ../six-seven-S7R-### <agent>/S7R-###
