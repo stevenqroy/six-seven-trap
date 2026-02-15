@@ -71,7 +71,7 @@
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
-| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | review | codex/S7R-074 | codex |
+| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | reviewing | codex/S7R-074 | codex |
 
 ## What can run RIGHT NOW
 
