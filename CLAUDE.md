@@ -69,8 +69,8 @@ Branch: <agent>/S7R-###
 STEP 1: Read AGENTS.md completely — follow the startup protocol and worktree protocol exactly.
 STEP 2: Create a worktree for your branch:
         git fetch origin
-        git worktree add ../six-seven-S7R-### -b <agent>/S7R-### origin/main 2>/dev/null || git worktree add ../six-seven-S7R-### <agent>/S7R-###
-        cd ../six-seven-S7R-###
+        git worktree add .worktrees/S7R-### -b <agent>/S7R-### origin/main 2>/dev/null || git worktree add .worktrees/S7R-### <agent>/S7R-###
+        cd .worktrees/S7R-###
         Run git branch --show-current and confirm it says <agent>/S7R-###. STOP if it doesn't.
         ALL work happens in this directory. Do not cd back to the main workspace.
 STEP 3: Update TICKETS.md — set status to wip:<agent>, Branch to <agent>/S7R-###, Owner to <agent>. Commit this change first.

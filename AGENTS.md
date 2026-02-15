@@ -34,20 +34,20 @@ Every session, before writing any code:
 **Setup (run from the main workspace):**
 ```bash
 git fetch origin
-# Create worktree with new branch from latest main
-git worktree add ../six-seven-S7R-### -b yourplatform/S7R-### origin/main 2>/dev/null || \
-  git worktree add ../six-seven-S7R-### yourplatform/S7R-###
-cd ../six-seven-S7R-###
+# Create worktree inside .worktrees/ (stays within sandbox)
+git worktree add .worktrees/S7R-### -b yourplatform/S7R-### origin/main 2>/dev/null || \
+  git worktree add .worktrees/S7R-### yourplatform/S7R-###
+cd .worktrees/S7R-###
 ```
 
 **HARD GATE**: Run `git branch --show-current` and **verify the output matches `yourplatform/S7R-###`**. If it doesn't, **STOP IMMEDIATELY**.
 
-**All work happens in `../six-seven-S7R-###`** — every file edit, every commit, every test run. Never `cd` back to the main workspace to edit files.
+**All work happens in `.worktrees/S7R-###`** — every file edit, every commit, every test run. Never `cd` back to the main workspace to edit files.
 
 **Cleanup (after ticket is merged to main):**
 ```bash
 cd /Users/steven/Documents/Six Seven
-git worktree remove ../six-seven-S7R-###
+git worktree remove .worktrees/S7R-###
 ```
 
 **Why worktrees?** Claude, Codex, and Gemini share one local repo. Without worktrees, `git checkout` in one session kicks every other session off their branch. This caused repeated data loss and wasted hours. Worktrees eliminate the problem entirely — each agent's directory is independent.
