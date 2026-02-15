@@ -106,6 +106,8 @@ Files: [list of files modified/created/deleted]
 Tests: [passed count / added N new]
 Status: [committed / pushed]
 Breaking: [none / description]
+
+Claude: sync TICKETS.md on main → review, branch=<branch>, owner=<platform>
 ```
 
 Do NOT include: test output, diff output, file contents, validation logs, or implementation details. QA reads the code directly.
