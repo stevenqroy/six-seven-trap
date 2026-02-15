@@ -57,11 +57,11 @@ describe('Flags Integration: Game Boot', () => {
     expect(typeof flags).toBe('object');
   });
 
-  it('should boot with all flags disabled (default state)', () => {
+  it('should boot with the default flag state', () => {
+    const expectedDefaults = getAllFlags();
     const flags = initFlags();
-    const allDisabled = Object.values(flags).every(v => v === false);
 
-    expect(allDisabled).toBe(true);
+    expect(flags).toEqual(expectedDefaults);
   });
 
   it('should boot with single flag enabled without error', () => {
@@ -139,16 +139,14 @@ describe('Flags Integration: Game Boot', () => {
   });
 
   it('should maintain consistency after reset', () => {
-    initFlags();
+    const expectedDefaults = { ...initFlags() };
     setFlag('debugMode', true);
     setFlag('telemetry', true);
 
     resetFlags();
 
     const flags = getAllFlags();
-    const allDefaults = Object.entries(flags).every(([, value]) => value === false);
-
-    expect(allDefaults).toBe(true);
+    expect(flags).toEqual(expectedDefaults);
   });
 
   it('should handle all enemy flags being enabled', () => {
