@@ -1504,7 +1504,7 @@
 
     /* Render: kanban (active tickets only, no done) */
 
-    function renderKanban(tickets, groomedSet) {
+    function renderKanban(tickets, groomedSet, researchTasks) {
       const grouped = {};
       const statusToCol = {};
       BOARD_COLUMNS.forEach(c => {
@@ -1515,6 +1515,15 @@
       for (const t of tickets) {
         const col = statusToCol[t.status];
         if (col) grouped[col].push(t);
+      }
+      // Include active research tickets on the kanban (wip, review, reviewing)
+      if (researchTasks) {
+        for (const r of researchTasks) {
+          const col = statusToCol[r.status];
+          if (col && r.status !== 'next' && r.status !== 'done') {
+            grouped[col].push({ ticket: r.name, name: r.desc, platform: r.who, status: r.status, _research: true });
+          }
+        }
       }
 
       const renderCard = (t) => {
@@ -1551,11 +1560,19 @@
         </div>`;
       }).join('');
 
+      // Build lookup of all kanban cards (V1 + research fake tickets)
+      const kanbanMap = {};
+      for (const col of BOARD_COLUMNS) {
+        for (const t of grouped[col.key]) {
+          kanbanMap[t.ticket || t.name] = t;
+        }
+      }
+
       // Wire board card clicks → lightbox
       document.querySelectorAll('[data-kcard]').forEach(el => {
         el.addEventListener('click', () => {
           const id = el.getAttribute('data-kcard');
-          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          const t = allTickets.find(t => (t.ticket || t.name) === id) || kanbanMap[id];
           if (t) openLightbox(t);
         });
       });
@@ -1831,7 +1848,7 @@
 
       renderGoal(tickets);
       renderWhatsNext(tickets, researchTasks);
-      renderKanban(tickets, groomed);
+      renderKanban(tickets, groomed, researchTasks);
       renderResearch(researchTasks);
       renderDone(tickets);
       renderBacklog(tickets, groomed, researchTasks);
