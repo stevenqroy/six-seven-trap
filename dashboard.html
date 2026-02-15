@@ -1470,11 +1470,18 @@
         </div>`;
       }).join('');
 
+      // Build lookup of all items (V1 tickets + research fake tickets)
+      const itemMap = {};
+      for (const { ticket: t } of items) {
+        const id = t.ticket || t.name;
+        itemMap[id] = t;
+      }
+
       // Wire card clicks → lightbox
       document.querySelectorAll('[data-ni-open]').forEach(el => {
         el.addEventListener('click', () => {
           const id = el.getAttribute('data-ni-open');
-          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          const t = allTickets.find(t => (t.ticket || t.name) === id) || itemMap[id];
           if (t) openLightbox(t);
         });
       });
@@ -1485,7 +1492,7 @@
           e.stopPropagation();
           const id = btn.getAttribute('data-ni-dispatch');
           const platform = btn.getAttribute('data-ni-platform');
-          const t = allTickets.find(t => (t.ticket || t.name) === id);
+          const t = allTickets.find(t => (t.ticket || t.name) === id) || itemMap[id];
           if (!t) return;
           const prompt = buildDispatchPrompt(t, platform);
           navigator.clipboard.writeText(prompt).then(() => {
