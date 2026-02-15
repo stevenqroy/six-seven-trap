@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**24 of 30 V1 tickets done (80%). 6 tickets + 2 gates remaining.**
+**25 of 30 V1 tickets done (83%). 5 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -71,7 +71,7 @@
 | 29 | S7R-071 | ⚡ Ability VFX: Shield sparkle + electric + degradation | — | no | codex | done | main | codex |
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
-| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | reviewing | codex/S7R-074 | codex |
+| 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | done | main | codex |
 
 ## What can run RIGHT NOW
 
@@ -99,7 +99,7 @@
 |--------|-------|--------|-------------|
 | S7R-057 | Extract shared defensive helpers into `src/utils/defensive.js` | done | — |
 | S7R-058 | Add missing destroy() methods to 7 modules. Fix event listener leaks in debug-panel. | done | — |
-| S7R-074 | Fix 2 failing flags-boot integration tests (assume all defaults false, but 4 are now true) | review | codex |
+| S7R-074 | Fix 2 failing flags-boot integration tests (assume all defaults false, but 4 are now true) | done | — |
 | S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | done | — |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | done | — |
@@ -633,3 +633,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-14 | S7R-073 | `src/game-objects/projectile.js`, `src/constants.js`, `src/ui/action-router.js` — energy bolt orb + 4 color themes + trail VFX + 1.2s cooldown | gemini |
 | 2026-02-14 | S7R-071 | `src/game-objects/shield.js`, `src/constants.js`, `src/utils/defensive.js` — sparkle particles, electric arcs, degradation, impact bursts, 4s cooldown, cost 30 | codex |
 | 2026-02-14 | S7R-072 | `src/main.js`, `src/ui/action-router.js` — slam shockwave VFX overhaul: dual rings, debris particles, screen shake, ship/entity push, haptic feedback, cost fix (POWER.SLAM_COST) | codex |
+| 2026-02-15 | S7R-074 | `tests/integration/flags-boot.test.js` — fix 2 failing tests: check actual flag defaults dynamically instead of assuming all-false | codex |
