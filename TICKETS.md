@@ -78,7 +78,7 @@
 | 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | done | codex/S7R-078 | codex |
 | 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | done | codex/S7R-079 | codex |
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | done | claude/S7R-080 | claude |
-| 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | wip:claude | claude/S7R-081 | claude |
+| 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | reviewing | claude/S7R-081 | claude |
 
 ## What can run RIGHT NOW
 
