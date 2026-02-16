@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**25 of 35 V1 tickets done (71%). 10 tickets + 2 gates remaining.**
+**25 of 37 V1 tickets done (68%). 12 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -77,6 +77,8 @@
 | 35 | S7R-077 | Unit tests: progression (phase thresholds, victory, HP ratio) | — | no | codex/gemini | wip:codex | codex/S7R-077 | codex |
 | 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | wip:codex | codex/S7R-078 | codex |
 | 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | wip:codex | codex/S7R-079 | codex |
+| 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | next | — | — |
+| 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | S7R-080 | yes | claude | blocked:080 | — | — |
 
 ## What can run RIGHT NOW
 
@@ -89,6 +91,8 @@
 | V1-PLAYTEST-GATE-1 | Enable all flags, play on mobile, check session length + ability usage + fairness | next | steven (manual) |
 | S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
+| S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | next | claude |
+| S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | blocked:080 | claude |
 
 ### VFX tickets (no blockers, can start now)
 
@@ -698,6 +702,81 @@
 - [ ] `destroy` tested: removes DOM and listeners, verified across repeated init/destroy cycles
 - [ ] Keyboard shortcut tested: backtick toggles panel
 - [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-080 Ready Brief
+
+**What:** Extract the world scenery system from `src/main.js` into `src/systems/world-render.js`. This is purely presentational code: sky gradients, hills, barn, stars, ground. Also extract related magic numbers from S7R-069 into `src/constants.js` as `SCENE.*` constants.
+
+**Reference files to read first:**
+- `src/main.js` lines 501–508 (state: `worldStars`, `worldGradientCache`, `WORLD_GRADIENT_STEP_MS`)
+- `src/main.js` lines 536–635 (`rebuildWorldStars`, `getWorldGradients`)
+- `src/main.js` lines 868–981 (`drawWorld` + helper `drawHillLayer`)
+- `src/systems/power.js` — gold standard extraction pattern (imports constants, receives state as params, exports named functions)
+- `docs/research/S7R-063-main-extraction.md` — extraction strategy (state injection, context passing)
+- `docs/research/S7R-069-magic-numbers.md` — magic numbers to extract (SCENE.PARALLAX_FACTOR, SKY_GRADIENT_BASE, HILL_WAVE_*, BARN_*, GROUND_*, GRASS_SPACING)
+
+**Files to modify:**
+1. `src/systems/world-render.js` (create new) — exports: `initWorldState`, `rebuildWorldStars`, `getWorldGradients`, `drawWorld`
+2. `src/main.js` — remove extracted functions, import from world-render.js, wire into game loop
+3. `src/constants.js` — add `SCENE` namespace with world-related magic numbers
+
+**DO NOT modify:** Any test files, any other source modules
+
+**Gotchas:**
+- `drawWorld` uses `ctx`, `wCSS`, `hCSS` — pass as params, don't import globals
+- `worldGradientCache` is module-level mutable state — keep it internal to world-render.js, expose via `getWorldGradients()`
+- `rebuildWorldStars` is called from `resize()` in main.js — export it so main.js can still call it
+- `drawHillLayer` is a helper only used by `drawWorld` — extract it too (can be unexported)
+- main.js calls `drawWorld(now, cx)` at lines 3521 and 3730 — both must be updated to use the import
+- `resize()` also resets `worldGradientCache.key = ''` — export a `resetWorldCache()` or similar
+- Net lines in main.js must decrease (rule 10)
+
+**Acceptance criteria:**
+- [ ] `src/systems/world-render.js` exists with exported functions
+- [ ] `src/main.js` imports and calls world-render functions — no world scenery code remains inline
+- [ ] Magic numbers moved to `SCENE.*` constants in `src/constants.js`
+- [ ] `drawWorld` renders identically (no visual regression)
+- [ ] main.js is shorter by ~200+ net lines
+- [ ] `npm run test` passes (all existing tests)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-081 Ready Brief
+
+**What:** Extract the badguys controller from `src/main.js` into `src/systems/badguys.js`. This is the alien ship's flight physics: swooping, target picking, bounds checking, sprite state. Also extract related magic numbers from S7R-069 into `src/constants.js` as `SCENE.BADGUYS_*` constants.
+
+**Reference files to read first:**
+- `src/main.js` lines 3395–3506 (`getBadguysBounds`, `pickBadguysTarget`, `updateBadguysFlight`, `updateBadguysState`)
+- `src/systems/power.js` — gold standard extraction pattern
+- `src/systems/world-render.js` — if S7R-080 is done, follow the same extraction conventions
+- `docs/research/S7R-063-main-extraction.md` — extraction strategy
+- `docs/research/S7R-069-magic-numbers.md` — magic numbers: BADGUYS_SIDE_PAD_RATIO, MAX_Y_RATIO, BASE_SPEED, TARGET_SPEED, SWOOP_FREQ_BASE, SWOOP_FORCE_BASE, SPAWN_SPREAD_RATIO
+
+**Files to modify:**
+1. `src/systems/badguys.js` (create new) — exports: `getBadguysBounds`, `pickBadguysTarget`, `updateBadguysFlight`, `updateBadguysState`
+2. `src/main.js` — remove extracted functions, import from badguys.js, wire into game loop
+3. `src/constants.js` — add `SCENE.BADGUYS_*` constants (if not already added by S7R-080)
+
+**DO NOT modify:** Any test files, any other source modules besides the three listed
+
+**Gotchas:**
+- `updateBadguysState` reads `S.badguysFlight`, `S.badguysRender`, `S.badguysOverlay`, `wCSS`, `hCSS` — pass state and dimensions as params
+- `updateBadguysFlight` is called from `updateBadguysState` — both must move together
+- `pickBadguysTarget` uses bounds — keep it coupled with `getBadguysBounds`
+- main.js calls `updateBadguysState(now, dt)` at lines 3516 and 3629 — update both call sites
+- Also called at lines 1562 and 1800 (init/reset paths) — don't miss these
+- `badguysOverlay` and `badguysSpriteSheet` are referenced — check if they need to be passed in or imported
+- Net lines in main.js must decrease (rule 10)
+
+**Acceptance criteria:**
+- [ ] `src/systems/badguys.js` exists with exported functions
+- [ ] `src/main.js` imports and calls badguys functions — no ship flight code remains inline
+- [ ] Magic numbers moved to `SCENE.BADGUYS_*` constants in `src/constants.js`
+- [ ] Ship movement behaves identically (no gameplay regression)
+- [ ] main.js is shorter by ~150+ net lines
+- [ ] `npm run test` passes (all existing tests)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 

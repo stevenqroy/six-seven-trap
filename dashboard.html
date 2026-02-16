@@ -1011,6 +1011,16 @@
         summary: 'Unit tests for the debug panel: init creates DOM and registers keyboard listener, destroy removes everything cleanly, repeated init/destroy cycles don\'t leak listeners. Based on S7R-064 audit P0 list.',
         marker: '\u{1F41B}',
       },
+      'S7R-080': {
+        title: 'Extract world scenery',
+        summary: 'Pull the sky, hills, barn, stars, and ground rendering out of main.js into src/systems/world-render.js. Move magic numbers to SCENE.* constants. Saves ~250 lines from main.js.',
+        marker: '\u{1F30C}',
+      },
+      'S7R-081': {
+        title: 'Extract badguys controller',
+        summary: 'Pull the alien ship flight physics (swooping, target picking, bounds checking) out of main.js into src/systems/badguys.js. Move magic numbers to SCENE.BADGUYS_* constants. Saves ~220 lines from main.js.',
+        marker: '\u{1F6F8}',
+      },
     };
 
     let lastText = '';
