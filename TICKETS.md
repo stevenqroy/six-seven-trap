@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**36 of 45 V1 tickets done (80%). 9 tickets + 2 gates remaining.**
+**37 of 45 V1 tickets done (82%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -86,7 +86,7 @@
 | 44 | S7R-086 | Unit tests: lives (loseLife, extraLife, invincibility alpha, boundary) | — | no | codex/gemini | done | codex/S7R-086 | codex |
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
-| 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | reviewing | codex/S7R-089 | codex |
+| 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 
 ## What can run RIGHT NOW
 
@@ -142,7 +142,7 @@
 | S7R-086 | Unit tests for lives: loseLife boundary, checkExtraLife thresholds, invincibility alpha output range | done | codex |
 | S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | done | codex |
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | done | gemini |
-| S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | reviewing | codex |
+| S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | done | codex |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1173,3 +1173,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-16 | S7R-085 | `tests/unit/ui/hud-updates.test.js` — 8 tests: factory isolation, lives display, pulse toggle, HP bar colors/boundaries, power bar near-full, visibility toggles, missing-element fallback, destroy no-op | codex |
 | 2026-02-16 | S7R-086 | `tests/unit/systems/lives.test.js` — 7 tests: resetLives, loseLife boundary/underflow, checkExtraLife thresholds/duplicates/MAX cap, isInvincible boundary, alpha range | codex |
 | 2026-02-16 | S7R-088 | `tests/unit/core/run-rng.test.js` — 9 tests: deterministic seeding, non-deterministic variation, draw count, tracker API, start() reset, seed override via query string, invalid seed fallback, monotonic draw count | gemini |
+| 2026-02-16 | S7R-089 | `tests/unit/utils/sprite.test.js` — 8 tests: alpha sampling bounds, transparent sprite cache + null context, alpha data cache, drawImageWithTransparencyKey, body/hand visibility, hitVisibleCharacterPixel, estimateCharacterNormal + fallbacks | codex |
