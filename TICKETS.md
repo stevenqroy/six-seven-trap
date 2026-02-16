@@ -85,7 +85,7 @@
 | 43 | S7R-085 | Unit tests: hud-updates (factory, pulse, visibility, missing-element fallback) | — | no | codex/gemini | done | codex/S7R-085 | codex |
 | 44 | S7R-086 | Unit tests: lives (loseLife, extraLife, invincibility alpha, boundary) | — | no | codex/gemini | done | codex/S7R-086 | codex |
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
-| 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | next | — | — |
+| 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | reviewing | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
@@ -141,7 +141,7 @@
 | S7R-085 | Unit tests for hud-updates: factory pattern, pulse class toggle, visibility, missing-element fallback | done | codex |
 | S7R-086 | Unit tests for lives: loseLife boundary, checkExtraLife thresholds, invincibility alpha output range | done | codex |
 | S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | done | codex |
-| S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | next | codex/gemini |
+| S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | reviewing | gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | next | codex/gemini |
 
 ### Research tickets (no blockers, can start now)
