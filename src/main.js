@@ -22,13 +22,11 @@ import {
   MOBILE,
   POLISH,
   ADAPTIVE_QUALITY,
-  SCENE,
 } from './constants.js';
 import S from './state.js';
 import {
   clamp as _clamp,
   distPointToSegmentSq as _distPointToSegmentSq,
-  quantize as _quantize,
 } from './utils/math.js';
 import {
   updateLaserStorm as updateLaserStormFn,
@@ -45,9 +43,7 @@ import {
   sampleSpriteAlpha as _sampleSpriteAlpha,
   isVisibleOnBody as _isVisibleOnBody,
   isVisibleOnHand as _isVisibleOnHand,
-  hitVisibleCharacterPixel as _hitVisibleCharacterPixel,
   sampleVisibleCharacter as _sampleVisibleCharacter,
-  estimateCharacterNormal as _estimateCharacterNormal,
 } from './utils/sprite.js';
 import {
   resetLives,
@@ -79,6 +75,12 @@ import {
   drawWorld,
 } from './systems/world-render.js';
 import { updateBadguysState as updateBadguysStateFn } from './systems/badguys.js';
+import {
+  getDangerBeamGeometry as getDangerBeamGeometryFn,
+  drawDangerBeam as drawDangerBeamFn,
+  updateDangerBeamEmbers as updateDangerBeamEmbersFn,
+  drawDangerBeamEmbers as drawDangerBeamEmbersFn,
+} from './systems/danger-beam.js';
 import { createTelemetrySystem } from './systems/telemetry.js';
 import { createAdaptiveQualityGovernor } from './systems/adaptive-quality.js';
 import { loadDefaultEnemyRegistry } from './systems/enemy-registry.js';
@@ -512,7 +514,6 @@ import { createRunRngTracker } from './core/run-rng.js';
   let wCSS = 0,
     hCSS = 0;
   const worldState = initWorldState();
-  const DANGER_BEAM_OSC_STEP_MS = SCENE.DANGER_BEAM_OSC_STEP_MS;
 
   function resize() {
     wCSS = window.innerWidth;
@@ -2106,15 +2107,12 @@ import { createRunRngTracker } from './core/run-rng.js';
   const sampleSpriteAlpha = _sampleSpriteAlpha;
   const isVisibleOnBody = _isVisibleOnBody;
   const isVisibleOnHand = _isVisibleOnHand;
-  const hitVisibleCharacterPixel = _hitVisibleCharacterPixel;
   const sampleVisibleCharacter = _sampleVisibleCharacter;
-  const estimateCharacterNormal = _estimateCharacterNormal;
   /* eslint-enable no-unused-vars */
 
   // Delegated to utils/math.js
   const clamp = _clamp;
   const distPointToSegmentSq = _distPointToSegmentSq;
-  const quantize = _quantize;
 
   // Laser storm wrappers — delegate to src/systems/laser-storm.js
   function updateLaserStorm(now, dt) {
@@ -2147,6 +2145,31 @@ import { createRunRngTracker } from './core/run-rng.js';
   }
   function drawLaserSmoke() {
     drawLaserSmokeFn(laserStorm, ctx);
+  }
+
+  // ── Danger beam wrappers (S7R-083) ──────────────────────────────
+  function getDangerBeamGeometry(now) {
+    return getDangerBeamGeometryFn(now, { badguysRender, dangerBeam, hCSS });
+  }
+  function drawDangerBeam(now) {
+    drawDangerBeamFn(now, {
+      ctx, badguysRender, dangerBeam, hCSS,
+      isDangerDanger: S.isDangerDanger,
+      regularBeamHarvest, getAdaptiveCapValue,
+    });
+  }
+  function updateDangerBeamEmbers(now, dt, targets) {
+    const result = updateDangerBeamEmbersFn(now, dt, {
+      dangerBeam, dangerEmbers, dangerSizzles,
+      dangerEmberSpawnCarry: S.dangerEmberSpawnCarry,
+      isDangerDanger: S.isDangerDanger,
+      badguysRender, hCSS, wCSS,
+      targets, rng: random, getAdaptiveCapValue,
+    });
+    S.dangerEmberSpawnCarry = result.dangerEmberSpawnCarry;
+  }
+  function drawDangerBeamEmbers() {
+    drawDangerBeamEmbersFn(ctx, dangerEmbers, dangerSizzles);
   }
 
   function applyLaserBrushToNumber(n, now) {
@@ -2314,185 +2337,6 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.restore();
   }
 
-  function getDangerBeamOscillation(now) {
-    const quantizedNow = quantize(now, DANGER_BEAM_OSC_STEP_MS);
-    const widthMod =
-      1 +
-      Math.sin(quantizedNow * dangerBeam.speedA + dangerBeam.phaseA) * dangerBeam.widthAmp * 0.65 +
-      Math.sin(quantizedNow * dangerBeam.speedB + dangerBeam.phaseB) * dangerBeam.widthAmp * 0.35;
-    const lenOsc =
-      0.5 +
-      0.5 *
-        (Math.sin(quantizedNow * (dangerBeam.speedA * 0.72) + dangerBeam.phaseB) * 0.7 +
-          Math.sin(quantizedNow * (dangerBeam.speedB * 0.53) + dangerBeam.phaseA) * 0.3);
-    const lengthFactor = clamp(
-      dangerBeam.lengthMin + (dangerBeam.lengthMax - dangerBeam.lengthMin) * lenOsc,
-      dangerBeam.lengthMin,
-      dangerBeam.lengthMax
-    );
-    return {
-      widthMod,
-      lengthFactor,
-      tSec: quantizedNow * 0.001,
-      bottomWidthScale:
-        1.14 + 0.34 * (widthMod - 1) + 0.16 * Math.sin(quantizedNow * 0.0025 + 1.3),
-    };
-  }
-
-  function drawDangerBeam(now) {
-    if (!badguysRender.ready || !dangerBeam.enabled) return;
-
-    const originX = badguysRender.x + badguysRender.w * 0.5 + dangerBeam.offsetX;
-    const originY = badguysRender.y + badguysRender.h * 0.61 + dangerBeam.offsetY;
-    const oscillation = getDangerBeamOscillation(now);
-    const { lengthFactor, tSec } = oscillation;
-    const beamBottom = originY + (hCSS - originY) * lengthFactor;
-    const beamHeight = beamBottom - originY;
-    if (beamHeight <= 0) return;
-
-    const isDangerBeam = S.isDangerDanger;
-    const baseColor = isDangerBeam ? { r: 255, g: 45, b: 45 } : { r: 90, g: 225, b: 255 };
-    const pulse = 0.8 + 0.2 * Math.sin(now * 0.006);
-    // Keep top fixed to the ship; only bottom width/length breathe.
-    const topWidth = badguysRender.w * dangerBeam.widthRatio;
-    const bottomWidth = topWidth * oscillation.bottomWidthScale;
-    const hueShift = 18 * Math.sin(tSec * 1.7 + dangerBeam.huePhase);
-    const gBase = clamp(baseColor.g + hueShift, 0, 255);
-    const bBase = clamp(baseColor.b + hueShift * 1.2, 0, 255);
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-
-    // Main tapered beam body.
-    const beamGradient = ctx.createLinearGradient(originX, originY, originX, beamBottom);
-    beamGradient.addColorStop(0, `rgba(${baseColor.r}, ${gBase}, ${bBase}, ${0.5 * pulse})`);
-    beamGradient.addColorStop(
-      0.25,
-      `rgba(${baseColor.r}, ${Math.max(0, gBase - 35)}, ${Math.max(0, bBase - 35)}, ${0.34 * pulse})`
-    );
-    beamGradient.addColorStop(
-      0.68,
-      `rgba(${baseColor.r}, ${Math.max(0, gBase - 65)}, ${Math.max(0, bBase - 65)}, ${0.2 * pulse})`
-    );
-    beamGradient.addColorStop(1, `rgba(${baseColor.r}, ${Math.max(0, gBase - 90)}, ${Math.max(0, bBase - 90)}, 0)`);
-    ctx.fillStyle = beamGradient;
-    ctx.beginPath();
-    ctx.moveTo(originX - topWidth / 2, originY);
-    ctx.lineTo(originX + topWidth / 2, originY);
-    ctx.lineTo(originX + bottomWidth / 2, beamBottom);
-    ctx.lineTo(originX - bottomWidth / 2, beamBottom);
-    ctx.closePath();
-    ctx.fill();
-
-    // Inner core.
-    const coreGradient = ctx.createLinearGradient(originX, originY, originX, beamBottom);
-    coreGradient.addColorStop(0, `rgba(255, 255, 255, ${0.52 * pulse})`);
-    coreGradient.addColorStop(0.32, `rgba(${baseColor.r}, ${gBase}, ${bBase}, ${0.38 * pulse})`);
-    coreGradient.addColorStop(
-      1,
-      `rgba(${baseColor.r}, ${Math.max(0, gBase - 45)}, ${Math.max(0, bBase - 45)}, 0)`
-    );
-    ctx.fillStyle = coreGradient;
-    ctx.beginPath();
-    ctx.moveTo(originX - topWidth * 0.18, originY);
-    ctx.lineTo(originX + topWidth * 0.18, originY);
-    ctx.lineTo(originX + bottomWidth * 0.22, beamBottom);
-    ctx.lineTo(originX - bottomWidth * 0.22, beamBottom);
-    ctx.closePath();
-    ctx.fill();
-
-    // Soft side aura.
-    const auraGradient = ctx.createRadialGradient(originX, originY + beamHeight * 0.4, 0, originX, originY + beamHeight * 0.4, bottomWidth * 0.9);
-    auraGradient.addColorStop(0, `rgba(${baseColor.r}, ${gBase}, ${bBase}, 0.16)`);
-    auraGradient.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = auraGradient;
-    ctx.beginPath();
-    ctx.ellipse(originX, originY + beamHeight * 0.42, bottomWidth * 0.85, beamHeight * 0.62, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (!isDangerBeam) {
-      // Portal under the ship: brightness ramps with captured 6/7 charge.
-      const chargeRatio = clamp(regularBeamHarvest.charge / regularBeamHarvest.target, 0, 1);
-      const portalY = originY + Math.max(7, topWidth * 0.1);
-      const pulse = 0.5 + 0.5 * Math.sin(tSec * (5.4 + chargeRatio * 2.8));
-      const flash = regularBeamHarvest.flash * 0.36 + regularBeamHarvest.eruptionFlash * 0.82;
-      const coreR = topWidth * (0.09 + chargeRatio * 0.2 + flash * 0.12) * (0.9 + pulse * 0.2);
-      const outerR = topWidth * (0.28 + chargeRatio * 0.56 + flash * 0.24);
-
-      const portalGlow = ctx.createRadialGradient(originX, portalY, 0, originX, portalY, outerR);
-      portalGlow.addColorStop(0, `rgba(185,245,255,${0.74 + chargeRatio * 0.22})`);
-      portalGlow.addColorStop(0.45, `rgba(109,219,255,${0.36 + chargeRatio * 0.34})`);
-      portalGlow.addColorStop(1, 'rgba(80,210,255,0)');
-      ctx.fillStyle = portalGlow;
-      ctx.beginPath();
-      ctx.arc(originX, portalY, outerR, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `rgba(255,255,255,${0.8 + chargeRatio * 0.2})`;
-      ctx.beginPath();
-      ctx.arc(originX, portalY, coreR, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.lineWidth = Math.max(1.2, topWidth * 0.018);
-      ctx.strokeStyle = `rgba(154,236,255,${0.5 + chargeRatio * 0.35})`;
-      ctx.beginPath();
-      ctx.arc(originX, portalY, coreR * 1.65, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    // Sparkles and particles (beam only).
-    const particleCount = Math.max(
-      10,
-      Math.floor(
-        getAdaptiveCapValue(
-          isDangerBeam ? 'dangerBeamSparkles' : 'regularBeamSparkles',
-          isDangerBeam ? 170 : 78
-        )
-      )
-    );
-    for (let i = 0; i < particleCount; i++) {
-      const yFrac = (tSec * (0.48 + (i % 5) * 0.04) + i * 0.031) % 1;
-      const y = originY + yFrac * beamHeight;
-      const widthAtY = topWidth + (bottomWidth - topWidth) * yFrac;
-      const drift = Math.sin(tSec * (2.2 + (i % 7) * 0.15) + i * 6.9) * widthAtY * 0.28;
-      const x = originX + drift;
-      const sizeBoost = isDangerBeam ? 1.28 : 1;
-      const size = (0.8 + 2.7 * (1 - yFrac) * (0.6 + 0.4 * Math.sin(tSec * 6 + i))) * sizeBoost;
-      const aBoost = isDangerBeam ? 0.18 : 0;
-      const a = 0.08 + 0.24 * (1 - yFrac) * (0.5 + 0.5 * Math.sin(tSec * 5.3 + i * 0.9)) + aBoost;
-      const g = Math.min(255, gBase + ((i * 19) % 65));
-      const b = Math.min(255, bBase + ((i * 23) % 80));
-      ctx.fillStyle = `rgba(${baseColor.r}, ${g}, ${b}, ${a})`;
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (i % 11 === 0) {
-        const twinkleA = 0.22 + 0.28 * Math.abs(Math.sin(tSec * 9 + i));
-        const twinkleR = size * 0.6;
-        ctx.fillStyle = `rgba(255,255,255,${twinkleA})`;
-        ctx.beginPath();
-        ctx.arc(x, y, twinkleR, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.restore();
-  }
-
-  function getDangerBeamGeometry(now) {
-    if (!badguysRender.ready || !dangerBeam.enabled) return null;
-    const originX = badguysRender.x + badguysRender.w * 0.5 + dangerBeam.offsetX;
-    const originY = badguysRender.y + badguysRender.h * 0.61 + dangerBeam.offsetY;
-    const oscillation = getDangerBeamOscillation(now);
-    const lengthFactor = oscillation.lengthFactor;
-    const beamBottom = originY + (hCSS - originY) * lengthFactor;
-    const beamHeight = beamBottom - originY;
-    if (beamHeight <= 0) return null;
-    const topWidth = badguysRender.w * dangerBeam.widthRatio;
-    const bottomWidth = topWidth * oscillation.bottomWidthScale;
-    return { originX, originY, beamBottom, beamHeight, topWidth, bottomWidth };
-  }
 
   function isGoodBeamNumber(n) {
     return !n.isTrap && (n.txt === '6' || n.txt === '7');
@@ -2668,164 +2512,6 @@ import { createRunRngTracker } from './core/run-rng.js';
       ctx.restore();
     }
 
-    ctx.restore();
-  }
-
-  function updateDangerBeamEmbers(now, dt, targets) {
-    if (!(dangerBeam.enabled && S.isDangerDanger)) {
-      dangerEmbers.length = 0;
-      S.dangerEmberSpawnCarry = 0;
-      dangerSizzles.length = 0;
-      return;
-    }
-    const geo = getDangerBeamGeometry(now);
-    if (!geo) return;
-    const spawnCeiling = geo.originY + Math.max(6, geo.topWidth * 0.08);
-    const emberSpawnRate = getAdaptiveCapValue('dangerEmberSpawnRate', 280);
-    const emberCap = Math.max(40, Math.floor(getAdaptiveCapValue('maxDangerEmbers', 300)));
-    const sizzleCap = Math.max(20, Math.floor(getAdaptiveCapValue('maxDangerSizzles', 150)));
-
-    S.dangerEmberSpawnCarry += dt * emberSpawnRate;
-    while (S.dangerEmberSpawnCarry >= 1 && dangerEmbers.length < emberCap) {
-      S.dangerEmberSpawnCarry -= 1;
-      // Emit mostly from the top of the beam.
-      const yFrac = 0.03 + random() * 0.16;
-      const y = geo.originY + geo.beamHeight * yFrac;
-      const widthAtY = geo.topWidth + (geo.bottomWidth - geo.topWidth) * yFrac;
-      const x = geo.originX + (random() - 0.5) * widthAtY * (0.34 + random() * 0.18);
-      const life = 1.15 + random() * 1.25;
-      dangerEmbers.push({
-        x,
-        y,
-        vx: (random() - 0.5) * (42 + random() * 52),
-        vy: 140 + random() * 170,
-        r: 0.75 + random() * 1.55,
-        life,
-        lifeMax: life,
-        hue: 28 + random() * 26,
-        driftAmp: 20 + random() * 34,
-        driftSpeed: 0.004 + random() * 0.01,
-        driftPhase: random() * Math.PI * 2,
-        ceilingY: spawnCeiling,
-        bounce: 0,
-      });
-    }
-    if (dangerEmbers.length >= emberCap) {
-      S.dangerEmberSpawnCarry = Math.min(S.dangerEmberSpawnCarry, 0.9);
-    }
-
-    for (let i = dangerEmbers.length - 1; i >= 0; i--) {
-      const e = dangerEmbers[i];
-      const prevX = e.x;
-      const prevY = e.y;
-      e.vy += 480 * dt;
-      e.vx += Math.sin(now * e.driftSpeed + e.driftPhase) * e.driftAmp * dt;
-      e.vx *= 0.992;
-      e.x += e.vx * dt;
-      e.y += e.vy * dt;
-      e.life -= dt * (0.62 + e.bounce * 0.12);
-
-      // Keep embers below the spacecraft/beam origin region.
-      if (e.y < e.ceilingY) {
-        if (e.vy < 0) {
-          removeBySwapPop(dangerEmbers, i);
-          continue;
-        }
-        e.y = e.ceilingY;
-      }
-
-      if (hitVisibleCharacterPixel(e.x, e.y, targets)) {
-        const moveX = e.x - prevX;
-        const moveY = e.y - prevY;
-        const { nx, ny } = estimateCharacterNormal(e.x, e.y, targets, moveX, moveY);
-        const dot = e.vx * nx + e.vy * ny;
-        e.vx -= 2 * dot * nx;
-        e.vy -= 2 * dot * ny;
-        e.vx *= 0.88;
-        e.vy *= 0.68;
-        e.vx += (random() - 0.5) * 58;
-        e.vy -= 85 + random() * 120;
-        if (e.vy < -190) e.vy = -190;
-        e.x = prevX;
-        e.y = prevY;
-        e.hue = clamp(e.hue + (random() - 0.5) * 10, 18, 65);
-        e.bounce++;
-        const sizzleCount = 2 + Math.floor(random() * 3);
-        for (let s = 0; s < sizzleCount; s++) {
-          const ang = random() * Math.PI * 2;
-          const speed = 34 + random() * 54;
-          dangerSizzles.push({
-            x: e.x,
-            y: e.y,
-            vx: Math.cos(ang) * speed,
-            vy: Math.sin(ang) * speed - 16,
-            r: 0.55 + random() * 1.1,
-            life: 0.12 + random() * 0.16,
-            hue: 26 + random() * 24,
-          });
-        }
-        if (dangerSizzles.length > sizzleCap) {
-          dangerSizzles.splice(0, dangerSizzles.length - sizzleCap);
-        }
-      }
-
-      // Let embers arc to the ground and fizzle quickly near the bottom.
-      if (e.y > hCSS * 0.88) {
-        e.life -= dt * 1.8;
-      }
-
-      if (e.life <= 0 || e.y > hCSS + 42 || e.x < -42 || e.x > wCSS + 42 || e.bounce > 8) {
-        removeBySwapPop(dangerEmbers, i);
-      }
-    }
-
-    for (let i = dangerSizzles.length - 1; i >= 0; i--) {
-      const s = dangerSizzles[i];
-      s.vy += 260 * dt;
-      s.vx *= 0.94;
-      s.vy *= 0.92;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      s.life -= dt;
-      if (s.life <= 0) removeBySwapPop(dangerSizzles, i);
-    }
-  }
-
-  function drawDangerBeamEmbers() {
-    if (!dangerEmbers.length && !dangerSizzles.length) return;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (const e of dangerEmbers) {
-      const glowR = e.r * (1.9 + e.bounce * 0.12);
-      const alpha = clamp(e.life, 0, 1);
-      ctx.fillStyle = `hsla(${e.hue + 6}, 100%, 56%, ${0.32 * alpha})`;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, glowR, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `hsla(${e.hue}, 100%, 78%, ${0.72 * alpha})`;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, Math.max(1.2, e.r * 0.95), 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `rgba(255,245,210,${0.85 * alpha})`;
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, Math.max(0.8, e.r * 0.45), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    for (const s of dangerSizzles) {
-      const a = clamp(s.life * 6.5, 0, 1);
-      const outer = s.r * 2.1;
-      ctx.fillStyle = `hsla(${s.hue + 8}, 100%, 52%, ${0.26 * a})`;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, outer, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `hsla(${s.hue}, 100%, 86%, ${0.75 * a})`;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, Math.max(0.8, s.r), 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
 
