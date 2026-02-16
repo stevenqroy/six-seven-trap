@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**32 of 45 V1 tickets done (71%). 13 tickets + 2 gates remaining.**
+**33 of 45 V1 tickets done (73%). 12 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -84,7 +84,7 @@
 | 42 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js | S7R-083 | yes | claude | blocked:083 | — | — |
 | 43 | S7R-085 | Unit tests: hud-updates (factory, pulse, visibility, missing-element fallback) | — | no | codex/gemini | next | — | — |
 | 44 | S7R-086 | Unit tests: lives (loseLife, extraLife, invincibility alpha, boundary) | — | no | codex/gemini | next | — | — |
-| 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | reviewing | codex/S7R-087 | codex |
+| 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | next | — | — |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | next | — | — |
 
@@ -140,7 +140,7 @@
 |--------|-------|--------|-------------|
 | S7R-085 | Unit tests for hud-updates: factory pattern, pulse class toggle, visibility, missing-element fallback | next | codex/gemini |
 | S7R-086 | Unit tests for lives: loseLife boundary, checkExtraLife thresholds, invincibility alpha output range | next | codex/gemini |
-| S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | reviewing | codex |
+| S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | done | codex |
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | next | codex/gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | next | codex/gemini |
 
@@ -1169,3 +1169,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-15 | S7R-080 | `src/systems/world-render.js`, `src/constants.js`, `src/main.js` — extracted world scenery (sky, stars, hills, barn, ground, grass) into module, added SCENE.* constants, main.js −230 net lines | claude |
 | 2026-02-15 | S7R-081 | `src/systems/badguys.js`, `src/constants.js`, `src/main.js` — extracted badguys flight controller (bounds, targeting, flight physics, state) into module, added SCENE.BADGUYS_* constants, main.js −108 net lines | claude |
 | 2026-02-16 | S7R-082 | `src/systems/laser-storm.js`, `src/utils/math.js`, `src/constants.js`, `src/main.js` — extracted laser storm (beams, gradients, smoke) into module, moved quantize() to utils/math.js, added SCENE.LASER_* constants, main.js −345 net lines | claude |
+| 2026-02-16 | S7R-087 | `tests/unit/systems/support-registry.test.js` — 6 tests: factory API, registration/normalization, duplicate ID overwrite, invalid input rejection, snapshot immutability | codex |
