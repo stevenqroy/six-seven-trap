@@ -76,11 +76,18 @@ import {
 } from './systems/world-render.js';
 import { updateBadguysState as updateBadguysStateFn } from './systems/badguys.js';
 import {
-  getDangerBeamGeometry as getDangerBeamGeometryFn,
   drawDangerBeam as drawDangerBeamFn,
   updateDangerBeamEmbers as updateDangerBeamEmbersFn,
   drawDangerBeamEmbers as drawDangerBeamEmbersFn,
 } from './systems/danger-beam.js';
+import {
+  isGoodBeamNumber,
+  getRegularBeamPortalState as getRegularBeamPortalStateFn,
+  isNumberInsideRegularBeam,
+  registerRegularBeamCapture as registerRegularBeamCaptureFn,
+  updateRegularBeamHarvest as updateRegularBeamHarvestFn,
+  drawRegularBeamEruptionNumbers as drawRegularBeamEruptionNumbersFn,
+} from './systems/beam-harvest.js';
 import { createTelemetrySystem } from './systems/telemetry.js';
 import { createAdaptiveQualityGovernor } from './systems/adaptive-quality.js';
 import { loadDefaultEnemyRegistry } from './systems/enemy-registry.js';
@@ -2148,9 +2155,6 @@ import { createRunRngTracker } from './core/run-rng.js';
   }
 
   // ── Danger beam wrappers (S7R-083) ──────────────────────────────
-  function getDangerBeamGeometry(now) {
-    return getDangerBeamGeometryFn(now, { badguysRender, dangerBeam, hCSS });
-  }
   function drawDangerBeam(now) {
     drawDangerBeamFn(now, {
       ctx, badguysRender, dangerBeam, hCSS,
@@ -2170,6 +2174,40 @@ import { createRunRngTracker } from './core/run-rng.js';
   }
   function drawDangerBeamEmbers() {
     drawDangerBeamEmbersFn(ctx, dangerEmbers, dangerSizzles);
+  }
+
+  // ── Beam harvest wrappers (S7R-084) ─────────────────────────────
+  function beamHarvestEruptCallback({ x, y, mouthX, mouthY }) {
+    S.cameraShake = Math.max(S.cameraShake, 18);
+    createParticles(x, y, 'rgba(166, 242, 255, 0.95)', 22);
+    if (S.shipHP > 0 && !S.isVictory) {
+      applyShipDamage(5, mouthX, mouthY, 'beam-eruption');
+      hudUpdater.updateShipHpBar(S);
+    }
+  }
+  function getRegularBeamPortalState(now) {
+    return getRegularBeamPortalStateFn(now, {
+      bossPhase: S.bossPhase, dangerBeam, isDangerDanger: S.isDangerDanger,
+      badguysRender, regularBeamHarvest, hCSS,
+    });
+  }
+  function registerRegularBeamCapture(n, now, portalState) {
+    registerRegularBeamCaptureFn(n, now, portalState, {
+      regularBeamHarvest, rng: random,
+      onCapture: (num) => createParticles(num.x, num.y, num.col, 4),
+      onErupt: beamHarvestEruptCallback,
+      badguysRender,
+    });
+  }
+  function updateRegularBeamHarvest(dt) {
+    const layout = getGuardianLayout();
+    updateRegularBeamHarvestFn(dt, {
+      regularBeamHarvest, floorY: layout.floorY, wallPad: layout.wallPad,
+      wCSS, hCSS, rng: random,
+    });
+  }
+  function drawRegularBeamEruptionNumbers() {
+    drawRegularBeamEruptionNumbersFn(ctx, regularBeamHarvest);
   }
 
   function applyLaserBrushToNumber(n, now) {
@@ -2337,183 +2375,6 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.restore();
   }
 
-
-  function isGoodBeamNumber(n) {
-    return !n.isTrap && (n.txt === '6' || n.txt === '7');
-  }
-
-  function getRegularBeamPortalState(now) {
-    // Beam harvest is only active in Phase 2+ (portal needs to be earned)
-    if (S.bossPhase < 2) return null;
-    if (!dangerBeam.enabled || S.isDangerDanger || !badguysRender.ready) return null;
-    const geo = getDangerBeamGeometry(now);
-    if (!geo) return null;
-    const chargeRatio = clamp(regularBeamHarvest.charge / regularBeamHarvest.target, 0, 1);
-    return {
-      geo,
-      x: geo.originX,
-      y: geo.originY + Math.max(7, geo.topWidth * 0.1),
-      chargeRatio,
-      snapRadius: Math.max(12, geo.topWidth * (0.055 + chargeRatio * 0.03)),
-    };
-  }
-
-  function isNumberInsideRegularBeam(n, portalState) {
-    const geo = portalState.geo;
-    if (n.y < geo.originY - 10 || n.y > geo.beamBottom + 12) return false;
-    const yFrac = clamp((n.y - geo.originY) / Math.max(1, geo.beamHeight), 0, 1);
-    const widthAtY = geo.topWidth + (geo.bottomWidth - geo.topWidth) * yFrac;
-    const beamInner = widthAtY * (0.42 + portalState.chargeRatio * 0.1);
-    return Math.abs(n.x - geo.originX) <= beamInner;
-  }
-
-  function triggerRegularBeamEruption(now, portalState) {
-    if (!badguysRender.ready) return;
-    const eruptionCount = Math.max(
-      regularBeamHarvest.target,
-      regularBeamHarvest.charge,
-      regularBeamHarvest.capturedDigits.length
-    );
-    const digits = regularBeamHarvest.capturedDigits.splice(0, eruptionCount);
-    while (digits.length < eruptionCount) {
-      digits.push(random() < 0.5 ? '6' : '7');
-    }
-
-    const mouthX = badguysRender.x + badguysRender.w * 0.5;
-    const mouthY = badguysRender.y + Math.max(8, badguysRender.h * 0.08);
-
-    for (let i = 0; i < eruptionCount; i++) {
-      const txt = digits[i];
-      const col = txt === '6' ? '#ff7eb3' : '#7afcff';
-      const angle = -Math.PI / 2 + (random() - 0.5) * 1.28;
-      const speed = 300 + random() * 440;
-      regularBeamHarvest.eruptionNumbers.push({
-        txt,
-        col,
-        x: mouthX + (random() - 0.5) * badguysRender.w * 0.12,
-        y: mouthY - random() * 8,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (80 + random() * 90),
-        size: 46 + random() * 24,
-        rot: random() * Math.PI * 2,
-        rotVel: (random() - 0.5) * 6.2,
-        alpha: 1,
-        bounces: 0,
-        life: 8.2,
-      });
-    }
-
-    regularBeamHarvest.charge = 0;
-    regularBeamHarvest.capturedDigits.length = 0;
-    regularBeamHarvest.flash = 1;
-    regularBeamHarvest.eruptionFlash = 1;
-    S.cameraShake = Math.max(S.cameraShake, 18);
-    createParticles(
-      portalState?.x ?? mouthX,
-      (portalState?.y ?? mouthY) + 8,
-      'rgba(166, 242, 255, 0.95)',
-      22
-    );
-
-    // Beam harvest eruption damages the ship (portal overload)
-    if (S.shipHP > 0 && !S.isVictory) {
-      applyShipDamage(5, mouthX, mouthY, 'beam-eruption');
-      hudUpdater.updateShipHpBar(S);
-    }
-  }
-
-  function registerRegularBeamCapture(n, now, portalState) {
-    regularBeamHarvest.capturedDigits.push(n.txt);
-    if (regularBeamHarvest.capturedDigits.length > regularBeamHarvest.target * 2) {
-      regularBeamHarvest.capturedDigits.shift();
-    }
-    regularBeamHarvest.charge += 1;
-    regularBeamHarvest.flash = 1;
-    createParticles(n.x, n.y, n.col, 4);
-    if (regularBeamHarvest.charge >= regularBeamHarvest.target) {
-      triggerRegularBeamEruption(now, portalState);
-    }
-  }
-
-  function updateRegularBeamHarvest(dt) {
-    regularBeamHarvest.flash = Math.max(0, regularBeamHarvest.flash - dt * 2.6);
-    regularBeamHarvest.eruptionFlash = Math.max(0, regularBeamHarvest.eruptionFlash - dt * 1.1);
-
-    const layout = getGuardianLayout();
-    const floorY = layout.floorY;
-    for (let i = regularBeamHarvest.eruptionNumbers.length - 1; i >= 0; i--) {
-      const n = regularBeamHarvest.eruptionNumbers[i];
-      let bounced = false;
-
-      n.vy += 620 * dt;
-      n.vx *= 0.997;
-      n.rot += n.rotVel * dt;
-      n.x += n.vx * dt;
-      n.y += n.vy * dt;
-      n.life -= dt;
-
-      const sidePad = Math.max(22, layout.wallPad - 2);
-      if (n.x < sidePad) {
-        n.x = sidePad;
-        n.vx = Math.abs(n.vx) * 0.82;
-        bounced = true;
-      } else if (n.x > wCSS - sidePad) {
-        n.x = wCSS - sidePad;
-        n.vx = -Math.abs(n.vx) * 0.82;
-        bounced = true;
-      }
-
-      if (n.y > floorY) {
-        n.y = floorY;
-        const bounceLoss = Math.max(0.26, 0.62 - n.bounces * 0.06);
-        n.vy = -Math.abs(n.vy) * bounceLoss;
-        n.vx *= 0.9;
-        if (Math.abs(n.vy) < 90) n.vy = -(90 + random() * 60);
-        bounced = true;
-      }
-
-      if (bounced) n.bounces++;
-      if (n.bounces > 0) {
-        n.alpha -= dt * (0.34 + Math.min(0.6, n.bounces * 0.1));
-      } else {
-        n.alpha -= dt * 0.03;
-      }
-
-      if (n.alpha <= 0 || n.life <= 0 || n.bounces > 10 || n.y > hCSS + 120) {
-        regularBeamHarvest.eruptionNumbers.splice(i, 1);
-      }
-    }
-  }
-
-  function drawRegularBeamEruptionNumbers() {
-    if (!regularBeamHarvest.eruptionNumbers.length) return;
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    for (const n of regularBeamHarvest.eruptionNumbers) {
-      const alpha = clamp(n.alpha, 0, 1);
-      ctx.save();
-      ctx.translate(n.x, n.y);
-      ctx.rotate(n.rot);
-      ctx.globalAlpha = alpha;
-      ctx.shadowColor = n.col;
-      ctx.shadowBlur = 22 * alpha;
-      ctx.font = `bold ${Math.round(n.size)}px Arial`;
-      ctx.fillStyle = n.col;
-      ctx.fillText(n.txt, 0, 0);
-
-      if (alpha > 0.38) {
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.85})`;
-        ctx.font = `bold ${Math.round(n.size * 0.56)}px Arial`;
-        ctx.fillText(n.txt, 0, 0);
-      }
-      ctx.restore();
-    }
-
-    ctx.restore();
-  }
 
   function drawTitlePreview(now, dt) {
     updateBadguysState(now, dt);
