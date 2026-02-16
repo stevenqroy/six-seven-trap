@@ -1021,6 +1021,46 @@
         summary: 'Pull the alien ship flight physics (swooping, target picking, bounds checking) out of main.js into src/systems/badguys.js. Move magic numbers to SCENE.BADGUYS_* constants. Saves ~220 lines from main.js.',
         marker: '\u{1F6F8}',
       },
+      'S7R-082': {
+        title: 'Extract laser storm',
+        summary: 'Pull all laser beam logic out of main.js into src/systems/laser-storm.js \u2014 beam physics, gradient caching, smoke puffs, and rendering. Also move quantize() to utils/math.js so danger beam can share it. Saves ~350 lines.',
+        marker: '\u26A1',
+      },
+      'S7R-083': {
+        title: 'Extract danger beam',
+        summary: 'Pull the tractor beam rendering, oscillation physics, and ember/sizzle particle systems out of main.js into src/systems/danger-beam.js. Saves ~330 lines.',
+        marker: '\u{1F7E0}',
+      },
+      'S7R-084': {
+        title: 'Extract beam harvest',
+        summary: 'Pull the portal capture mechanic (6/7s getting scooped up, charged, and erupted) out of main.js into src/systems/beam-harvest.js. The last big extraction. Saves ~170 lines.',
+        marker: '\u{1F7E3}',
+      },
+      'S7R-085': {
+        title: 'Test the HUD updater',
+        summary: 'Unit tests for the HUD system: lives display, HP bar, power bar, pulse animations, and graceful fallback when DOM elements are missing. Based on S7R-064 audit P1 list.',
+        marker: '\u{1F4FA}',
+      },
+      'S7R-086': {
+        title: 'Test the lives system',
+        summary: 'Unit tests for lives: losing a life at boundary, extra-life score thresholds (no duplicates), and invincibility alpha stays in the right range. Based on S7R-064 audit P1 list.',
+        marker: '\u2764\uFE0F',
+      },
+      'S7R-087': {
+        title: 'Test support registry',
+        summary: 'Unit tests for the support unit registry: creating it, registering units, handling duplicate IDs, rejecting bad input, and making sure snapshots are immutable. Based on S7R-064 audit P1 list.',
+        marker: '\u{1F4D6}',
+      },
+      'S7R-088': {
+        title: 'Test the RNG tracker',
+        summary: 'Unit tests for the run RNG tracker: seed override precedence, deterministic replay, draw-count resets per run. Ensures replays are perfectly reproducible. Based on S7R-064 audit P1 list.',
+        marker: '\u{1F3B2}',
+      },
+      'S7R-089': {
+        title: 'Test sprite utilities',
+        summary: 'Unit tests for sprite alpha sampling, pixel-level hit detection, character normal estimation, and transparent sprite caching. Based on S7R-064 audit P1 list.',
+        marker: '\u{1F3A8}',
+      },
     };
 
     let lastText = '';

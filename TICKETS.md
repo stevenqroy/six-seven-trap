@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**30 of 37 V1 tickets done (81%). 7 tickets + 2 gates remaining.**
+**31 of 45 V1 tickets done (69%). 14 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -79,6 +79,14 @@
 | 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | done | codex/S7R-079 | codex |
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | done | claude/S7R-080 | claude |
 | 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | done | claude/S7R-081 | claude |
+| 40 | S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js | S7R-080 | yes | claude | next | — | — |
+| 41 | S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js | S7R-082 | yes | claude | blocked:082 | — | — |
+| 42 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js | S7R-083 | yes | claude | blocked:083 | — | — |
+| 43 | S7R-085 | Unit tests: hud-updates (factory, pulse, visibility, missing-element fallback) | — | no | codex/gemini | next | — | — |
+| 44 | S7R-086 | Unit tests: lives (loseLife, extraLife, invincibility alpha, boundary) | — | no | codex/gemini | next | — | — |
+| 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | next | — | — |
+| 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | next | — | — |
+| 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -93,6 +101,9 @@
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | done | claude |
 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | done | claude |
+| S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js (~350 lines). Touches main.js. | next | claude |
+| S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js (~330 lines). Touches main.js. Depends on S7R-082 (quantize). | blocked:082 | claude |
+| S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js (~170 lines). Touches main.js. Depends on S7R-083 (getDangerBeamGeometry). | blocked:083 | claude |
 
 ### VFX tickets (no blockers, can start now)
 
@@ -122,6 +133,16 @@
 | S7R-077 | Unit tests for progression: phase thresholds, victory transition, HP ratio clamp, speed/spawn multipliers | done | — |
 | S7R-078 | Unit tests for power: charge, spend, drain, canAfford with invalid inputs, getPowerRatio clamp | done | — |
 | S7R-079 | Unit tests for debug-panel: init/destroy lifecycle, keyboard toggle, listener cleanup | done | — |
+
+### Test tickets (from S7R-064 P1 audit — no blockers, can start now)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-085 | Unit tests for hud-updates: factory pattern, pulse class toggle, visibility, missing-element fallback | next | codex/gemini |
+| S7R-086 | Unit tests for lives: loseLife boundary, checkExtraLife thresholds, invincibility alpha output range | next | codex/gemini |
+| S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | next | codex/gemini |
+| S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | next | codex/gemini |
+| S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | next | codex/gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -777,6 +798,279 @@
 - [ ] Ship movement behaves identically (no gameplay regression)
 - [ ] main.js is shorter by ~150+ net lines
 - [ ] `npm run test` passes (all existing tests)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-082 Ready Brief
+
+**What:** Extract the laser storm system from `src/main.js` into `src/systems/laser-storm.js`. This includes beam physics, gradient caching, smoke particles, and all rendering. Also extract `quantize()` into `src/utils/math.js` (shared by danger beam). Move laser-specific magic numbers to `src/constants.js`.
+
+**Reference files to read first:**
+- `src/main.js` lines 507–513 (gradient cache constants + arrays)
+- `src/main.js` line 515 (`quantize` — shared helper, move to utils/math.js)
+- `src/main.js` lines 2129–2162 (`startLaserPostHitBounce`, `updateLaserBounceTip`)
+- `src/main.js` lines 2191–2577 (`getInertBeamPolylinePoints`, `updateLaserStorm`, `getCachedLaserSourceGradient`, `getCachedLaserBeamGradient`, `drawLaserStorm`, `spawnLaserSmoke`, `updateLaserSmoke`, `drawLaserSmoke`)
+- `src/systems/world-render.js` — extraction pattern (imports constants, receives ctx/state as params)
+- `src/systems/badguys.js` — extraction pattern (wrapper function in main.js)
+- `docs/research/S7R-063-main-extraction.md` — extraction strategy
+
+**Files to modify:**
+1. `src/utils/math.js` — add `quantize(value, step)` export (shared by laser storm + danger beam)
+2. `src/systems/laser-storm.js` (create new) — exports: `initLaserStormState`, `startLaserPostHitBounce`, `updateLaserBounceTip`, `getInertBeamPolylinePoints`, `updateLaserStorm`, `drawLaserStorm`, `spawnLaserSmoke`, `updateLaserSmoke`, `drawLaserSmoke`
+3. `src/main.js` — import from laser-storm.js, remove extracted functions, add wrapper if needed
+4. `src/constants.js` — add `LASER.*` constants (gradient step sizes, smoke caps, beam physics)
+
+**DO NOT modify:** Any test files, any other source modules besides the four listed
+
+**Gotchas:**
+- `quantize()` is also used by `getDangerBeamOscillation` (line 2663). Move it to `src/utils/math.js` so both laser-storm.js and danger-beam.js (S7R-083) can import it. Remove from main.js.
+- `updateLaserStorm` reads many state fields: `S.laserStorm`, `badguysLightAnchors`, `badguysRender`, canvas dimensions. Use a wrapper function pattern (like S7R-081) to keep call sites clean.
+- `drawLaserStorm` uses `ctx` and reads `S.laserStorm` + laser gradient caches. The gradient caches should be internal to the module (like worldGradientCache in world-render.js).
+- `spawnLaserSmoke` is called from multiple places in main.js — check all call sites and ensure the wrapper covers them.
+- The 3 `LASER_GRADIENT_*` constants and 2 cache arrays (lines 507–513) move entirely to the new module.
+- `getAdaptiveCapValue` is used in `updateLaserStorm` — pass as param or import from adaptive-quality.
+- `random()` closure must be passed as `rng` param.
+- Net lines in main.js must decrease (rule 10).
+
+**Acceptance criteria:**
+- [ ] `src/systems/laser-storm.js` exists with all laser functions exported
+- [ ] `quantize()` moved to `src/utils/math.js` and imported where needed
+- [ ] `src/main.js` imports and calls laser-storm functions — no laser code remains inline
+- [ ] Gradient caches are internal to laser-storm.js (not exported)
+- [ ] main.js is shorter by ~300+ net lines
+- [ ] `npm run test` passes (all existing tests)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-083 Ready Brief
+
+**What:** Extract the danger beam system from `src/main.js` into `src/systems/danger-beam.js`. This includes beam oscillation, rendering, geometry calculation, and ember/sizzle particle systems. Move danger-beam-specific magic numbers to `src/constants.js`.
+
+**Reference files to read first:**
+- `src/main.js` line 510 (`DANGER_BEAM_OSC_STEP_MS` constant)
+- `src/main.js` lines 2662–2828 (`getDangerBeamOscillation`, `drawDangerBeam`, `getDangerBeamGeometry`)
+- `src/main.js` lines 3019–3175 (`updateDangerBeamEmbers`, `drawDangerBeamEmbers`)
+- `src/systems/laser-storm.js` — sibling extraction (if S7R-082 done)
+- `src/utils/math.js` — `quantize()` (moved here by S7R-082)
+- `docs/research/S7R-063-main-extraction.md` — extraction strategy
+
+**Files to modify:**
+1. `src/systems/danger-beam.js` (create new) — exports: `getDangerBeamOscillation`, `drawDangerBeam`, `getDangerBeamGeometry`, `updateDangerBeamEmbers`, `drawDangerBeamEmbers`
+2. `src/main.js` — import from danger-beam.js, remove extracted functions, add wrapper if needed
+3. `src/constants.js` — add `DANGER_BEAM.*` constants (oscillation step, ember/sizzle physics)
+
+**DO NOT modify:** Any test files, any other source modules besides the three listed
+
+**Gotchas:**
+- `getDangerBeamGeometry` is called by beam-harvest functions (S7R-084). Export it so beam-harvest.js can import it later.
+- `drawDangerBeam` uses `quantize()` (from S7R-082's `src/utils/math.js`), `getAdaptiveCapValue`, and `estimateCharacterNormal` (from `src/utils/sprite.js`). Import directly or pass as params.
+- `updateDangerBeamEmbers` reads `S.dangerEmbers`, `S.dangerSizzles`, `S.dangerEmberSpawnCarry` plus adaptive caps. Use wrapper pattern.
+- `DANGER_BEAM_OSC_STEP_MS` (line 510) moves to constants.js.
+- `drawDangerBeam` has complex rendering with multiple gradients — ensure `ctx` is passed as param.
+- Depends on S7R-082 completing first (quantize must be in utils/math.js).
+- Net lines in main.js must decrease (rule 10).
+
+**Acceptance criteria:**
+- [ ] `src/systems/danger-beam.js` exists with all danger beam functions exported
+- [ ] `getDangerBeamGeometry` is exported (needed by S7R-084 beam harvest)
+- [ ] `src/main.js` imports and calls danger-beam functions — no danger beam code remains inline
+- [ ] `DANGER_BEAM_OSC_STEP_MS` moved to constants.js
+- [ ] main.js is shorter by ~280+ net lines
+- [ ] `npm run test` passes (all existing tests)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-084 Ready Brief
+
+**What:** Extract the beam harvest mechanic from `src/main.js` into `src/systems/beam-harvest.js`. This is the "portal" system where 6/7s are captured, charged, and erupted during the regular beam phase. Move beam-harvest magic numbers to `src/constants.js`.
+
+**Reference files to read first:**
+- `src/main.js` lines 2846–3017 (`getRegularBeamPortalState`, `isNumberInsideRegularBeam`, `triggerRegularBeamEruption`, `registerRegularBeamCapture`, `updateRegularBeamHarvest`, `drawRegularBeamEruptionNumbers`)
+- `src/systems/danger-beam.js` — sibling extraction, provides `getDangerBeamGeometry` (if S7R-083 done)
+- `docs/research/S7R-063-main-extraction.md` — extraction strategy
+
+**Files to modify:**
+1. `src/systems/beam-harvest.js` (create new) — exports: `getRegularBeamPortalState`, `isNumberInsideRegularBeam`, `triggerRegularBeamEruption`, `registerRegularBeamCapture`, `updateRegularBeamHarvest`, `drawRegularBeamEruptionNumbers`
+2. `src/main.js` — import from beam-harvest.js, remove extracted functions, add wrapper if needed
+3. `src/constants.js` — add `BEAM_HARVEST.*` constants if applicable
+
+**DO NOT modify:** Any test files, any other source modules besides the three listed
+
+**Gotchas:**
+- `getRegularBeamPortalState` and `isNumberInsideRegularBeam` are called from the main game loop collision detection — check all call sites.
+- `triggerRegularBeamEruption` and `registerRegularBeamCapture` are called from game logic that needs state context — wrapper pattern recommended.
+- `getDangerBeamGeometry` is imported from `src/systems/danger-beam.js` (S7R-083). If S7R-083 isn't done yet, this ticket is blocked.
+- `drawRegularBeamEruptionNumbers` uses `ctx` — pass as param.
+- `updateRegularBeamHarvest` reads harvest state arrays — pass as params or via wrapper.
+- `random()` closure must be passed as `rng` param.
+- This is the smallest extraction (~170 lines). Net lines in main.js must decrease (rule 10).
+
+**Acceptance criteria:**
+- [ ] `src/systems/beam-harvest.js` exists with all beam harvest functions exported
+- [ ] Imports `getDangerBeamGeometry` from `src/systems/danger-beam.js`
+- [ ] `src/main.js` imports and calls beam-harvest functions — no beam harvest code remains inline
+- [ ] main.js is shorter by ~140+ net lines
+- [ ] `npm run test` passes (all existing tests)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-085 Ready Brief
+
+**What:** Write unit tests for `src/ui/hud-updates.js`. Cover the factory pattern, DOM update methods, pulse class toggling, visibility toggles, and graceful fallback when DOM elements are missing.
+
+**Reference files to read first:**
+- `src/ui/hud-updates.js` — the module under test (169 lines, factory export: `createHudUpdater` returning object with 8 methods)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+- `tests/unit/config/debug-panel.test.js` — pattern for testing DOM-dependent modules
+
+**Files to modify:**
+1. `tests/unit/ui/hud-updates.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createHudUpdater` takes a config object with `document` — mock the document to provide fake elements
+- Methods like `updateLivesDisplay`, `updateShipHpBar`, `updatePowerBar` set DOM properties — verify they update textContent/style correctly
+- Pulse class toggle: `pulseElement` adds/removes a CSS class with a timeout — mock timers
+- When elements are missing from the document, methods should not throw — test null element fallback
+- The factory returns an object, not a class — test multiple instances don't share state
+
+**Acceptance criteria:**
+- [ ] `createHudUpdater` tested: returns object with all expected methods
+- [ ] `updateLivesDisplay` tested: correct DOM updates for various life counts
+- [ ] `updateShipHpBar` tested: width/color changes at boundary HP values
+- [ ] `updatePowerBar` tested: height updates, low-power visual state
+- [ ] Missing-element fallback tested: no throws when elements are null
+- [ ] Pulse class toggle tested with timer mocks
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-086 Ready Brief
+
+**What:** Write unit tests for `src/systems/lives.js`. Cover `loseLife` boundary behavior, `checkExtraLife` thresholds, invincibility alpha output range, and edge cases.
+
+**Reference files to read first:**
+- `src/systems/lives.js` — the module under test (65 lines, 5 exports: `resetLives`, `isInvincible`, `loseLife`, `checkExtraLife`, `getInvincibilityAlpha`)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+- `src/constants.js` — lives-related constants if any
+
+**Files to modify:**
+1. `tests/unit/systems/lives.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `loseLife` should not go below 0 lives — test with lives=1 and lives=0
+- `checkExtraLife` has score thresholds — test at, below, and above each threshold
+- `checkExtraLife` should not award duplicate extra lives for the same threshold — test repeated calls with same score
+- `getInvincibilityAlpha` should return values in [0.3, 1] range while invincible — test output bounds
+- `isInvincible` uses time-based check — test with `now` at boundary of invincibility window
+- `resetLives` should restore to initial state — test after damage/extra-life modifications
+
+**Acceptance criteria:**
+- [ ] `resetLives` tested: initial state correct
+- [ ] `loseLife` tested: normal, lives=1→0, lives=0 (no underflow)
+- [ ] `checkExtraLife` tested: threshold boundaries, no duplicate awards
+- [ ] `isInvincible` tested: during and after invincibility window
+- [ ] `getInvincibilityAlpha` tested: output range [0.3, 1], returns 1 when not invincible
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-087 Ready Brief
+
+**What:** Write unit tests for `src/systems/support-registry.js`. Cover factory creation, unit registration, duplicate ID handling, input normalization, and snapshot immutability.
+
+**Reference files to read first:**
+- `src/systems/support-registry.js` — the module under test (65 lines, factory export: `createSupportRegistry`)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+- `src/systems/enemy-registry.js` — sibling registry pattern (frozen objects)
+
+**Files to modify:**
+1. `tests/unit/systems/support-registry.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createSupportRegistry` is a factory — test it returns the expected API
+- Registering a unit with a duplicate ID may overwrite — test and document behavior
+- Invalid inputs (null, missing fields) should be handled gracefully — test normalization
+- `getAllSupportUnits` should return an immutable snapshot — test that modifying the returned array doesn't affect internal state
+- The registry may use `Object.freeze` — verify frozen behavior in tests
+
+**Acceptance criteria:**
+- [ ] `createSupportRegistry` tested: returns object with expected methods
+- [ ] Registration tested: add unit, retrieve by ID
+- [ ] Duplicate ID tested: verify overwrite or rejection behavior
+- [ ] Invalid input tested: null, undefined, missing required fields
+- [ ] Snapshot immutability tested: modifying returned array doesn't corrupt registry
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-088 Ready Brief
+
+**What:** Write unit tests for `src/core/run-rng.js`. Cover seed override precedence, deterministic vs non-deterministic modes, draw-count reset per run, and tracker state.
+
+**Reference files to read first:**
+- `src/core/run-rng.js` — the module under test (56 lines, factory export: `createRunRngTracker` with 4 methods)
+- `src/utils/rng.js` — the seeded PRNG it wraps
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+
+**Files to modify:**
+1. `tests/unit/core/run-rng.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createRunRngTracker` takes config with optional seed — test with and without explicit seed
+- Deterministic mode: same seed should produce same sequence — test reproducibility
+- Non-deterministic mode: different calls should produce different sequences (probabilistic test, use multiple draws)
+- `start()` resets the draw count — test that count resets to 0
+- Draw count increments on each `random()` call — verify monotonic increase
+- Query string seed override: if the factory supports `?seed=X`, test that it takes precedence over config seed
+
+**Acceptance criteria:**
+- [ ] Factory tested: creates tracker with expected methods (start, random, getDrawCount, getSeed)
+- [ ] Deterministic mode tested: same seed → same sequence across multiple runs
+- [ ] Non-deterministic mode tested: no explicit seed → varying output
+- [ ] Draw-count tested: resets on start(), increments on random()
+- [ ] Seed precedence tested: explicit seed overrides default
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-089 Ready Brief
+
+**What:** Write unit tests for `src/utils/sprite.js`. Cover alpha sampling bounds, null canvas context guards, cache hit behavior, and `estimateCharacterNormal` fallback vectors.
+
+**Reference files to read first:**
+- `src/utils/sprite.js` — the module under test (183 lines, 9 exports including `getTransparentSprite`, `sampleSpriteAlpha`, `hitVisibleCharacterPixel`, `estimateCharacterNormal`)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+
+**Files to modify:**
+1. `tests/unit/utils/sprite.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `getTransparentSprite` and `getSpriteAlphaData` need canvas context mocking — create minimal mock with `getImageData` returning known pixel data
+- `sampleSpriteAlpha` takes normalized UV coords (0–1) — test boundary values (0, 1, out-of-range)
+- `estimateCharacterNormal` uses spatial sampling and falls back to `(fallbackVx, fallbackVy)` — test both computed and fallback paths
+- `hitVisibleCharacterPixel` takes a targets array — test with empty targets, single target, multiple targets
+- Cache behavior: repeated calls with same image should reuse cached data — verify with spy/mock
+- `drawImageWithTransparencyKey` is a thin wrapper — basic smoke test is sufficient
+- `isVisibleOnBody` and `isVisibleOnHand` have different coordinate systems — test both
+
+**Acceptance criteria:**
+- [ ] `sampleSpriteAlpha` tested: valid UV coords, boundary (0, 1), out-of-range
+- [ ] `getTransparentSprite` tested: returns cached sprite, handles null context
+- [ ] `hitVisibleCharacterPixel` tested: empty targets, hit, miss
+- [ ] `estimateCharacterNormal` tested: computed normal, fallback when sampling fails
+- [ ] `isVisibleOnBody` and `isVisibleOnHand` tested: inside/outside bounds
+- [ ] Cache reuse tested: same input returns cached result
+- [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 
