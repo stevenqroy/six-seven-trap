@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**25 of 30 V1 tickets done (83%). 5 tickets + 2 gates remaining.**
+**25 of 35 V1 tickets done (71%). 10 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -72,6 +72,11 @@
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
 | 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | done | main | codex |
+| 33 | S7R-075 | Unit tests: shield lifecycle (activate, update, expire, draw) | — | no | codex/gemini | next | — | — |
+| 34 | S7R-076 | Unit tests: projectile (fire, update, collide, draw, caps) | — | no | codex/gemini | next | — | — |
+| 35 | S7R-077 | Unit tests: progression (phase thresholds, victory, HP ratio) | — | no | codex/gemini | next | — | — |
+| 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | next | — | — |
+| 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -103,6 +108,16 @@
 | S7R-059 | Hard-cap danger embers + sizzles. Without adaptive quality, both default to `Infinity`. Spawn rate 280/sec compounds. | done | — |
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | done | — |
+
+### Test tickets (no blockers, from S7R-064 P0 audit)
+
+| Ticket | TL;DR | Status | Available to |
+|--------|-------|--------|-------------|
+| S7R-075 | Unit tests for shield: activate, cooldown, update lifecycle, expire, draw quality caps | next | codex/gemini |
+| S7R-076 | Unit tests for projectile: fire, spawn cap, update/collide, offscreen removal, trail/theme bounds | next | codex/gemini |
+| S7R-077 | Unit tests for progression: phase thresholds, victory transition, HP ratio clamp, speed/spawn multipliers | next | codex/gemini |
+| S7R-078 | Unit tests for power: charge, spend, drain, canAfford with invalid inputs, getPowerRatio clamp | next | codex/gemini |
+| S7R-079 | Unit tests for debug-panel: init/destroy lifecycle, keyboard toggle, listener cleanup | next | codex/gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -535,6 +550,154 @@
 - [ ] Tests validate defaults dynamically (not hardcoded false assumption)
 - [ ] All other tests in the file still pass (13 total)
 - [ ] `npm run test:unit` passes with 0 failures
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-075 Ready Brief
+
+**What:** Write unit tests for `src/game-objects/shield.js`. Cover the full shield lifecycle: activation, cooldown enforcement, update/expire, draw quality caps, and particle limits.
+
+**Reference files to read first:**
+- `src/game-objects/shield.js` — the module under test (exports: `activateShield`, `updateShield`, `isShieldActive`, `getShieldAlpha`, `drawShield`)
+- `src/constants.js` — `SHIELD` namespace (DURATION_MS, COOLDOWN_MS, etc.)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern (mock setup, lifecycle, draw guards)
+
+**Files to modify:**
+1. `tests/unit/game-objects/shield.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `activateShield` returns false while cooling down — test both fresh activation and cooldown rejection
+- `drawShield` accepts optional `qualityCaps` — test with and without quality constraints
+- Shield state lives on `state.shield.*` — mock the state object per medic-firefly patterns
+- Import `SHIELD` constants from `src/constants.js` for duration/cooldown values — don't hardcode
+
+**Acceptance criteria:**
+- [ ] `activateShield` tested: fresh activation succeeds, cooldown blocks re-activation
+- [ ] `updateShield` tested: active → expired lifecycle at SHIELD.DURATION_MS
+- [ ] `isShieldActive` and `getShieldAlpha` tested with active/expired states
+- [ ] `drawShield` tested: quality cap enforcement (shadowBlur, particle caps)
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-076 Ready Brief
+
+**What:** Write unit tests for `src/game-objects/projectile.js`. Cover firing, spawn cap, update/collision, offscreen removal, and trail/theme bounds.
+
+**Reference files to read first:**
+- `src/game-objects/projectile.js` — the module under test (exports: `fireProjectile`, `updateProjectiles`, `drawProjectiles`)
+- `src/constants.js` — `PROJECTILE` namespace (MAX_ACTIVE, SPEED, etc.)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+
+**Files to modify:**
+1. `tests/unit/game-objects/projectile.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `fireProjectile` should respect `PROJECTILE.MAX_ACTIVE` spawn cap — test at and beyond the limit
+- `updateProjectiles` takes `dt` and `shipRect` — test with large `dt` values and offscreen positions
+- Trail arrays should be bounded — verify no unbounded growth
+- Theme index comes from random — test that it stays within valid range
+
+**Acceptance criteria:**
+- [ ] `fireProjectile` tested: spawns projectile, respects MAX_ACTIVE cap
+- [ ] `updateProjectiles` tested: movement, offscreen removal, large dt behavior
+- [ ] `drawProjectiles` tested: quality cap handling
+- [ ] Trail length bounded (no unbounded array growth)
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-077 Ready Brief
+
+**What:** Write unit tests for `src/systems/progression.js`. Cover phase thresholds, victory transition, HP ratio clamping, and phase multiplier functions.
+
+**Reference files to read first:**
+- `src/systems/progression.js` — the module under test (exports: `resetShip`, `damageShip`, `getPhaseForHP`, `updateBossPhase`, `getShipHPRatio`, `getPhaseSpeedMultiplier`, `getPhaseSpawnMultiplier`, `getPhaseTrapChanceBoost`, `getPhaseEffects`)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+
+**Files to modify:**
+1. `tests/unit/systems/progression.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `getPhaseForHP` has multiple thresholds — test each boundary (at, above, below)
+- `updateBossPhase` sets `isVictory` only on first defeat — test idempotency (calling twice shouldn't re-trigger)
+- `getShipHPRatio` should clamp for negative and overflow HP values
+- `damageShip` should not go below 0 HP
+
+**Acceptance criteria:**
+- [ ] `getPhaseForHP` tested at every threshold boundary
+- [ ] `updateBossPhase` tested: normal phase transitions + victory fires once only
+- [ ] `getShipHPRatio` tested: normal, negative HP, overflow HP — all clamped [0,1]
+- [ ] `damageShip` tested: normal damage, overkill (doesn't go negative)
+- [ ] Phase multiplier functions return expected values per phase
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-078 Ready Brief
+
+**What:** Write unit tests for `src/systems/power.js`. Cover charge, spend, drain, canAfford with edge cases, and getPowerRatio clamping.
+
+**Reference files to read first:**
+- `src/systems/power.js` — the module under test (exports: `resetPower`, `chargePower`, `spendPower`, `canAfford`, `drainPower`, `getPowerRatio`)
+- `src/constants.js` — `POWER` namespace (MAX, SLAM_COST, etc.)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+
+**Files to modify:**
+1. `tests/unit/systems/power.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `chargePower` should cap at POWER.MAX — test overflow
+- `spendPower` should not go negative — test with cost > current power
+- `drainPower` takes `amountPerSec` and `dt` — test with very large dt, NaN dt, zero dt
+- `canAfford` with NaN/undefined cost should return false (or whatever the current behavior is — test it)
+- `getPowerRatio` should clamp to [0,1]
+
+**Acceptance criteria:**
+- [ ] `resetPower` tested: sets initial state correctly
+- [ ] `chargePower` tested: normal charge, overflow caps at MAX
+- [ ] `spendPower` tested: normal spend, insufficient funds, zero/negative cost
+- [ ] `canAfford` tested: normal, edge (exact cost), NaN/undefined
+- [ ] `drainPower` tested: normal drain, large dt, zero dt
+- [ ] `getPowerRatio` tested: normal, 0 power, max power, beyond-max clamped
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-079 Ready Brief
+
+**What:** Write unit tests for `src/config/debug-panel.js`. Cover init/destroy lifecycle, keyboard toggle, listener cleanup, and flag rendering.
+
+**Reference files to read first:**
+- `src/config/debug-panel.js` — the module under test (exports: `initDebugPanel`, `showDebugPanel`, `hideDebugPanel`, `toggleDebugPanel`)
+- `tests/unit/supports/medic-firefly.test.js` — gold standard test pattern
+- `tests/unit/config/flags.test.js` — pattern for testing config modules with DOM/browser mocks
+
+**Files to modify:**
+1. `tests/unit/config/debug-panel.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- Debug panel creates DOM elements — need jsdom or mock document
+- `initDebugPanel` registers keyboard listener (backtick key) — test it fires only once per init
+- Repeated init/destroy cycles must not leak listeners — test multiple cycles
+- Panel reads flags from `getAllFlags()` — mock the flags module
+
+**Acceptance criteria:**
+- [ ] `initDebugPanel` tested: creates DOM, registers listener once
+- [ ] `toggleDebugPanel` tested: show/hide toggling
+- [ ] `destroy` tested: removes DOM and listeners, verified across repeated init/destroy cycles
+- [ ] Keyboard shortcut tested: backtick toggles panel
+- [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 

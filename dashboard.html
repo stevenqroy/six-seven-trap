@@ -986,6 +986,31 @@
         summary: '2 integration tests fail because they assume all flag defaults are false, but 4 action-bar flags now default to true. Update tests to check actual defaults dynamically.',
         marker: '\u{1F9EA}',
       },
+      'S7R-075': {
+        title: 'Test the shield',
+        summary: 'Unit tests for the shield system: activation, cooldown enforcement, update/expire lifecycle, draw with quality caps, particle limits. Based on S7R-064 audit P0 list.',
+        marker: '\u{1F6E1}',
+      },
+      'S7R-076': {
+        title: 'Test the projectile',
+        summary: 'Unit tests for the projectile system: fire, spawn cap enforcement, movement, offscreen removal, collision, trail length bounds, color theme index. Based on S7R-064 audit P0 list.',
+        marker: '\u{1F680}',
+      },
+      'S7R-077': {
+        title: 'Test boss progression',
+        summary: 'Unit tests for the progression system: phase threshold boundaries, victory transition (fires once only), HP ratio clamping, speed/spawn/trap multipliers per phase. Based on S7R-064 audit P0 list.',
+        marker: '\u{1F4CA}',
+      },
+      'S7R-078': {
+        title: 'Test the power system',
+        summary: 'Unit tests for the power system: charge to max, spend with insufficient funds, drain with large/zero dt, canAfford edge cases (NaN, undefined), getPowerRatio clamping. Based on S7R-064 audit P0 list.',
+        marker: '\u{1F50B}',
+      },
+      'S7R-079': {
+        title: 'Test the debug panel',
+        summary: 'Unit tests for the debug panel: init creates DOM and registers keyboard listener, destroy removes everything cleanly, repeated init/destroy cycles don\'t leak listeners. Based on S7R-064 audit P0 list.',
+        marker: '\u{1F41B}',
+      },
     };
 
     let lastText = '';
