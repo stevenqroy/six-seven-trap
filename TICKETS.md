@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**25 of 37 V1 tickets done (68%). 12 tickets + 2 gates remaining.**
+**30 of 37 V1 tickets done (81%). 7 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -72,11 +72,11 @@
 | 30 | S7R-072 | ⚡ Ability VFX: Slam shockwave + push + haptic | — | yes | codex | done | main | codex |
 | 31 | S7R-073 | ⚡ Ability VFX: Projectile trails + color variety | — | no | gemini | done | main | gemini |
 | 32 | S7R-074 | Fix flags-boot integration tests (2 failing) | — | no | codex/gemini | done | main | codex |
-| 33 | S7R-075 | Unit tests: shield lifecycle (activate, update, expire, draw) | — | no | codex/gemini | reviewing | codex/S7R-075 | codex |
-| 34 | S7R-076 | Unit tests: projectile (fire, update, collide, draw, caps) | — | no | codex/gemini | reviewing | codex/S7R-076 | codex |
-| 35 | S7R-077 | Unit tests: progression (phase thresholds, victory, HP ratio) | — | no | codex/gemini | reviewing | codex/S7R-077 | codex |
-| 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | reviewing | codex/S7R-078 | codex |
-| 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | reviewing | codex/S7R-079 | codex |
+| 33 | S7R-075 | Unit tests: shield lifecycle (activate, update, expire, draw) | — | no | codex/gemini | done | codex/S7R-075 | codex |
+| 34 | S7R-076 | Unit tests: projectile (fire, update, collide, draw, caps) | — | no | codex/gemini | done | codex/S7R-076 | codex |
+| 35 | S7R-077 | Unit tests: progression (phase thresholds, victory, HP ratio) | — | no | codex/gemini | done | codex/S7R-077 | codex |
+| 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | done | codex/S7R-078 | codex |
+| 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | done | codex/S7R-079 | codex |
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | next | — | — |
 | 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | S7R-080 | yes | claude | blocked:080 | — | — |
 
@@ -113,15 +113,15 @@
 | S7R-060 | Cache/pool gradient objects, gate `shadowBlur` behind quality tier, cache static sky/hill gradients. | done | — |
 | S7R-061 | Replace `splice(i,1)` with swap-and-pop in all particle loops. Gate `serializeDebug()` on panel visibility. Reduce harvester/support-runtime per-frame allocs. | done | — |
 
-### Test tickets (no blockers, from S7R-064 P0 audit)
+### Test tickets (from S7R-064 P0 audit)
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
-| S7R-075 | Unit tests for shield: activate, cooldown, update lifecycle, expire, draw quality caps | next | codex/gemini |
-| S7R-076 | Unit tests for projectile: fire, spawn cap, update/collide, offscreen removal, trail/theme bounds | next | codex/gemini |
-| S7R-077 | Unit tests for progression: phase thresholds, victory transition, HP ratio clamp, speed/spawn multipliers | next | codex/gemini |
-| S7R-078 | Unit tests for power: charge, spend, drain, canAfford with invalid inputs, getPowerRatio clamp | next | codex/gemini |
-| S7R-079 | Unit tests for debug-panel: init/destroy lifecycle, keyboard toggle, listener cleanup | next | codex/gemini |
+| S7R-075 | Unit tests for shield: activate, cooldown, update lifecycle, expire, draw quality caps | done | — |
+| S7R-076 | Unit tests for projectile: fire, spawn cap, update/collide, offscreen removal, trail/theme bounds | done | — |
+| S7R-077 | Unit tests for progression: phase thresholds, victory transition, HP ratio clamp, speed/spawn multipliers | done | — |
+| S7R-078 | Unit tests for power: charge, spend, drain, canAfford with invalid inputs, getPowerRatio clamp | done | — |
+| S7R-079 | Unit tests for debug-panel: init/destroy lifecycle, keyboard toggle, listener cleanup | done | — |
 
 ### Research tickets (no blockers, can start now)
 
@@ -867,3 +867,8 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-15 | S7R-069 | `docs/research/S7R-069-magic-numbers.md` — ~35 hardcoded scene-tuning values cataloged with suggested SCENE.* constant names | gemini |
 | 2026-02-15 | S7R-064 | `docs/research/S7R-064-test-gaps.md` — full test gap audit: 16/35 modules untested, 4 pattern violations, 17 prioritized test additions | codex |
 | 2026-02-15 | S7R-062 | `docs/research/S7R-062-tunable-constants.md` — 60+ tunable constants cataloged across 6 systems for S7R-054 polish pass | gemini |
+| 2026-02-15 | S7R-075 | `tests/unit/game-objects/shield.test.js` — 6 tests: activate/cooldown, update/expire, alpha, draw quality caps | codex |
+| 2026-02-15 | S7R-076 | `tests/unit/game-objects/projectile.test.js` — 7 tests: fire/cap, collision, movement/trail, offscreen, trail bounds, draw caps | codex |
+| 2026-02-15 | S7R-077 | `tests/unit/systems/progression.test.js` — 11 tests: phase thresholds, victory idempotent, HP ratio, multipliers, effects | codex |
+| 2026-02-15 | S7R-078 | `tests/unit/systems/power.test.js` — 11 tests: charge/cap, spend, canAfford, drain, ratio clamp, NaN guards | codex |
+| 2026-02-15 | S7R-079 | `tests/unit/config/debug-panel.test.js` — 5 tests: init/destroy lifecycle, keyboard toggle, listener leak check, flag rendering | codex |
