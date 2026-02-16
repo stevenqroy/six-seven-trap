@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**37 of 45 V1 tickets done (82%). 8 tickets + 2 gates remaining.**
+**38 of 45 V1 tickets done (84%). 7 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -80,8 +80,8 @@
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | done | claude/S7R-080 | claude |
 | 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | done | claude/S7R-081 | claude |
 | 40 | S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js | S7R-080 | yes | claude | done | claude/S7R-082 | claude |
-| 41 | S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js | S7R-082 | yes | claude | wip:claude | claude/S7R-083 | claude |
-| 42 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js | S7R-083 | yes | claude | blocked:083 | — | — |
+| 41 | S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js | S7R-082 | yes | claude | done | claude/S7R-083 | claude |
+| 42 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js | S7R-083 | yes | claude | next | — | — |
 | 43 | S7R-085 | Unit tests: hud-updates (factory, pulse, visibility, missing-element fallback) | — | no | codex/gemini | done | codex/S7R-085 | codex |
 | 44 | S7R-086 | Unit tests: lives (loseLife, extraLife, invincibility alpha, boundary) | — | no | codex/gemini | done | codex/S7R-086 | codex |
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
@@ -102,8 +102,8 @@
 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | done | claude |
 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | done | claude |
 | S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js (~350 lines). Touches main.js. | done | claude |
-| S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js (~330 lines). Touches main.js. Depends on S7R-082 (quantize). | blocked:082 | claude |
-| S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js (~170 lines). Touches main.js. Depends on S7R-083 (getDangerBeamGeometry). | blocked:083 | claude |
+| S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js (~330 lines). Touches main.js. Depends on S7R-082 (quantize). | done | claude |
+| S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js (~170 lines). Touches main.js. Depends on S7R-083 (getDangerBeamGeometry). | next | claude |
 
 ### VFX tickets (no blockers, can start now)
 
@@ -1102,7 +1102,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: wip:claude (S7R-083)
+**Currently held by**: nobody (unlocked)
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
@@ -1174,3 +1174,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-16 | S7R-086 | `tests/unit/systems/lives.test.js` — 7 tests: resetLives, loseLife boundary/underflow, checkExtraLife thresholds/duplicates/MAX cap, isInvincible boundary, alpha range | codex |
 | 2026-02-16 | S7R-088 | `tests/unit/core/run-rng.test.js` — 9 tests: deterministic seeding, non-deterministic variation, draw count, tracker API, start() reset, seed override via query string, invalid seed fallback, monotonic draw count | gemini |
 | 2026-02-16 | S7R-089 | `tests/unit/utils/sprite.test.js` — 8 tests: alpha sampling bounds, transparent sprite cache + null context, alpha data cache, drawImageWithTransparencyKey, body/hand visibility, hitVisibleCharacterPixel, estimateCharacterNormal + fallbacks | codex |
+| 2026-02-16 | S7R-083 | `src/systems/danger-beam.js`, `src/constants.js`, `src/main.js` — extracted danger beam (oscillation, rendering, geometry, ember/sizzle particles) into module, added ~50 SCENE.DANGER_* constants, removed unused sprite/math imports, main.js −314 net lines | claude |
