@@ -115,7 +115,7 @@
 | S7R-066 | Research sprite sheet formats and tools for small 2D characters (16x16 or 32x32). What format works with canvas? How to animate idle/walk/hit? Free pixel art tools? | next | gemini |
 | S7R-067 | Design visual identity for alien kids — what do they look like? Sketch descriptions for all characters. | next | steven/claude |
 | S7R-068 | Brainstorm alien ship personality and visual ideas. Does it hover impatiently? Honk? Send stern messages? | next | anyone |
-| S7R-069 | Catalog ~30 hardcoded scene-tuning values in main.js (parallax, gradients, wave freq, etc.). Move to constants.js or scene-config module. | reviewing | gemini | gemini/S7R-069 | gemini |
+| S7R-069 | Catalog ~30 hardcoded scene-tuning values in main.js (parallax, gradients, wave freq, etc.). Move to constants.js or scene-config module. | done | gemini | gemini/S7R-069 | gemini |
 
 #### S7R-058 Ready Brief
 
@@ -622,3 +622,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-14 | S7R-072 | `src/main.js`, `src/ui/action-router.js` — slam shockwave VFX overhaul: dual rings, debris particles, screen shake, ship/entity push, haptic feedback, cost fix (POWER.SLAM_COST) | codex |
 | 2026-02-15 | S7R-074 | `tests/integration/flags-boot.test.js` — fix 2 failing tests: check actual flag defaults dynamically instead of assuming all-false | codex |
 | 2026-02-15 | S7R-063 | `docs/research/S7R-063-main-extraction.md` — top 5 main.js extraction candidates: laser storm, danger beam, world scenery, badguys, beam harvest (~1300 lines) | gemini |
+| 2026-02-15 | S7R-069 | `docs/research/S7R-069-magic-numbers.md` — ~35 hardcoded scene-tuning values cataloged with suggested SCENE.* constant names | gemini |
