@@ -32,6 +32,16 @@ export function distPointToSegmentSq(px, py, x1, y1, x2, y2) {
  * Returns a 0-1 value biased toward 0 or 1 (edges).
  * Higher power = stronger edge bias.
  */
+/**
+ * Snap a value to the nearest step.
+ * Returns 0 for non-finite values; returns value unchanged for non-positive step.
+ */
+export function quantize(value, step) {
+  if (!Number.isFinite(value)) return 0;
+  if (!Number.isFinite(step) || step <= 0) return value;
+  return Math.round(value / step) * step;
+}
+
 export function edgeBiasedUnit(power = 1.8, random = Math.random) {
   const towardLeftOrTop = random() < 0.5;
   const n = Math.pow(random(), power);

@@ -7,8 +7,6 @@ import {
   TRAP_SPAWN_CHANCE_START,
   TRAP_SPAWN_CHANCE_MAX,
   MAX_ACTIVE_NUMS,
-  MAX_ACTIVE_LASER_BEAMS,
-  MAX_LASER_SMOKE,
   TEMP_NO_LOSE,
   BADGUYS_SPRITE_SHEET,
   HAND_TUNING,
@@ -24,12 +22,22 @@ import {
   MOBILE,
   POLISH,
   ADAPTIVE_QUALITY,
+  SCENE,
 } from './constants.js';
 import S from './state.js';
 import {
   clamp as _clamp,
   distPointToSegmentSq as _distPointToSegmentSq,
+  quantize as _quantize,
 } from './utils/math.js';
+import {
+  updateLaserStorm as updateLaserStormFn,
+  drawLaserStorm as drawLaserStormFn,
+  spawnLaserSmoke as spawnLaserSmokeFn,
+  updateLaserSmoke as updateLaserSmokeFn,
+  drawLaserSmoke as drawLaserSmokeFn,
+  startLaserPostHitBounce as startLaserPostHitBounceFn,
+} from './systems/laser-storm.js';
 import {
   getTransparentSprite as _getTransparentSprite,
   drawImageWithTransparencyKey as _drawImageWithTransparencyKey,
@@ -504,19 +512,7 @@ import { createRunRngTracker } from './core/run-rng.js';
   let wCSS = 0,
     hCSS = 0;
   const worldState = initWorldState();
-  const LASER_GRADIENT_POS_STEP_PX = 6;
-  const LASER_GRADIENT_HUE_STEP = 12;
-  const LASER_GRADIENT_ALPHA_STEP = 0.05;
-  const DANGER_BEAM_OSC_STEP_MS = 33;
-
-  const laserBeamGradientCache = [];
-  const laserSourceGradientCache = [];
-
-  function quantize(value, step) {
-    if (!Number.isFinite(value)) return 0;
-    if (!Number.isFinite(step) || step <= 0) return value;
-    return Math.round(value / step) * step;
-  }
+  const DANGER_BEAM_OSC_STEP_MS = SCENE.DANGER_BEAM_OSC_STEP_MS;
 
   function resize() {
     wCSS = window.innerWidth;
@@ -527,8 +523,6 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     rebuildWorldStars(worldState, wCSS, hCSS, random);
     resetWorldCache(worldState);
-    laserBeamGradientCache.length = 0;
-    laserSourceGradientCache.length = 0;
   }
   window.addEventListener('resize', resize);
   resize();
@@ -2120,316 +2114,39 @@ import { createRunRngTracker } from './core/run-rng.js';
   // Delegated to utils/math.js
   const clamp = _clamp;
   const distPointToSegmentSq = _distPointToSegmentSq;
+  const quantize = _quantize;
 
-  function getLaserBeamSource(beam, anchors) {
-    const idx = ((beam.anchorIndex % anchors.length) + anchors.length) % anchors.length;
-    return getBadguysScreenPoint(anchors[idx]);
-  }
-
-  function startLaserPostHitBounce(beam, sourceX, sourceY) {
-    if (beam.inert) return;
-    beam.inert = true;
-    beam.bouncesRemaining = 4;
-    beam.inertElapsed = 0;
-    beam.inertDuration = 1;
-    beam.bounceStage = -1;
-
-    const startX = clamp(sourceX + Math.cos(beam.angle) * beam.length * 0.44, 0, wCSS);
-    const startY = clamp(sourceY + Math.sin(beam.angle) * beam.length * 0.44, 0, hCSS);
-    const sides = ['left', 'top', 'right', 'bottom'];
-    const offset = (random() * 4) | 0;
-    const ordered = [
-      sides[offset],
-      sides[(offset + 1) % 4],
-      sides[(offset + 2) % 4],
-      sides[(offset + 3) % 4],
-    ];
-    const points = [{ x: startX, y: startY }];
-    for (let i = 0; i < ordered.length; i++) {
-      const side = ordered[i];
-      if (side === 'left') points.push({ x: 0, y: random() * hCSS });
-      else if (side === 'right') points.push({ x: wCSS, y: random() * hCSS });
-      else if (side === 'top') points.push({ x: random() * wCSS, y: 0 });
-      else points.push({ x: random() * wCSS, y: hCSS });
-    }
-
-    beam.bouncePath = points;
-    beam.tipX = startX;
-    beam.tipY = startY;
-    beam.life = Math.max(beam.life, 1.05);
-  }
-
-  function updateLaserBounceTip(beam, dt, sourceX, sourceY) {
-    if (!beam.bouncePath || beam.bouncePath.length < 2) {
-      beam.life -= dt * 4;
-      return;
-    }
-
-    beam.inertElapsed += dt;
-    const segCount = beam.bouncePath.length - 1;
-    const tNorm = clamp(beam.inertElapsed / beam.inertDuration, 0, 1);
-    const travel = tNorm * segCount;
-    const seg = Math.min(segCount - 1, Math.floor(travel));
-    const localT = travel - seg;
-    const p0 = beam.bouncePath[seg];
-    const p1 = beam.bouncePath[seg + 1];
-    beam.tipX = p0.x + (p1.x - p0.x) * localT;
-    beam.tipY = p0.y + (p1.y - p0.y) * localT;
-
-    if (seg !== beam.bounceStage) {
-      beam.bounceStage = seg;
-      beam.bouncesRemaining = Math.max(0, 4 - (seg + 1));
-    }
-
-    if (beam.inertElapsed >= beam.inertDuration) {
-      beam.life -= dt * 4.2;
-    }
-
-    beam.angle = Math.atan2(beam.tipY - sourceY, beam.tipX - sourceX);
-  }
-
-  function getInertBeamPolylinePoints(beam) {
-    if (!beam.bouncePath || beam.bouncePath.length < 2) return null;
-    const segCount = beam.bouncePath.length - 1;
-    const tNorm = clamp(beam.inertElapsed / Math.max(0.0001, beam.inertDuration), 0, 1);
-    const travel = tNorm * segCount;
-    const seg = Math.min(segCount - 1, Math.floor(travel));
-    const localT = travel - seg;
-    const p0 = beam.bouncePath[seg];
-    const p1 = beam.bouncePath[seg + 1];
-    const tip = {
-      x: p0.x + (p1.x - p0.x) * localT,
-      y: p0.y + (p1.y - p0.y) * localT,
-    };
-
-    const points = [{ x: beam.sourceX, y: beam.sourceY }, beam.bouncePath[0]];
-    for (let i = 1; i <= seg; i++) points.push(beam.bouncePath[i]);
-    points.push(tip);
-    return points;
-  }
-
+  // Laser storm wrappers — delegate to src/systems/laser-storm.js
   function updateLaserStorm(now, dt) {
-    laserStorm.segments.length = 0;
-    laserStorm.sourceBurst = Math.max(0, laserStorm.sourceBurst - dt * 1.4);
-
-    if (!(laserStorm.enabled && badguysRender.ready)) return;
-    const maxLaserBeams = Math.max(
-      2,
-      Math.floor(getAdaptiveCapValue('maxActiveLaserBeams', MAX_ACTIVE_LASER_BEAMS))
-    );
-
-    const fallbackAnchors = [{ x: 0.5, y: 0.69 }];
-    const anchors = badguysLightAnchors.length ? badguysLightAnchors : fallbackAnchors;
-    laserStorm.spawnCarry += dt * (4.8 + anchors.length * 0.42);
-
-    while (laserStorm.spawnCarry >= 1 && laserStorm.beams.length < maxLaserBeams) {
-      laserStorm.spawnCarry -= 1;
-      const anchorIndex = (random() * anchors.length) | 0;
-      const src = getLaserBeamSource({ anchorIndex }, anchors);
-      const baseAngle =
-        random() < 0.66
-          ? Math.PI / 2 + (random() - 0.5) * 1.9
-          : random() * Math.PI * 2;
-      const jitterFreq = 0.003 + random() * 0.009;
-      const jitterAmp = 0.35 + random() * 0.55;
-      const sweepVel = (random() - 0.5) * (2.8 + random() * 2.6);
-      const length = Math.hypot(wCSS, hCSS) * (1.55 + random() * 0.35);
-      const life = 1.85 + random() * 1.05;
-
-      laserStorm.beams.push({
-        anchorIndex,
-        sourceX: src.x,
-        sourceY: src.y,
-        angle: baseAngle,
-        angVel: sweepVel,
-        targetVel: sweepVel,
-        nextJoltAt: now + 120 + random() * 360,
-        jitterFreq,
-        jitterAmp,
-        jitterPhase: random() * Math.PI * 2,
-        length,
-        life,
-        lifeMax: life,
-        hue: (now * 0.07 + random() * 360) % 360,
-        width: 2.5 + random() * 2.6,
-        power: 7.8 + random() * 6.4,
-        hitCount: 0,
-        nextHitAt: 0,
-        inert: false,
-        bouncesRemaining: 0,
-        inertElapsed: 0,
-        inertDuration: 1,
-        bounceStage: -1,
-        bouncePath: null,
-        tipX: src.x + Math.cos(baseAngle) * length,
-        tipY: src.y + Math.sin(baseAngle) * length,
-      });
-    }
-    if (laserStorm.beams.length > maxLaserBeams) {
-      const overflow = laserStorm.beams.length - maxLaserBeams;
-      for (let i = 0; i < overflow; i++) {
-        laserStorm.beams[i].life = Math.min(laserStorm.beams[i].life, 0.08);
-      }
-    }
-    if (laserStorm.beams.length >= maxLaserBeams) {
-      laserStorm.spawnCarry = Math.min(laserStorm.spawnCarry, 0.5);
-    }
-
-    for (let i = laserStorm.beams.length - 1; i >= 0; i--) {
-      const b = laserStorm.beams[i];
-      const src = getLaserBeamSource(b, anchors);
-      b.sourceX = src.x;
-      b.sourceY = src.y;
-      b.life -= dt;
-
-      if (!b.inert) {
-        if (now >= b.nextJoltAt) {
-          b.targetVel = (random() - 0.5) * (2.8 + random() * 3.2);
-          b.nextJoltAt = now + 110 + random() * 380;
-        }
-        const velEase = Math.min(1, dt * 7.2);
-        b.angVel += (b.targetVel - b.angVel) * velEase;
-        const jitter = Math.sin(now * b.jitterFreq + b.jitterPhase) * b.jitterAmp;
-        b.angle += (b.angVel + jitter) * dt;
-        b.tipX = src.x + Math.cos(b.angle) * b.length;
-        b.tipY = src.y + Math.sin(b.angle) * b.length;
-      } else {
-        updateLaserBounceTip(b, dt, src.x, src.y);
-      }
-
-      if (!b.inert) {
-        laserStorm.segments.push({
-          x1: src.x,
-          y1: src.y,
-          x2: b.tipX,
-          y2: b.tipY,
-          sourceX: src.x,
-          sourceY: src.y,
-          hue: b.hue,
-          power: b.power,
-          width: b.width,
-          beam: b,
-        });
-      }
-
-      if (b.life <= 0) {
-        laserStorm.beams.splice(i, 1);
-      }
-    }
+    updateLaserStormFn(laserStorm, {
+      now, dt, wCSS, hCSS, rng: random,
+      badguysRenderReady: badguysRender.ready,
+      badguysLightAnchors,
+      getScreenPoint: getBadguysScreenPoint,
+      getAdaptiveCapValue,
+    });
   }
-
-  function getCachedLaserSourceGradient(index, x, y, radius, srcGlow, hue) {
-    const qX = quantize(x, LASER_GRADIENT_POS_STEP_PX);
-    const qY = quantize(y, LASER_GRADIENT_POS_STEP_PX);
-    const qRadius = Math.max(2, quantize(radius, 2));
-    const qGlow = clamp(quantize(srcGlow, LASER_GRADIENT_ALPHA_STEP), 0, 1);
-    const qHue = ((quantize(hue, LASER_GRADIENT_HUE_STEP) % 360) + 360) % 360;
-    const key = `${qX}|${qY}|${qRadius}|${qGlow}|${qHue}`;
-
-    let cached = laserSourceGradientCache[index];
-    if (!cached || cached.key !== key) {
-      const gradient = ctx.createRadialGradient(qX, qY, 0, qX, qY, qRadius);
-      gradient.addColorStop(0, `rgba(255,255,255,${0.9 * qGlow})`);
-      gradient.addColorStop(0.5, `hsla(${qHue},100%,70%,${0.46 * qGlow})`);
-      gradient.addColorStop(1, 'rgba(255,255,255,0)');
-      cached = { key, gradient };
-      laserSourceGradientCache[index] = cached;
-    }
-    return cached.gradient;
-  }
-
-  function getCachedLaserBeamGradient(index, srcX, srcY, endX, endY, hue, alpha, inertFactor) {
-    const qSrcX = quantize(srcX, LASER_GRADIENT_POS_STEP_PX);
-    const qSrcY = quantize(srcY, LASER_GRADIENT_POS_STEP_PX);
-    const qEndX = quantize(endX, LASER_GRADIENT_POS_STEP_PX);
-    const qEndY = quantize(endY, LASER_GRADIENT_POS_STEP_PX);
-    const qHue = ((quantize(hue, LASER_GRADIENT_HUE_STEP) % 360) + 360) % 360;
-    const qAlpha = clamp(quantize(alpha, LASER_GRADIENT_ALPHA_STEP), 0, 1);
-    const qInert = clamp(quantize(inertFactor, LASER_GRADIENT_ALPHA_STEP), 0, 1);
-    const key = `${qSrcX}|${qSrcY}|${qEndX}|${qEndY}|${qHue}|${qAlpha}|${qInert}`;
-
-    let cached = laserBeamGradientCache[index];
-    if (!cached || cached.key !== key) {
-      const gradient = ctx.createLinearGradient(qSrcX, qSrcY, qEndX, qEndY);
-      gradient.addColorStop(0, `hsla(${qHue},100%,90%,${0.94 * qAlpha * qInert})`);
-      gradient.addColorStop(0.25, `hsla(${(qHue + 28) % 360},100%,70%,${0.7 * qAlpha * qInert})`);
-      gradient.addColorStop(1, `hsla(${(qHue + 55) % 360},100%,62%,${0.22 * qAlpha * qInert})`);
-      cached = { key, gradient };
-      laserBeamGradientCache[index] = cached;
-    }
-    return cached.gradient;
-  }
-
   function drawLaserStorm(now) {
-    if (!laserStorm.enabled || !badguysRender.ready) return;
-    if (!laserStorm.beams.length && laserStorm.sourceBurst <= 0.01) return;
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const blurCaps = getAdaptiveShadowBlurCaps();
-
-    const pulse = 0.45 + 0.55 * Math.sin(now * 0.018);
-    const srcGlow = laserStorm.sourceBurst > 0 ? laserStorm.sourceBurst : 0.16 + pulse * 0.22;
-    for (let i = 0; i < badguysLightAnchors.length; i++) {
-      const p = getBadguysScreenPoint(badguysLightAnchors[i]);
-      const glowR = 5 + srcGlow * 16;
-      const hue = (now * 0.2 + i * 41) % 360;
-      ctx.fillStyle = getCachedLaserSourceGradient(i, p.x, p.y, glowR, srcGlow, hue);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    for (let i = 0; i < laserStorm.beams.length; i++) {
-      const b = laserStorm.beams[i];
-      const srcX = b.sourceX;
-      const srcY = b.sourceY;
-      const alpha = clamp(b.life / Math.max(0.01, b.lifeMax), 0, 1);
-      const inertFactor = b.inert ? 0.42 : 1;
-      const hue = (b.hue + Math.sin(now * 0.014 + i * 1.7) * 28 + 360) % 360;
-
-      const drawPts = b.inert ? getInertBeamPolylinePoints(b) : null;
-      const endX = drawPts ? drawPts[drawPts.length - 1].x : b.tipX;
-      const endY = drawPts ? drawPts[drawPts.length - 1].y : b.tipY;
-      ctx.strokeStyle = getCachedLaserBeamGradient(
-        i,
-        srcX,
-        srcY,
-        endX,
-        endY,
-        hue,
-        alpha,
-        inertFactor
-      );
-      ctx.lineWidth = b.width * (b.inert ? 0.8 : 1.45);
-      ctx.lineCap = 'round';
-      ctx.shadowColor = `hsla(${hue},100%,72%,${0.65 * alpha * inertFactor})`;
-      ctx.shadowBlur = blurCaps.enabled
-        ? Math.min(blurCaps.maxShadowBlur, 14 + b.width * 5)
-        : 0;
-      ctx.beginPath();
-      ctx.moveTo(srcX, srcY);
-      if (drawPts) {
-        for (let j = 1; j < drawPts.length; j++) ctx.lineTo(drawPts[j].x, drawPts[j].y);
-      } else {
-        ctx.lineTo(b.tipX, b.tipY);
-      }
-      ctx.stroke();
-
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = `hsla(${(hue + 10) % 360},100%,95%,${0.65 * alpha * inertFactor})`;
-      ctx.lineWidth = Math.max(1.1, b.width * (b.inert ? 0.18 : 0.28));
-      ctx.beginPath();
-      ctx.moveTo(srcX, srcY);
-      if (drawPts) {
-        for (let j = 1; j < drawPts.length; j++) ctx.lineTo(drawPts[j].x, drawPts[j].y);
-      } else {
-        ctx.lineTo(b.tipX, b.tipY);
-      }
-      ctx.stroke();
-    }
-
-    ctx.restore();
+    drawLaserStormFn(laserStorm, {
+      now, ctx,
+      badguysRenderReady: badguysRender.ready,
+      badguysLightAnchors,
+      getScreenPoint: getBadguysScreenPoint,
+      getAdaptiveShadowBlurCaps,
+    });
+  }
+  function spawnLaserSmoke(x, y, strength = 1) {
+    spawnLaserSmokeFn(laserStorm, x, y, strength, {
+      rng: random,
+      isLowGraphics: isLowGraphicsModeEnabled(),
+      getAdaptiveCapValue,
+    });
+  }
+  function updateLaserSmoke(dt) {
+    updateLaserSmokeFn(laserStorm, dt);
+  }
+  function drawLaserSmoke() {
+    drawLaserSmokeFn(laserStorm, ctx);
   }
 
   function applyLaserBrushToNumber(n, now) {
@@ -2473,7 +2190,7 @@ import { createRunRngTracker } from './core/run-rng.js';
     beam.hitCount = (beam.hitCount || 0) + 1;
     beam.nextHitAt = now + 36;
     if (beam.hitCount >= 3) {
-      startLaserPostHitBounce(beam, beam.sourceX, beam.sourceY);
+      startLaserPostHitBounceFn(beam, beam.sourceX, beam.sourceY, { wCSS, hCSS, rng: random });
     }
     S.cameraShake = Math.max(S.cameraShake, 3.5);
     createParticles(n.x, n.y, n.col, 3);
@@ -2512,68 +2229,6 @@ import { createRunRngTracker } from './core/run-rng.js';
       n.dy = Math.abs(n.dy) * 0.76;
       n.dx += (random() - 0.5) * 1.6;
     }
-  }
-
-  function spawnLaserSmoke(x, y, strength = 1) {
-    const lowGraphics = isLowGraphicsModeEnabled();
-    if (lowGraphics && random() > 0.45) return;
-
-    const smokeCap = Math.max(
-      24,
-      Math.floor(
-        getAdaptiveCapValue(
-          'maxLaserSmoke',
-          lowGraphics ? Math.floor(MAX_LASER_SMOKE * 0.35) : MAX_LASER_SMOKE
-        )
-      )
-    );
-    if (laserStorm.smokePuffs.length >= smokeCap) {
-      laserStorm.smokePuffs.splice(0, laserStorm.smokePuffs.length - smokeCap + 1);
-    }
-
-    const smokeRateScale = getAdaptiveCapValue('laserSmokeSpawnScale', 1);
-    const smokeStrength = (lowGraphics ? strength * 0.68 : strength) * smokeRateScale;
-    laserStorm.smokePuffs.push({
-      x: x + (random() - 0.5) * 8,
-      y: y - 6 + (random() - 0.5) * 6,
-      vx: (random() - 0.5) * 22 * smokeStrength,
-      vy: -(16 + random() * 30 * smokeStrength),
-      r: 2.2 + random() * 3.2 * smokeStrength,
-      life: 0.55 + random() * 0.5,
-      lifeMax: 0.55 + random() * 0.5,
-      grow: 10 + random() * 14,
-    });
-  }
-
-  function updateLaserSmoke(dt) {
-    for (let i = laserStorm.smokePuffs.length - 1; i >= 0; i--) {
-      const s = laserStorm.smokePuffs[i];
-      s.vx *= 0.96;
-      s.vy -= 12 * dt;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-      s.r += s.grow * dt;
-      s.life -= dt;
-      if (s.life <= 0) removeBySwapPop(laserStorm.smokePuffs, i);
-    }
-  }
-
-  function drawLaserSmoke() {
-    if (!laserStorm.smokePuffs.length) return;
-    ctx.save();
-    for (let i = 0; i < laserStorm.smokePuffs.length; i++) {
-      const s = laserStorm.smokePuffs[i];
-      const a = clamp(s.life / Math.max(0.01, s.lifeMax), 0, 1);
-      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
-      g.addColorStop(0, `rgba(205,205,205,${0.35 * a})`);
-      g.addColorStop(0.5, `rgba(128,128,128,${0.22 * a})`);
-      g.addColorStop(1, 'rgba(80,80,80,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
   }
 
   function drawBadguysLightAnchors(now) {
