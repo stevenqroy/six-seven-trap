@@ -78,7 +78,7 @@
 | 36 | S7R-078 | Unit tests: power (charge, spend, drain, afford, ratio) | — | no | codex/gemini | done | codex/S7R-078 | codex |
 | 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | done | codex/S7R-079 | codex |
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | done | claude/S7R-080 | claude |
-| 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | next | — | — |
+| 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | wip:claude | claude/S7R-081 | claude |
 
 ## What can run RIGHT NOW
 
@@ -92,7 +92,7 @@
 | S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | done | claude |
-| S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | next | claude |
+| S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | wip:claude | claude |
 
 ### VFX tickets (no blockers, can start now)
 
@@ -808,7 +808,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: nobody (unlocked)
+**Currently held by**: wip:claude (S7R-081)
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
