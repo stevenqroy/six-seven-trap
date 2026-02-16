@@ -66,6 +66,12 @@ import {
   spendPower,
   drainPower,
 } from './systems/power.js';
+import {
+  initWorldState,
+  rebuildWorldStars,
+  resetWorldCache,
+  drawWorld,
+} from './systems/world-render.js';
 import { createTelemetrySystem } from './systems/telemetry.js';
 import { createAdaptiveQualityGovernor } from './systems/adaptive-quality.js';
 import { loadDefaultEnemyRegistry } from './systems/enemy-registry.js';
@@ -498,32 +504,12 @@ import { createRunRngTracker } from './core/run-rng.js';
   // Resize & Setup
   let wCSS = 0,
     hCSS = 0;
-  let worldStars = [];
-  const WORLD_GRADIENT_STEP_MS = 500;
+  const worldState = initWorldState();
   const LASER_GRADIENT_POS_STEP_PX = 6;
   const LASER_GRADIENT_HUE_STEP = 12;
   const LASER_GRADIENT_ALPHA_STEP = 0.05;
   const DANGER_BEAM_OSC_STEP_MS = 33;
 
-  const worldGradientCache = {
-    key: '',
-    sky: null,
-    hillFar: null,
-    hillMid: null,
-    hillNear: null,
-    barnBody: null,
-    doorGlow: null,
-    ground: null,
-    groundTop: 0,
-    barnW: 0,
-    barnH: 0,
-    barnX: 0,
-    barnY: 0,
-    doorW: 0,
-    doorH: 0,
-    doorX: 0,
-    doorY: 0,
-  };
   const laserBeamGradientCache = [];
   const laserSourceGradientCache = [];
 
@@ -533,107 +519,6 @@ import { createRunRngTracker } from './core/run-rng.js';
     return Math.round(value / step) * step;
   }
 
-  function rebuildWorldStars() {
-    const count = Math.max(36, Math.min(96, Math.floor((wCSS * hCSS) / 18000)));
-    worldStars = [];
-    for (let i = 0; i < count; i++) {
-      worldStars.push({
-        x: random() * wCSS,
-        y: random() * (hCSS * 0.62),
-        r: 0.6 + random() * 1.7,
-        a: 0.2 + random() * 0.75,
-        tw: 0.0012 + random() * 0.0024,
-        phase: random() * Math.PI * 2,
-      });
-    }
-  }
-
-  function getWorldGradients(elapsedMs) {
-    const stepMs = Math.floor(Math.max(0, elapsedMs) / WORLD_GRADIENT_STEP_MS) * WORLD_GRADIENT_STEP_MS;
-    const cacheKey = `${wCSS}x${hCSS}@${stepMs}`;
-    if (worldGradientCache.key === cacheKey) return worldGradientCache;
-
-    const dayProgress = Math.max(0, Math.min(1, stepMs / 180000));
-    const skyTopR = Math.round(20 + dayProgress * 22);
-    const skyTopG = Math.round(14 + dayProgress * 12);
-    const skyTopB = Math.round(58 + dayProgress * 48);
-    const skyBottomR = Math.round(255 - dayProgress * 28);
-    const skyBottomG = Math.round(160 - dayProgress * 38);
-    const skyBottomB = Math.round(110 - dayProgress * 16);
-
-    const sky = ctx.createLinearGradient(0, 0, 0, hCSS);
-    sky.addColorStop(0, `rgb(${skyTopR}, ${skyTopG}, ${skyTopB})`);
-    sky.addColorStop(
-      0.52,
-      `rgba(${Math.round(skyTopR + 8)}, ${Math.round(skyTopG + 6)}, ${Math.round(skyTopB + 16)}, 0.98)`
-    );
-    sky.addColorStop(1, `rgb(${skyBottomR}, ${skyBottomG}, ${skyBottomB})`);
-
-    const farBaseY = hCSS * 0.67;
-    const midBaseY = hCSS * 0.74;
-    const nearBaseY = hCSS * 0.8;
-    const hillFar = ctx.createLinearGradient(0, farBaseY - 31.2, 0, hCSS + 8);
-    hillFar.addColorStop(0, 'rgba(95, 132, 88, 0.72)');
-    hillFar.addColorStop(1, 'rgba(58, 88, 60, 0.92)');
-
-    const hillMid = ctx.createLinearGradient(0, midBaseY - 40.8, 0, hCSS + 8);
-    hillMid.addColorStop(0, 'rgba(112, 154, 94, 0.82)');
-    hillMid.addColorStop(1, 'rgba(65, 100, 62, 0.98)');
-
-    const hillNear = ctx.createLinearGradient(0, nearBaseY - 21.6, 0, hCSS + 8);
-    hillNear.addColorStop(0, 'rgba(124, 168, 88, 0.86)');
-    hillNear.addColorStop(1, 'rgba(78, 116, 58, 0.98)');
-
-    const groundTop = hCSS - 108;
-    const barnW = Math.max(180, Math.min(260, wCSS * 0.3));
-    const barnH = barnW * 0.62;
-    const barnX = wCSS * 0.5 - barnW * 0.5;
-    const barnY = groundTop - barnH + 8;
-    const barnBody = ctx.createLinearGradient(0, barnY, 0, barnY + barnH);
-    barnBody.addColorStop(0, '#b34f42');
-    barnBody.addColorStop(1, '#7f2f2b');
-
-    const doorW = barnW * 0.28;
-    const doorH = barnH * 0.52;
-    const doorX = barnX + barnW * 0.5 - doorW * 0.5;
-    const doorY = barnY + barnH - doorH;
-    const doorGlow = ctx.createRadialGradient(
-      doorX + doorW * 0.5,
-      doorY + doorH * 0.68,
-      0,
-      doorX + doorW * 0.5,
-      doorY + doorH * 0.68,
-      doorW * 0.95
-    );
-    doorGlow.addColorStop(0, 'rgba(255, 224, 140, 0.85)');
-    doorGlow.addColorStop(1, 'rgba(255, 190, 95, 0)');
-
-    const ground = ctx.createLinearGradient(0, groundTop, 0, hCSS);
-    ground.addColorStop(0, '#3f7d3f');
-    ground.addColorStop(0.46, '#2f5f2e');
-    ground.addColorStop(1, '#1f3821');
-
-    worldGradientCache.key = cacheKey;
-    worldGradientCache.sky = sky;
-    worldGradientCache.hillFar = hillFar;
-    worldGradientCache.hillMid = hillMid;
-    worldGradientCache.hillNear = hillNear;
-    worldGradientCache.barnBody = barnBody;
-    worldGradientCache.doorGlow = doorGlow;
-    worldGradientCache.ground = ground;
-    worldGradientCache.groundTop = groundTop;
-    worldGradientCache.barnW = barnW;
-    worldGradientCache.barnH = barnH;
-    worldGradientCache.barnX = barnX;
-    worldGradientCache.barnY = barnY;
-    worldGradientCache.doorW = doorW;
-    worldGradientCache.doorH = doorH;
-    worldGradientCache.doorX = doorX;
-    worldGradientCache.doorY = doorY;
-
-    return worldGradientCache;
-  }
-
   function resize() {
     wCSS = window.innerWidth;
     hCSS = window.innerHeight;
@@ -641,8 +526,8 @@ import { createRunRngTracker } from './core/run-rng.js';
     canvas.width = Math.floor(wCSS * dpr);
     canvas.height = Math.floor(hCSS * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    rebuildWorldStars();
-    worldGradientCache.key = '';
+    rebuildWorldStars(worldState, wCSS, hCSS, random);
+    resetWorldCache(worldState);
     laserBeamGradientCache.length = 0;
     laserSourceGradientCache.length = 0;
   }
@@ -864,121 +749,6 @@ import { createRunRngTracker } from './core/run-rng.js';
 
   // Initialize HUD displays (S7R-046)
   hudUpdater.updateLivesDisplay(S);
-
-  function drawWorld(now, cx) {
-    const elapsed = Math.max(0, now - S.gameStartTime);
-    const dayProgress = Math.max(0, Math.min(1, elapsed / 180000));
-    const parallax = ((cx - wCSS * 0.5) / Math.max(1, wCSS * 0.5)) * 14;
-    const gradients = getWorldGradients(elapsed);
-
-    ctx.fillStyle = gradients.sky;
-    ctx.fillRect(0, 0, wCSS, hCSS);
-
-    ctx.save();
-    const starFade = 1 - dayProgress * 0.58;
-    for (let i = 0; i < worldStars.length; i++) {
-      const s = worldStars[i];
-      const twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * s.tw + s.phase));
-      ctx.globalAlpha = s.a * twinkle * starFade;
-      ctx.fillStyle = '#f6f1ff';
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    function drawHillLayer(baseY, amp, freq, phase, px, fillStyle) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(-32, hCSS + 8);
-      for (let x = -32; x <= wCSS + 32; x += 24) {
-        const y =
-          baseY +
-          Math.sin((x + parallax * px) * freq + phase) * amp +
-          Math.sin((x + parallax * px * 1.3) * (freq * 0.53) + phase * 1.7) * amp * 0.35;
-        ctx.lineTo(x, y);
-      }
-      ctx.lineTo(wCSS + 32, hCSS + 8);
-      ctx.closePath();
-      ctx.fillStyle = fillStyle;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    drawHillLayer(
-      hCSS * 0.67,
-      26,
-      0.0082,
-      now * 0.00016 + 1.4,
-      0.35,
-      gradients.hillFar
-    );
-    drawHillLayer(
-      hCSS * 0.74,
-      34,
-      0.0106,
-      now * 0.0002 + 0.2,
-      0.68,
-      gradients.hillMid
-    );
-    drawHillLayer(
-      hCSS * 0.8,
-      18,
-      0.0124,
-      now * 0.00024 + 2.2,
-      0.95,
-      gradients.hillNear
-    );
-
-    const groundTop = gradients.groundTop;
-    const barnW = gradients.barnW;
-    const barnH = gradients.barnH;
-    const barnX = gradients.barnX;
-    const barnY = gradients.barnY;
-
-    ctx.fillStyle = gradients.barnBody;
-    ctx.fillRect(barnX, barnY, barnW, barnH);
-
-    ctx.strokeStyle = 'rgba(255, 220, 185, 0.35)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(barnX + 1, barnY + 1, barnW - 2, barnH - 2);
-
-    ctx.fillStyle = '#6f2723';
-    ctx.beginPath();
-    ctx.moveTo(barnX - 16, barnY + 2);
-    ctx.lineTo(barnX + barnW + 16, barnY + 2);
-    ctx.lineTo(barnX + barnW * 0.5, barnY - barnH * 0.45);
-    ctx.closePath();
-    ctx.fill();
-
-    const doorW = gradients.doorW;
-    const doorH = gradients.doorH;
-    const doorX = gradients.doorX;
-    const doorY = gradients.doorY;
-    ctx.fillStyle = gradients.doorGlow;
-    ctx.fillRect(doorX - doorW * 0.7, doorY - doorH * 0.6, doorW * 2.4, doorH * 1.9);
-
-    ctx.fillStyle = '#3b2016';
-    ctx.fillRect(doorX, doorY, doorW, doorH);
-    ctx.strokeStyle = 'rgba(255, 214, 165, 0.5)';
-    ctx.lineWidth = 1.4;
-    ctx.strokeRect(doorX, doorY, doorW, doorH);
-
-    ctx.fillStyle = gradients.ground;
-    ctx.fillRect(0, groundTop, wCSS, hCSS - groundTop);
-
-    ctx.save();
-    ctx.strokeStyle = 'rgba(120, 190, 120, 0.2)';
-    ctx.lineWidth = 1;
-    for (let x = -20; x < wCSS + 20; x += 20) {
-      const y = groundTop + 6 + Math.sin(x * 0.15 + now * 0.0016) * 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 6, y + 8);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
 
   function drawMagnetPullLines(cx, anchorY, now) {
     if (!S.magnet.active) return;
@@ -3518,7 +3288,7 @@ import { createRunRngTracker } from './core/run-rng.js';
 
     ctx.clearRect(0, 0, wCSS, hCSS);
     ctx.save();
-    drawWorld(now, cx);
+    drawWorld(worldState, ctx, wCSS, hCSS, now, cx, S.gameStartTime);
 
     if (badguysRender.ready) {
       const activeBadguysImg = getActiveBadguysSpriteImage();
@@ -3727,7 +3497,7 @@ import { createRunRngTracker } from './core/run-rng.js';
       let bodyW = 0;
       let bodyH = 0;
 
-      drawWorld(now, cx);
+      drawWorld(worldState, ctx, wCSS, hCSS, now, cx, S.gameStartTime);
 
       // Invincibility flash — scoped to character only (body + scowl + hands)
       const invAlpha = getInvincibilityAlpha(S, now);

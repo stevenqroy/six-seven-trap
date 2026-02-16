@@ -207,6 +207,52 @@ export const DANGER_BEAM_TUNING = {
   offsetY: 54,
 };
 
+// World scenery tuning (S7R-080, numbers from S7R-069)
+export const SCENE = {
+  DAY_CYCLE_DURATION_MS: 180000,
+  PARALLAX_FACTOR: 14,
+  GRADIENT_STEP_MS: 500,
+  SKY_GRADIENT_BASE: {
+    topR: 20, topG: 14, topB: 58,
+    bottomR: 255, bottomG: 160, bottomB: 110,
+    dayDeltaTopR: 22, dayDeltaTopG: 12, dayDeltaTopB: 48,
+    dayDeltaBottomR: 28, dayDeltaBottomG: 38, dayDeltaBottomB: 16,
+    midOffsetR: 8, midOffsetG: 6, midOffsetB: 16,
+  },
+  STAR_COUNT_MIN: 36,
+  STAR_COUNT_MAX: 96,
+  STAR_DENSITY_DIVISOR: 18000,
+  STAR_HEIGHT_RATIO: 0.62,
+  STAR_FADE_FACTOR: 0.58,
+  HILL_FAR: { baseY: 0.67, amp: 26, freq: 0.0082, speed: 0.00016, phaseOffset: 1.4, px: 0.35, gradTopOffset: 31.2 },
+  HILL_MID: { baseY: 0.74, amp: 34, freq: 0.0106, speed: 0.0002, phaseOffset: 0.2, px: 0.68, gradTopOffset: 40.8 },
+  HILL_NEAR: { baseY: 0.8, amp: 18, freq: 0.0124, speed: 0.00024, phaseOffset: 2.2, px: 0.95, gradTopOffset: 21.6 },
+  HILL_STEP_PX: 24,
+  HILL_PAD_PX: 32,
+  HILL_SECONDARY_FREQ_RATIO: 0.53,
+  HILL_SECONDARY_AMP_RATIO: 0.35,
+  HILL_SECONDARY_PX_RATIO: 1.3,
+  HILL_SECONDARY_PHASE_RATIO: 1.7,
+  GROUND_OFFSET_Y: 108,
+  BARN_WIDTH_RATIO: 0.3,
+  BARN_WIDTH_MIN: 180,
+  BARN_WIDTH_MAX: 260,
+  BARN_HEIGHT_RATIO: 0.62,
+  BARN_ROOF_OVERHANG: 16,
+  BARN_ROOF_HEIGHT_RATIO: 0.45,
+  BARN_FLOOR_LIFT: 8,
+  BARN_DOOR_WIDTH_RATIO: 0.28,
+  BARN_DOOR_HEIGHT_RATIO: 0.52,
+  BARN_DOOR_GLOW_CENTER_Y_RATIO: 0.68,
+  BARN_DOOR_GLOW_RADIUS_RATIO: 0.95,
+  GRASS_SPACING_PX: 20,
+  GRASS_WAVE_FREQ: 0.15,
+  GRASS_WAVE_SPEED: 0.0016,
+  GRASS_BLADE_DX: 6,
+  GRASS_BLADE_DY: 8,
+  GRASS_TOP_OFFSET: 6,
+};
+
 // Mobile / responsive gameplay scaling
 export const MOBILE = {
   BASE_SHORT_EDGE: 430,
