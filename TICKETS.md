@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**31 of 45 V1 tickets done (69%). 14 tickets + 2 gates remaining.**
+**32 of 45 V1 tickets done (71%). 13 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -79,7 +79,7 @@
 | 37 | S7R-079 | Unit tests: debug-panel (init, destroy, keyboard toggle) | — | no | codex/gemini | done | codex/S7R-079 | codex |
 | 38 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js | — | yes | claude | done | claude/S7R-080 | claude |
 | 39 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js | — | yes | claude | done | claude/S7R-081 | claude |
-| 40 | S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js | S7R-080 | yes | claude | reviewing | claude/S7R-082 | claude |
+| 40 | S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js | S7R-080 | yes | claude | done | claude/S7R-082 | claude |
 | 41 | S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js | S7R-082 | yes | claude | blocked:082 | — | — |
 | 42 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js | S7R-083 | yes | claude | blocked:083 | — | — |
 | 43 | S7R-085 | Unit tests: hud-updates (factory, pulse, visibility, missing-element fallback) | — | no | codex/gemini | next | — | — |
@@ -101,7 +101,7 @@
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
 | S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | done | claude |
 | S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | done | claude |
-| S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js (~350 lines). Touches main.js. | reviewing | claude |
+| S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js (~350 lines). Touches main.js. | done | claude |
 | S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js (~330 lines). Touches main.js. Depends on S7R-082 (quantize). | blocked:082 | claude |
 | S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js (~170 lines). Touches main.js. Depends on S7R-083 (getDangerBeamGeometry). | blocked:083 | claude |
 
@@ -1102,7 +1102,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: wip:claude (S7R-082)
+**Currently held by**: nobody (unlocked)
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
@@ -1168,3 +1168,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-15 | S7R-079 | `tests/unit/config/debug-panel.test.js` — 5 tests: init/destroy lifecycle, keyboard toggle, listener leak check, flag rendering | codex |
 | 2026-02-15 | S7R-080 | `src/systems/world-render.js`, `src/constants.js`, `src/main.js` — extracted world scenery (sky, stars, hills, barn, ground, grass) into module, added SCENE.* constants, main.js −230 net lines | claude |
 | 2026-02-15 | S7R-081 | `src/systems/badguys.js`, `src/constants.js`, `src/main.js` — extracted badguys flight controller (bounds, targeting, flight physics, state) into module, added SCENE.BADGUYS_* constants, main.js −108 net lines | claude |
+| 2026-02-16 | S7R-082 | `src/systems/laser-storm.js`, `src/utils/math.js`, `src/constants.js`, `src/main.js` — extracted laser storm (beams, gradients, smoke) into module, moved quantize() to utils/math.js, added SCENE.LASER_* constants, main.js −345 net lines | claude |
