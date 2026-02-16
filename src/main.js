@@ -29,7 +29,6 @@ import S from './state.js';
 import {
   clamp as _clamp,
   distPointToSegmentSq as _distPointToSegmentSq,
-  edgeBiasedUnit as _edgeBiasedUnit,
 } from './utils/math.js';
 import {
   getTransparentSprite as _getTransparentSprite,
@@ -54,7 +53,6 @@ import {
   damageShip,
   updateBossPhase,
   getShipHPRatio,
-  getPhaseSpeedMultiplier,
   getPhaseSpawnMultiplier,
   getPhaseTrapChanceBoost,
   getPhaseEffects,
@@ -72,6 +70,7 @@ import {
   resetWorldCache,
   drawWorld,
 } from './systems/world-render.js';
+import { updateBadguysState as updateBadguysStateFn } from './systems/badguys.js';
 import { createTelemetrySystem } from './systems/telemetry.js';
 import { createAdaptiveQualityGovernor } from './systems/adaptive-quality.js';
 import { loadDefaultEnemyRegistry } from './systems/enemy-registry.js';
@@ -1734,6 +1733,22 @@ import { createRunRngTracker } from './core/run-rng.js';
   const dangerBeam = S.dangerBeam;
   const badguysEditor = S.badguysEditor;
 
+  function updateBadguysState(now, dt) {
+    updateBadguysStateFn(badguysFlight, badguysRender, {
+      now, dt,
+      overlay: badguysOverlay,
+      visible: S.badguysVisible,
+      motionPaused: badguysMotionPausedForLightSetup,
+      bossPhase: S.bossPhase,
+      recoilX: S.shipRecoilX,
+      recoilY: S.shipRecoilY,
+      viewW: wCSS,
+      viewH: hCSS,
+      rng: random,
+      spriteImg: getActiveBadguysSpriteImage(),
+    });
+  }
+
   const badguysHud = document.createElement('div');
   badguysHud.style.position = 'absolute';
   badguysHud.style.right = '12px';
@@ -3157,129 +3172,6 @@ import { createRunRngTracker } from './core/run-rng.js';
       ctx.fill();
     }
     ctx.restore();
-  }
-
-  // Delegated to utils/math.js
-  const edgeBiasedUnit = _edgeBiasedUnit;
-
-  function getBadguysBounds(drawW, drawH) {
-    const sidePad = Math.max(4, wCSS * 0.006);
-    const minX = sidePad;
-    const maxX = Math.max(minX, wCSS - drawW - sidePad);
-    const minY = Math.max(6, badguysOverlay.y);
-    const maxY = Math.max(minY, hCSS * 0.72 - drawH);
-    return { minX, maxX, minY, maxY };
-  }
-
-  function pickBadguysTarget(bounds) {
-    const xT = random() < 0.7 ? edgeBiasedUnit(1.65, random) : random();
-    const yT = random() < 0.55 ? edgeBiasedUnit(1.9, random) : random();
-    badguysFlight.targetX = bounds.minX + xT * (bounds.maxX - bounds.minX || 1);
-    badguysFlight.targetY = bounds.minY + yT * (bounds.maxY - bounds.minY || 1);
-  }
-
-  function updateBadguysFlight(now, dt, drawW, drawH) {
-    const bounds = getBadguysBounds(drawW, drawH);
-
-    if (!badguysFlight.initialized) {
-      badguysFlight.x = clamp((wCSS - drawW) / 2, bounds.minX, bounds.maxX);
-      badguysFlight.y = clamp(bounds.minY + 8, bounds.minY, bounds.maxY);
-      badguysFlight.vx = 0;
-      badguysFlight.vy = 0;
-      badguysFlight.currentSpeed = 180;
-      badguysFlight.targetSpeed = 280;
-      badguysFlight.swoopFreq = 0.0035 + random() * 0.0035;
-      badguysFlight.swoopPhase = random() * Math.PI * 2;
-      badguysFlight.swoopForce = 260 + random() * 220;
-      pickBadguysTarget(bounds);
-      badguysFlight.nextRetargetAt = now + 150 + random() * 420;
-      badguysFlight.nextSpeedShiftAt = now + 180 + random() * 560;
-      badguysFlight.initialized = true;
-    }
-
-    if (now >= badguysFlight.nextRetargetAt) {
-      pickBadguysTarget(bounds);
-      badguysFlight.nextRetargetAt = now + 150 + random() * 420;
-    }
-
-    if (now >= badguysFlight.nextSpeedShiftAt) {
-      const speedMult = getPhaseSpeedMultiplier(S.bossPhase);
-      badguysFlight.targetSpeed = (180 + random() * 280) * speedMult;
-      badguysFlight.swoopFreq = (0.003 + random() * 0.0045) * (1 + (speedMult - 1) * 0.5);
-      badguysFlight.swoopForce = (240 + random() * 280) * speedMult;
-      badguysFlight.nextSpeedShiftAt = now + (180 + random() * 620) / speedMult;
-    }
-
-    const dx = badguysFlight.targetX - badguysFlight.x;
-    const dy = badguysFlight.targetY - badguysFlight.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist < 24) {
-      pickBadguysTarget(bounds);
-    }
-
-    const speedRamp = Math.min(1, dt * 3.2);
-    badguysFlight.currentSpeed += (badguysFlight.targetSpeed - badguysFlight.currentSpeed) * speedRamp;
-    const desiredSpeed = Math.min(540, Math.max(130, Math.min(dist * 2.2, badguysFlight.currentSpeed)));
-    const dirX = dist > 0.001 ? dx / dist : 0;
-    const dirY = dist > 0.001 ? dy / dist : 0;
-    const desiredVx = dirX * desiredSpeed;
-    const desiredVy = dirY * desiredSpeed;
-    const smoothFactor = Math.min(1, 3.9 * dt);
-
-    badguysFlight.vx += (desiredVx - badguysFlight.vx) * smoothFactor;
-    badguysFlight.vy += (desiredVy - badguysFlight.vy) * smoothFactor;
-    const swoopAccel = Math.sin(now * badguysFlight.swoopFreq + badguysFlight.swoopPhase) * badguysFlight.swoopForce;
-    badguysFlight.vy += swoopAccel * dt;
-    badguysFlight.vx += Math.cos(now * badguysFlight.swoopFreq * 0.7 + badguysFlight.swoopPhase) * 70 * dt;
-
-    badguysFlight.x += badguysFlight.vx * dt;
-    badguysFlight.y += badguysFlight.vy * dt;
-
-    if (badguysFlight.x <= bounds.minX || badguysFlight.x >= bounds.maxX) {
-      const hitLeft = badguysFlight.x <= bounds.minX;
-      badguysFlight.x = clamp(badguysFlight.x, bounds.minX, bounds.maxX);
-      const bounceBoost = 1.08 + random() * 0.08;
-      const boostedVx = Math.min(560, Math.max(160, Math.abs(badguysFlight.vx)) * bounceBoost + 18);
-      badguysFlight.vx = hitLeft ? boostedVx : -boostedVx;
-      badguysFlight.vy += (random() - 0.5) * 95;
-      pickBadguysTarget(bounds);
-    }
-
-    if (badguysFlight.y <= bounds.minY || badguysFlight.y >= bounds.maxY) {
-      badguysFlight.y = clamp(badguysFlight.y, bounds.minY, bounds.maxY);
-      badguysFlight.vy *= -0.82;
-      badguysFlight.vx += (random() - 0.5) * 65;
-      pickBadguysTarget(bounds);
-    }
-  }
-
-  function updateBadguysState(now, dt) {
-    const activeBadguysImg = getActiveBadguysSpriteImage();
-    if (!(S.badguysVisible && activeBadguysImg.complete && activeBadguysImg.naturalWidth > 0)) {
-      badguysRender.ready = false;
-      return;
-    }
-
-    const badguysFrameW = badguysSpriteSheet.frameW;
-    const badguysFrameH = badguysSpriteSheet.frameH;
-    const badguysScale = badguysOverlay.scale * badguysSpriteSheet.scaleMultiplier;
-    const badguysW = badguysFrameW * badguysScale;
-    const badguysH = badguysFrameH * badguysScale;
-    if (badguysMotionPausedForLightSetup) {
-      const bounds = getBadguysBounds(badguysW, badguysH);
-      badguysFlight.x = clamp((wCSS - badguysW) / 2, bounds.minX, bounds.maxX);
-      badguysFlight.y = clamp(bounds.minY + 10, bounds.minY, bounds.maxY);
-      badguysFlight.vx = 0;
-      badguysFlight.vy = 0;
-    } else {
-      updateBadguysFlight(now, dt, badguysW, badguysH);
-    }
-    badguysRender.x = badguysFlight.x + S.shipRecoilX;
-    badguysRender.y = badguysFlight.y + S.shipRecoilY;
-    badguysRender.w = badguysW;
-    badguysRender.h = badguysH;
-    badguysRender.ready = true;
   }
 
   function drawTitlePreview(now, dt) {
