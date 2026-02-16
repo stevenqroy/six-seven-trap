@@ -123,7 +123,7 @@
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
-| S7R-062 | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table for S7R-054 polish pass. | wip:gemini | gemini | gemini/S7R-062 | gemini |
+| S7R-062 | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table for S7R-054 polish pass. | reviewing | gemini | gemini/S7R-062 | gemini |
 | S7R-063 | Identify top 5 blocks in main.js that should become standalone modules. Line ranges, what they do, lines saved. | done | gemini | gemini/S7R-063 |
 | S7R-064 | Review all modules for missing test coverage, edge cases, pattern violations. Output gap report. | done | codex | codex/S7R-064 | codex |
 | S7R-065 | Write a one-page story brief: who are the characters, what's the tone, what do enemies/supports represent in-story. 6 and 7 are alien kids at recess, the ship is their parents' minivan. | next | steven/claude |
