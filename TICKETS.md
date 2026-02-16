@@ -110,7 +110,7 @@
 |--------|-------|--------|-------------|
 | S7R-062 | Catalog every tunable constant (damage, cooldown, speed, radius, cost) across all modules. Output markdown table for S7R-054 polish pass. | next | gemini |
 | S7R-063 | Identify top 5 blocks in main.js that should become standalone modules. Line ranges, what they do, lines saved. | done | gemini | gemini/S7R-063 |
-| S7R-064 | Review all modules for missing test coverage, edge cases, pattern violations. Output gap report. | reviewing | codex | codex/S7R-064 | codex |
+| S7R-064 | Review all modules for missing test coverage, edge cases, pattern violations. Output gap report. | done | codex | codex/S7R-064 | codex |
 | S7R-065 | Write a one-page story brief: who are the characters, what's the tone, what do enemies/supports represent in-story. 6 and 7 are alien kids at recess, the ship is their parents' minivan. | next | steven/claude |
 | S7R-066 | Research sprite sheet formats and tools for small 2D characters (16x16 or 32x32). What format works with canvas? How to animate idle/walk/hit? Free pixel art tools? | next | gemini |
 | S7R-067 | Design visual identity for alien kids — what do they look like? Sketch descriptions for all characters. | next | steven/claude |
@@ -623,3 +623,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-15 | S7R-074 | `tests/integration/flags-boot.test.js` — fix 2 failing tests: check actual flag defaults dynamically instead of assuming all-false | codex |
 | 2026-02-15 | S7R-063 | `docs/research/S7R-063-main-extraction.md` — top 5 main.js extraction candidates: laser storm, danger beam, world scenery, badguys, beam harvest (~1300 lines) | gemini |
 | 2026-02-15 | S7R-069 | `docs/research/S7R-069-magic-numbers.md` — ~35 hardcoded scene-tuning values cataloged with suggested SCENE.* constant names | gemini |
+| 2026-02-15 | S7R-064 | `docs/research/S7R-064-test-gaps.md` — full test gap audit: 16/35 modules untested, 4 pattern violations, 17 prioritized test additions | codex |
