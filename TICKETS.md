@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**39 of 45 V1 tickets done (87%). 6 tickets + 2 gates remaining.**
+**39 of 46 V1 tickets done (85%). 7 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -87,6 +87,7 @@
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
+| 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -143,6 +144,7 @@
 | S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | done | codex |
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | done | gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | done | codex |
+| S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | next | claude |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1071,6 +1073,39 @@
 - [ ] `isVisibleOnBody` and `isVisibleOnHand` tested: inside/outside bounds
 - [ ] Cache reuse tested: same input returns cached result
 - [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-090 Ready Brief
+
+**What:** Split the monolithic `loop()` function (~667 lines) in `src/main.js` into distinct update and draw phases. Create `updateGame(now, dt)` and `drawGame(now)` functions so `loop()` becomes a thin orchestrator: compute dt, call update, call draw, requestAnimationFrame. Pure refactor — zero behavior change.
+
+**Reference files to read first:**
+- `src/main.js` lines 2420–3087 — the current `loop()` function
+- The existing extracted system wrappers (laser storm, danger beam, beam harvest, badguys, world-render) for patterns
+
+**Files to modify:**
+1. `src/main.js` — split `loop()` internals into `updateGame()` and `drawGame()`
+
+**DO NOT modify:** Any other source files or test files
+
+**Gotchas:**
+- Title screen and victory branches have their own update+draw interleaved — split those too (`updateTitle`/`drawTitle`, `updateVictory`/`drawVictory`)
+- Camera shake calculation happens between update and draw (it depends on updated state but feeds into draw transforms) — keep it at the boundary
+- Some draw calls depend on values computed during update in the same frame (e.g. `shakeX`) — pass via local variables or a frame context object
+- `ctx.save()`/`ctx.restore()` and `ctx.translate()` for camera shake wraps the entire draw phase — keep that in `loop()` or in `drawGame()`
+- `S.lifeLossFlash`, `S.slowMoTimer` updates use `rawDt` not `dt` — make sure the split preserves which dt each uses
+- `requestAnimationFrame(loop)` stays in `loop()` only
+- This is a refactor inside the IIFE — no new exports needed
+- Net lines in main.js must stay the same or decrease (rule 10 — slight increase OK since we're adding function boundaries)
+
+**Acceptance criteria:**
+- [ ] `loop()` is ≤30 lines — just dt calc, branching, update/draw calls, rAF
+- [ ] `updateGame(now, dt, rawDt)` contains all state mutation logic
+- [ ] `drawGame(now)` contains all canvas rendering
+- [ ] Title screen and victory paths also split into update/draw
+- [ ] No behavior change — game plays identically
+- [ ] All existing tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 

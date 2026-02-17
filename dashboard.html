@@ -1061,6 +1061,11 @@
         summary: 'Unit tests for sprite alpha sampling, pixel-level hit detection, character normal estimation, and transparent sprite caching. Based on S7R-064 audit P1 list.',
         marker: '\u{1F3A8}',
       },
+      'S7R-090': {
+        title: 'Split game loop: update vs draw',
+        summary: 'Refactor the 667-line loop() into updateGame() + drawGame() so the game loop is a thin orchestrator. Pure structural refactor, zero behavior change. Unlocks future scene/phase extraction.',
+        marker: '\u{1F504}',
+      },
     };
 
     let lastText = '';
