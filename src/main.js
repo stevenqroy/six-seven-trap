@@ -2376,8 +2376,13 @@ import { createRunRngTracker } from './core/run-rng.js';
   }
 
 
-  function drawTitlePreview(now, dt) {
+  // --- Title preview (split) ---
+
+  function updateTitlePreview(now, dt) {
     updateBadguysState(now, dt);
+  }
+
+  function drawTitlePreview(now) {
     const cx = wCSS * 0.5 + Math.sin(now * 0.0005) * wCSS * 0.12;
 
     ctx.clearRect(0, 0, wCSS, hCSS);
@@ -2414,675 +2419,713 @@ import { createRunRngTracker } from './core/run-rng.js';
     ctx.restore();
   }
 
+  // --- Frame context (shared between updateGame/drawGame each frame) ---
+
+  const F = {
+    shakeX: 0, shakeY: 0, cx: 0, layout: null,
+    bodyX: 0, bodyY: 0, bodyW: 0, bodyH: 0,
+    stretchL: 1, stretchR: 1, invAlpha: 1,
+    anchorY: 0, wristOffset: 0, handW: 0, handH: 0,
+    impactTargets: null, regularPortal: null,
+    leftHandCenterX: 0, rightHandCenterX: 0,
+    bottomYL: 0, bottomYR: 0,
+  };
+
   let lastFrameAt = performance.now();
 
-  // Main Loop
+  // --- Victory state (split) ---
+
+  function updateVictory(dt) {
+    if (S.shipDamageFlash > 0) S.shipDamageFlash = Math.max(0, S.shipDamageFlash - dt * 3);
+    if (S.cameraShake > 0) {
+      S.cameraShake *= 0.92;
+      if (S.cameraShake < 0.1) S.cameraShake = 0;
+    }
+    updateParticles();
+    updateScorePopups(dt);
+
+    const shakeAmplitude = S.cameraShake * getMotionScale();
+    let slamShakeX = 0;
+    let slamShakeY = 0;
+    if ((S.slam.shakeFrames || 0) > 0) {
+      slamShakeX = (random() - 0.5) * 8;
+      slamShakeY = (random() - 0.5) * 8;
+      S.slam.shakeFrames -= 1;
+    }
+    F.shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
+    F.shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
+  }
+
+  function drawVictory(now) {
+    ctx.clearRect(0, 0, wCSS, hCSS);
+    ctx.save();
+    ctx.translate(F.shakeX, F.shakeY);
+
+    // Draw the defeated ship (frozen frame)
+    if (badguysRender.ready) {
+      const activeBadguysImg = getActiveBadguysSpriteImage();
+      const frameIndex =
+        Math.floor((now * badguysSpriteSheet.fps) / 1000) % badguysSpriteSheet.frames;
+      const frameCol = frameIndex % badguysSpriteSheet.cols;
+      const frameRow = Math.floor(frameIndex / badguysSpriteSheet.cols);
+      const srcX = frameCol * badguysSpriteSheet.frameW;
+      const srcY = frameRow * badguysSpriteSheet.frameH;
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(
+        activeBadguysImg, srcX, srcY,
+        badguysSpriteSheet.frameW, badguysSpriteSheet.frameH,
+        badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h
+      );
+      ctx.globalAlpha = 1;
+    }
+
+    drawParticles();
+    drawScorePopups();
+    ctx.restore();
+  }
+
+  // --- Main gameplay (split) ---
+
+  function updateGame(now, dt, rawDt) {
+    telemetry.onFrame(rawDt * 1000);
+    updateAdaptiveQuality(rawDt * 1000, now);
+    updateEnemyStateMachine(rawDt * 1000, now);
+    if (actionBar) actionBar.updateCooldowns(dt);
+    updateBadguysState(now, dt);
+
+    // Boss phase transitions
+    const phaseResult = updateBossPhase(S);
+    if (phaseResult.phaseChanged) {
+      telemetry.onPhaseTransition(phaseResult.oldPhase, phaseResult.newPhase, now);
+    }
+    if (phaseResult.phaseChanged && !phaseResult.defeated) {
+      applyPhaseEffects(phaseResult.newPhase);
+      S.cameraShake = Math.max(S.cameraShake, 12);
+    }
+    if (phaseResult.defeated) {
+      triggerVictory(now);
+    }
+
+    // Decay ship damage flash
+    if (S.shipDamageFlash > 0) {
+      S.shipDamageFlash = Math.max(0, S.shipDamageFlash - dt * 3);
+    }
+
+    // Progressive difficulty — modulated by boss phase
+    const phase = S.bossPhase;
+    const spawnMult = getPhaseSpawnMultiplier(phase);
+    const trapBoost = getPhaseTrapChanceBoost(phase);
+    const gameTime = (now - S.gameStartTime) / 1000;
+    S.spawnInterval = Math.max(
+      MIN_SPAWN_INTERVAL,
+      (INITIAL_SPAWN_INTERVAL - gameTime * 30) * spawnMult
+    );
+    S.trapChance = Math.min(
+      TRAP_SPAWN_CHANCE_MAX + trapBoost,
+      TRAP_SPAWN_CHANCE_START + gameTime * 0.01 + trapBoost
+    );
+
+    // Smart spawning
+    if (now - S.lastTrapTime > S.spawnInterval) {
+      if (random() < S.trapChance) {
+        spawnTrap();
+        S.lastTrapTime = now;
+      }
+    }
+
+    if (now - S.lastGoodTime > S.spawnInterval * 1.5) {
+      spawnGood();
+      S.lastGoodTime = now;
+    }
+
+    updateParticles();
+    updateScorePopups(dt);
+    updateRegularBeamHarvest(dt);
+    updateLaserStorm(now, dt);
+    updateLaserSmoke(dt);
+    updateShield(S, now);
+    updateSlamShockwave(dt, now);
+    updateUltimate(now, dt);
+    if (S.magnet.active) {
+      const hasPower = drainPower(S, POWER.MAGNET_DRAIN, dt);
+      hudUpdater.updatePowerBar(S);
+      if (!hasPower) S.magnet.active = false;
+    }
+    const projectileHits = updateProjectiles(S, dt, badguysRender);
+    if (projectileHits.length && S.shipHP > 0 && !S.isVictory) {
+      for (let i = 0; i < projectileHits.length; i++) {
+        const hit = projectileHits[i];
+        applyShipDamage(PROJECTILE.DAMAGE, hit.x, hit.y, 'projectile');
+        createParticles(hit.x, hit.y, '#ffd76a', 10);
+        S.cameraShake = Math.max(S.cameraShake, 5);
+        if (S.shipHP <= 0) break;
+      }
+      hudUpdater.updateShipHpBar(S);
+    }
+
+    // Camera shake
+    if (S.cameraShake > 0) {
+      S.cameraShake *= 0.9;
+      if (S.cameraShake < 0.1) S.cameraShake = 0;
+    }
+
+    const shakeAmplitude = S.cameraShake * getMotionScale();
+    let slamShakeX = 0;
+    let slamShakeY = 0;
+    if ((S.slam.shakeFrames || 0) > 0) {
+      slamShakeX = (random() - 0.5) * 8;
+      slamShakeY = (random() - 0.5) * 8;
+      S.slam.shakeFrames -= 1;
+    }
+    F.shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
+    F.shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
+
+    // Layout + body position
+    F.layout = getGuardianLayout();
+    F.cx = Math.max(F.layout.sidePad, Math.min(wCSS - F.layout.sidePad, touchX));
+
+    if (avatar.complete && avatar.naturalWidth > 0) {
+      const scale = 350 / avatar.height;
+      F.bodyW = avatar.width * scale;
+      F.bodyH = 350;
+      F.bodyX = F.cx - F.bodyW / 2;
+      F.bodyY = hCSS - F.bodyH + 60;
+    } else {
+      F.bodyW = 0;
+      F.bodyH = 0;
+      F.bodyX = 0;
+      F.bodyY = 0;
+    }
+
+    // Stretch
+    const time = now / 170;
+    F.stretchL = 1.0 + Math.sin(time) * 0.35;
+    F.stretchR = 1.0 + Math.sin(time + Math.PI) * 0.35;
+    if (now <= S.swat.stretchUntil) {
+      const t = Math.max(0, Math.min(1, (S.swat.stretchUntil - now) / SWAT.STRETCH_DURATION));
+      const swatBoost = SWAT.STRETCH_AMOUNT * t;
+      if (S.swat.hand === 'left') F.stretchL += swatBoost;
+      else if (S.swat.hand === 'right') F.stretchR += swatBoost;
+    } else {
+      S.swat.hand = null;
+    }
+
+    F.anchorY = F.layout.anchorY;
+    F.wristOffset = F.layout.wristOffset;
+    F.handW = F.layout.handW;
+    F.handH = F.layout.handH;
+    F.invAlpha = getInvincibilityAlpha(S, now);
+
+    // Collision zones
+    F.bottomYL = F.anchorY + F.handH * F.stretchL;
+    F.bottomYR = F.anchorY + F.handH * F.stretchR;
+    F.leftHandCenterX = F.cx - F.wristOffset - F.handW / 2;
+    F.rightHandCenterX = F.cx + F.wristOffset + F.handW / 2;
+
+    // Impact targets for danger beam embers
+    F.impactTargets = {
+      body:
+        F.bodyW > 0
+          ? {
+              x: F.bodyX,
+              y: F.bodyY,
+              w: F.bodyW,
+              h: F.bodyH,
+              alpha: getSpriteAlphaData(avatar),
+            }
+          : null,
+      hands: [
+        {
+          tx: F.cx - F.wristOffset + handTuning.left.x,
+          ty: F.anchorY + handTuning.left.y,
+          rot: handTuning.left.rot,
+          stretch: F.stretchL,
+          drawX: -F.handW,
+          drawY: 0,
+          drawW: F.handW,
+          drawH: F.handH,
+          alpha: getSpriteAlphaData(leftHandImg),
+        },
+        {
+          tx: F.cx + F.wristOffset + handTuning.right.x,
+          ty: F.anchorY + handTuning.right.y,
+          rot: handTuning.right.rot,
+          stretch: F.stretchR,
+          drawX: 0,
+          drawY: 0,
+          drawW: F.handW,
+          drawH: F.handH,
+          alpha: getSpriteAlphaData(rightHandImg),
+        },
+      ],
+    };
+
+    updateDangerBeamEmbers(now, dt, F.impactTargets);
+
+    // Low-HP sparking particles on the ship (uses random — keep in update)
+    if (badguysRender.ready && S.bossPhase >= 3 && S.shipHP > 0) {
+      const sparkChance = S.bossPhase >= 4 ? 0.3 : 0.12;
+      if (random() < sparkChance) {
+        const sparkX = badguysRender.x + random() * badguysRender.w;
+        const sparkY = badguysRender.y + random() * badguysRender.h * 0.8;
+        createParticles(sparkX, sparkY, '#ff8844', 2);
+      }
+    }
+
+    F.regularPortal = getRegularBeamPortalState(now);
+
+    // Update numbers (physics, collision, removal)
+    for (let i = nums.length - 1; i >= 0; i--) {
+      let n = nums[i];
+      if (now - (n.bornAt || now) > 26000) {
+        nums.splice(i, 1);
+        continue;
+      }
+      if (!F.regularPortal && n.beamCapturing) n.beamCapturing = false;
+
+      if (F.regularPortal && isGoodBeamNumber(n)) {
+        if (n.beamCapturing || isNumberInsideRegularBeam(n, F.regularPortal)) {
+          if (!n.beamCapturing) {
+            n.beamCapturing = true;
+            n.beamPhase = random() * Math.PI * 2;
+          }
+
+          const sway = Math.sin(now * 0.012 + n.beamPhase) * 1.8;
+          const targetX = F.regularPortal.x + sway;
+          const targetY = F.regularPortal.y;
+          n.dx += (targetX - n.x) * (0.048 + F.regularPortal.chargeRatio * 0.032);
+          n.dy += (targetY - n.y) * (0.074 + F.regularPortal.chargeRatio * 0.042);
+          n.dx *= 0.78;
+          n.dy *= 0.78;
+          n.x += n.dx;
+          n.y += n.dy;
+          n.cooldown = 0;
+
+          if (Math.hypot(n.x - F.regularPortal.x, n.y - F.regularPortal.y) <= F.regularPortal.snapRadius) {
+            registerRegularBeamCapture(n, now, F.regularPortal);
+            nums.splice(i, 1);
+            continue;
+          }
+          continue;
+        }
+        n.beamCapturing = false;
+      }
+      applyLaserBrushToNumber(n, now);
+
+      if (n.cooldown > 0) n.cooldown -= 16;
+      n.dy += GRAVITY;
+      if (S.magnet.active && !n.isTrap && !n.beamCapturing) {
+        const dxMag = F.cx - n.x;
+        const dyMag = F.anchorY - n.y;
+        const distSqMag = dxMag * dxMag + dyMag * dyMag;
+        const maxDistSqMag = MAGNET.RANGE * MAGNET.RANGE;
+        if (distSqMag <= maxDistSqMag) {
+          const distMag = Math.sqrt(distSqMag) || 1;
+          const pullRatio = 1 - distMag / MAGNET.RANGE;
+          const pullScale = dt * 60 * (0.6 + pullRatio * 0.8);
+          n.dx += dxMag * MAGNET.FORCE * pullScale;
+          n.dy += dyMag * MAGNET.FORCE * 0.5 * pullScale;
+          const damping = Math.pow(MAGNET.DAMPING, pullScale);
+          n.dx *= damping;
+          n.dy *= damping;
+        }
+      }
+      if (n.dy > 15) n.dy = 15;
+      n.x += n.dx;
+      n.y += n.dy;
+
+      if (n.isTrap && isShieldActive(S, now)) {
+        const shieldCenterX = F.cx;
+        const shieldCenterY = F.anchorY + 18;
+        const trapRadius = 34;
+        const dxShield = n.x - shieldCenterX;
+        const dyShield = n.y - shieldCenterY;
+        const hitRadius = SHIELD.RADIUS_PX + trapRadius;
+        if (dxShield * dxShield + dyShield * dyShield <= hitRadius * hitRadius) {
+          S.shield.rippleAt = now;
+          createParticles(n.x, n.y, '#8ffff5', 14);
+          nums.splice(i, 1);
+          continue;
+        }
+      }
+
+      if (n.x < F.layout.wallPad) {
+        n.x = F.layout.wallPad;
+        const wallKick = Math.max(1.2, Math.abs(n.dx) * (n.lasered ? 0.94 : 0.88));
+        n.dx = wallKick;
+        if (Math.abs(n.dy) < 1.2) n.dy -= 0.9 + random() * 1.4;
+        n.wallHits = (n.wallHits || 0) + 1;
+      } else if (n.x > wCSS - F.layout.wallPad) {
+        n.x = wCSS - F.layout.wallPad;
+        const wallKick = Math.max(1.2, Math.abs(n.dx) * (n.lasered ? 0.94 : 0.88));
+        n.dx = -wallKick;
+        if (Math.abs(n.dy) < 1.2) n.dy -= 0.9 + random() * 1.4;
+        n.wallHits = (n.wallHits || 0) + 1;
+      }
+
+      const floorY = F.layout.floorY;
+      if (n.y > floorY) {
+        if (n.isTrap) {
+          nums.splice(i, 1);
+          continue;
+        } else {
+          n.y = floorY;
+          n.floorBounces = (n.floorBounces || 0) + 1;
+          n.dy *= FLOOR_BOUNCE;
+          if (Math.abs(n.dy) < 3) n.dy = -(5 + random() * 1.8);
+          if (Math.abs(n.dx) < 0.9) n.dx += (random() - 0.5) * 2.4;
+        }
+      }
+
+      if (!n.isTrap) {
+        if (n.x <= F.layout.wallPad + 1 && Math.abs(n.dx) < 1.1) n.dx = 1.2 + random() * 1.4;
+        else if (n.x >= wCSS - (F.layout.wallPad + 1) && Math.abs(n.dx) < 1.1) {
+          n.dx = -(1.2 + random() * 1.4);
+        }
+        if (n.y >= floorY - 1 && Math.abs(n.dy) < 1.2) n.dy = -(4.2 + random() * 2.2);
+      }
+
+      bounceLaseredNumberOffShip(n);
+      if (!n.isTrap && (n.floorBounces || 0) > 26 && !n.beamCapturing) {
+        nums.splice(i, 1);
+        continue;
+      }
+      if (!n.isTrap && (n.wallHits || 0) > 18 && n.y > floorY - 50) {
+        nums.splice(i, 1);
+        continue;
+      }
+
+      if ((n.laserSmokeTime || 0) > 0) {
+        n.laserSmokeTime = Math.max(0, n.laserSmokeTime - dt);
+        const smokeRateScale = getAdaptiveCapValue(
+          'laserSmokeSpawnScale',
+          isLowGraphicsModeEnabled() ? 0.42 : 1
+        );
+        n.laserSmokeCarry =
+          (n.laserSmokeCarry || 0) +
+          dt * (8 + (n.laserBrushHits || 1) * 4) * smokeRateScale;
+        while (n.laserSmokeCarry >= 1) {
+          n.laserSmokeCarry -= 1;
+          spawnLaserSmoke(n.x, n.y, 0.7 + (n.laserBrushHits || 0) * 0.2);
+        }
+      }
+
+      // Improved collision
+      const hitL =
+        Math.abs(n.x - F.leftHandCenterX) < F.layout.hitZoneX &&
+        Math.abs(n.y - F.bottomYL) < F.layout.hitZoneY;
+      const hitR =
+        Math.abs(n.x - F.rightHandCenterX) < F.layout.hitZoneX &&
+        Math.abs(n.y - F.bottomYR) < F.layout.hitZoneY;
+      let hitHand = null;
+      if (hitL && hitR) {
+        hitHand =
+          Math.abs(n.x - F.leftHandCenterX) <= Math.abs(n.x - F.rightHandCenterX) ? 'left' : 'right';
+      } else if (hitL) {
+        hitHand = 'left';
+      } else if (hitR) {
+        hitHand = 'right';
+      }
+
+      if ((hitL || hitR) && n.dy > 0 && n.cooldown <= 0) {
+        if (n.isTrap) {
+          // TEMP_NO_LOSE: dev toggle — just destroy the trap
+          if (TEMP_NO_LOSE) {
+            createParticles(n.x, n.y, n.col, 10);
+            nums.splice(i, 1);
+            continue;
+          }
+
+          // Skip if invincible (post-hit grace period)
+          if (isInvincible(S, now)) {
+            createParticles(n.x, n.y, n.col, 8);
+            nums.splice(i, 1);
+            continue;
+          }
+
+          // Lose a life
+          S.cameraShake = 20;
+          createParticles(n.x, n.y, n.col, 15);
+          S.combo = 0;
+          comboEl.classList.remove('active');
+          nums.splice(i, 1);
+
+          const stillAlive = loseLife(S, now);
+          telemetry.onLifeLost(S.lives);
+          hudUpdater.updateLivesDisplay(S);
+          livesEl.classList.remove('hit');
+          void livesEl.offsetWidth; // force reflow for re-trigger
+          livesEl.classList.add('hit');
+          S.lifeLossFlash = Math.max(S.lifeLossFlash, 1);
+          S.slowMoTimer = Math.max(S.slowMoTimer, POLISH.LIFE_LOSS_SLOW_MO_SEC);
+          pushScorePopup(n.x, n.y - 18, '-1 LIFE', '#ff9c8d', 20);
+
+          if (!stillAlive) {
+            // All lives lost — game over
+            S.isGameOver = true;
+            logRunSummary('game-over', now);
+            const survivalTime = Math.floor((now - S.gameStartTime) / 1000);
+            document.getElementById('finalScore').textContent = S.score;
+            document.getElementById('bestCombo').textContent = S.bestCombo;
+            document.getElementById('survivalTime').textContent = survivalTime;
+
+            if (S.score > S.highScore) {
+              S.highScore = S.score;
+              localStorage.setItem('highScore', S.highScore);
+              hudUpdater.syncBestDisplays(S);
+            }
+
+            idiotModal.style.display = 'flex';
+            break;
+          }
+          continue;
+        } else {
+          const boostedBySwat = hitHand && S.swat.hand === hitHand && now <= S.swat.stretchUntil;
+          const bounceForce = boostedBySwat
+            ? HAND_BOUNCE * SWAT.BOUNCE_MULTIPLIER
+            : HAND_BOUNCE;
+
+          n.dy = bounceForce;
+          n.dx += handVelX * 0.15;
+          if (boostedBySwat) {
+            n.dx += hitHand === 'left' ? -0.8 : 0.8;
+            S.swat.hand = null;
+            S.swat.stretchUntil = 0;
+          }
+          n.cooldown = 200;
+          n.floorBounces = 0;
+          n.wallHits = 0;
+          S.score++;
+          S.combo++;
+          S.bestCombo = Math.max(S.bestCombo, S.combo);
+          scoreEl.textContent = S.score;
+          pushScorePopup(n.x, n.y - 14, '+1', n.col, boostedBySwat ? 26 : 22);
+          if (S.combo >= 3 && S.combo % 3 === 0) {
+            pushScorePopup(n.x + (random() - 0.5) * 30, n.y - 42, `${S.combo}x`, '#ffe89a', 20);
+          }
+          chargePower(S, POWER.PER_BOUNCE + S.combo * POWER.COMBO_BONUS);
+          hudUpdater.updatePowerBar(S);
+          if (!S.ultimate.active && S.power >= POWER.ULTIMATE_COST) {
+            S.ultimate.pendingTrigger = true;
+          }
+
+          // Each bounce deals chip damage to the ship
+          if (S.shipHP > 0 && !S.isVictory) {
+            const dmg = S.combo >= 5 ? 2 : 1; // combo bonus damage
+            applyShipDamage(dmg, n.x, n.y, 'bounce');
+            hudUpdater.updateShipHpBar(S);
+          }
+
+          // Check for extra life at score milestones
+          if (checkExtraLife(S, S.score)) {
+            telemetry.onLifeGained(S.lives);
+            hudUpdater.updateLivesDisplay(S);
+            hudUpdater.triggerLifeGainPulse();
+            pushScorePopup(F.cx, hCSS * 0.3, 'LIFE +1', '#9cffc0', 24);
+            createParticles(F.cx, hCSS * 0.3, '#00ff88', 20);
+          }
+
+          if (S.combo > 1) {
+            comboEl.textContent = `${S.combo}x Combo!`;
+            comboEl.classList.add('active');
+          }
+
+          createParticles(n.x, n.y, n.col, boostedBySwat ? 10 : 6);
+        }
+      }
+
+      // Reset combo if number hits floor
+      if (n.y >= floorY && !n.isTrap && n.cooldown <= 0) {
+        S.combo = 0;
+        comboEl.classList.remove('active');
+      }
+    }
+
+    if (S.ultimate.pendingTrigger && !S.ultimate.active && !S.isVictory) {
+      startUltimate(now, F.cx, F.anchorY);
+    }
+  }
+
+  function drawGame(now) {
+    ctx.clearRect(0, 0, wCSS, hCSS);
+    ctx.save();
+    ctx.translate(F.shakeX, F.shakeY);
+
+    drawWorld(worldState, ctx, wCSS, hCSS, now, F.cx, S.gameStartTime);
+
+    // Invincibility flash — scoped to character only (body + scowl + hands)
+    ctx.save();
+    if (F.invAlpha < 1) ctx.globalAlpha = F.invAlpha;
+
+    // Draw Body
+    if (F.bodyW > 0) {
+      drawImageWithTransparencyKey(avatar, F.bodyX, F.bodyY, F.bodyW, F.bodyH);
+    }
+
+    // Draw Scowl Overlay
+    if (S.scowlVisible && F.bodyW > 0 && scowlImg.complete && scowlImg.naturalWidth > 0) {
+      const overlayW = scowlImg.width * scowlOverlay.scale;
+      const overlayH = scowlImg.height * scowlOverlay.scale;
+      const drawX = F.bodyX + scowlOverlay.x;
+      const drawY = F.bodyY + scowlOverlay.y;
+      ctx.save();
+      ctx.translate(drawX + overlayW / 2, drawY + overlayH / 2);
+      ctx.rotate(scowlOverlay.rot);
+      ctx.drawImage(scowlImg, -overlayW / 2, -overlayH / 2, overlayW, overlayH);
+      ctx.restore();
+    }
+
+    // Draw Badguys Overlay (top-center of screen)
+    if (badguysRender.ready) {
+      // Ship should not inherit guardian invincibility alpha.
+      ctx.save();
+      ctx.globalAlpha = 1;
+      const activeBadguysImg = getActiveBadguysSpriteImage();
+      const frameIndex =
+        Math.floor((now * badguysSpriteSheet.fps) / 1000) % badguysSpriteSheet.frames;
+      const frameCol = frameIndex % badguysSpriteSheet.cols;
+      const frameRow = Math.floor(frameIndex / badguysSpriteSheet.cols);
+      const srcX = frameCol * badguysSpriteSheet.frameW;
+      const srcY = frameRow * badguysSpriteSheet.frameH;
+      ctx.drawImage(
+        activeBadguysImg,
+        srcX,
+        srcY,
+        badguysSpriteSheet.frameW,
+        badguysSpriteSheet.frameH,
+        badguysRender.x,
+        badguysRender.y,
+        badguysRender.w,
+        badguysRender.h
+      );
+
+      const hpRatio = getShipHPRatio(S);
+      const lowHpTint = Math.max(0, (1 - hpRatio) * 0.35);
+      if (lowHpTint > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = lowHpTint;
+        ctx.fillStyle = '#5c1216';
+        ctx.fillRect(badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h);
+        ctx.restore();
+      }
+
+      // Ship damage flash overlay — bright flash when hit
+      if (S.shipDamageFlash > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = S.shipDamageFlash * 0.6;
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      drawDangerBeam(now);
+      drawLaserStorm(now);
+      drawBadguysLightAnchors(now);
+      ctx.restore();
+    }
+
+    // Draw Left Hand
+    if (leftHandImg.complete && leftHandImg.naturalWidth > 0) {
+      ctx.save();
+      ctx.translate(F.cx - F.wristOffset + handTuning.left.x, F.anchorY + handTuning.left.y);
+      ctx.rotate(handTuning.left.rot);
+      ctx.scale(1, F.stretchL);
+      drawImageWithTransparencyKey(leftHandImg, -F.handW, 0, F.handW, F.handH);
+      ctx.restore();
+    }
+
+    // Draw Right Hand
+    if (rightHandImg.complete && rightHandImg.naturalWidth > 0) {
+      ctx.save();
+      ctx.translate(F.cx + F.wristOffset + handTuning.right.x, F.anchorY + handTuning.right.y);
+      ctx.rotate(handTuning.right.rot);
+      ctx.scale(1, F.stretchR);
+      drawImageWithTransparencyKey(rightHandImg, 0, 0, F.handW, F.handH);
+      ctx.restore();
+    }
+
+    // Restore canvas state (ends invincibility flash scope)
+    ctx.restore();
+
+    drawShield(ctx, F.cx, F.anchorY, S, now);
+    drawMagnetPullLines(F.cx, F.anchorY, now);
+
+    drawDangerBeamEmbers();
+
+    // Draw numbers
+    for (let i = 0; i < nums.length; i++) {
+      const n = nums[i];
+
+      // Beam-capturing numbers get special glow
+      if (n.beamCapturing && F.regularPortal) {
+        const beamAlpha = 0.55 + 0.45 * Math.sin(now * 0.03 + n.beamPhase);
+        ctx.shadowColor = '#9cefff';
+        ctx.shadowBlur = 18 + F.regularPortal.chargeRatio * 12;
+        ctx.globalAlpha = 0.72 + 0.28 * beamAlpha;
+        ctx.font = `bold ${F.layout.beamFont}px Arial`;
+        ctx.fillStyle = n.col;
+        ctx.textAlign = 'center';
+        ctx.fillText(n.txt, n.x, n.y);
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        continue;
+      }
+
+      // Draw number with glow for traps
+      if (n.isTrap) {
+        n.glow = 0.5 + Math.sin(now / 200) * 0.5;
+        ctx.shadowColor = n.col;
+        ctx.shadowBlur = 20 * n.glow;
+      }
+
+      ctx.font = `bold ${F.layout.numberFont}px Arial`;
+      ctx.fillStyle = n.col;
+      ctx.textAlign = 'center';
+      ctx.fillText(n.txt, n.x, n.y);
+
+      ctx.shadowBlur = 0;
+    }
+
+    drawUltimate(now, F.cx, F.anchorY);
+    drawSlamShockwave(now);
+    drawLaserSmoke();
+    drawRegularBeamEruptionNumbers();
+    drawProjectiles(ctx, S, getAdaptiveQualityCaps());
+    drawScorePopups();
+    drawParticles();
+    ctx.restore();
+
+    if (S.lifeLossFlash > 0.01) {
+      ctx.save();
+      ctx.fillStyle = `rgba(255, 82, 62, ${Math.min(0.28, S.lifeLossFlash * 0.28)})`;
+      ctx.fillRect(0, 0, wCSS, hCSS);
+      ctx.restore();
+    }
+  }
+
+  // --- Main Loop ---
+
   function loop(now) {
     const rawDt = Math.min(0.05, Math.max(0.001, (now - lastFrameAt) / 1000));
     lastFrameAt = now;
     const slowMoActive = S.slowMoTimer > 0;
-    if (slowMoActive) {
-      S.slowMoTimer = Math.max(0, S.slowMoTimer - rawDt);
-    }
-    const slowMoMultiplier =
-      slowMoActive && !isReducedMotionEnabled() ? POLISH.LIFE_LOSS_SLOW_MO_SCALE : 1;
-    const dt = rawDt * slowMoMultiplier;
+    if (slowMoActive) S.slowMoTimer = Math.max(0, S.slowMoTimer - rawDt);
+    const dt = rawDt * (slowMoActive && !isReducedMotionEnabled() ? POLISH.LIFE_LOSS_SLOW_MO_SCALE : 1);
     S.lifeLossFlash = Math.max(0, S.lifeLossFlash - rawDt * POLISH.LIFE_LOSS_FLASH_DECAY);
     updateShipRecoil(dt);
 
     if (S.isTitleScreen) {
-      drawTitlePreview(now, dt);
-      requestAnimationFrame(loop);
-      return;
+      updateTitlePreview(now, dt);
+      drawTitlePreview(now);
+    } else if (S.isVictory) {
+      updateVictory(dt);
+      drawVictory(now);
+    } else if (!S.isGameOver && !S.isPaused) {
+      updateGame(now, dt, rawDt);
+      drawGame(now);
     }
 
-    // Victory state: keep rendering particles/shake but stop gameplay simulation
-    if (S.isVictory) {
-      if (S.shipDamageFlash > 0) S.shipDamageFlash = Math.max(0, S.shipDamageFlash - dt * 3);
-      if (S.cameraShake > 0) {
-        S.cameraShake *= 0.92;
-        if (S.cameraShake < 0.1) S.cameraShake = 0;
-      }
-      updateParticles();
-      updateScorePopups(dt);
-
-      const shakeAmplitude = S.cameraShake * getMotionScale();
-      let slamShakeX = 0;
-      let slamShakeY = 0;
-      if ((S.slam.shakeFrames || 0) > 0) {
-        slamShakeX = (random() - 0.5) * 8;
-        slamShakeY = (random() - 0.5) * 8;
-        S.slam.shakeFrames -= 1;
-      }
-      const shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
-      const shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
-      ctx.clearRect(0, 0, wCSS, hCSS);
-      ctx.save();
-      ctx.translate(shakeX, shakeY);
-
-      // Draw the defeated ship (frozen frame)
-      if (badguysRender.ready) {
-        const activeBadguysImg = getActiveBadguysSpriteImage();
-        const frameIndex =
-          Math.floor((now * badguysSpriteSheet.fps) / 1000) % badguysSpriteSheet.frames;
-        const frameCol = frameIndex % badguysSpriteSheet.cols;
-        const frameRow = Math.floor(frameIndex / badguysSpriteSheet.cols);
-        const srcX = frameCol * badguysSpriteSheet.frameW;
-        const srcY = frameRow * badguysSpriteSheet.frameH;
-        ctx.globalAlpha = 0.5;
-        ctx.drawImage(
-          activeBadguysImg, srcX, srcY,
-          badguysSpriteSheet.frameW, badguysSpriteSheet.frameH,
-          badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h
-        );
-        ctx.globalAlpha = 1;
-      }
-
-      drawParticles();
-      drawScorePopups();
-      ctx.restore();
-      requestAnimationFrame(loop);
-      return;
-    }
-
-    if (!S.isGameOver && !S.isPaused) {
-      telemetry.onFrame(rawDt * 1000);
-      updateAdaptiveQuality(rawDt * 1000, now);
-      updateEnemyStateMachine(rawDt * 1000, now);
-      if (actionBar) actionBar.updateCooldowns(dt);
-      updateBadguysState(now, dt);
-
-      // Boss phase transitions
-      const phaseResult = updateBossPhase(S);
-      if (phaseResult.phaseChanged) {
-        telemetry.onPhaseTransition(phaseResult.oldPhase, phaseResult.newPhase, now);
-      }
-      if (phaseResult.phaseChanged && !phaseResult.defeated) {
-        applyPhaseEffects(phaseResult.newPhase);
-        S.cameraShake = Math.max(S.cameraShake, 12);
-      }
-      if (phaseResult.defeated) {
-        triggerVictory(now);
-      }
-
-      // Decay ship damage flash
-      if (S.shipDamageFlash > 0) {
-        S.shipDamageFlash = Math.max(0, S.shipDamageFlash - dt * 3);
-      }
-
-      // Progressive difficulty — modulated by boss phase
-      const phase = S.bossPhase;
-      const spawnMult = getPhaseSpawnMultiplier(phase);
-      const trapBoost = getPhaseTrapChanceBoost(phase);
-      const gameTime = (now - S.gameStartTime) / 1000;
-      S.spawnInterval = Math.max(
-        MIN_SPAWN_INTERVAL,
-        (INITIAL_SPAWN_INTERVAL - gameTime * 30) * spawnMult
-      );
-      S.trapChance = Math.min(
-        TRAP_SPAWN_CHANCE_MAX + trapBoost,
-        TRAP_SPAWN_CHANCE_START + gameTime * 0.01 + trapBoost
-      );
-
-      // Smart spawning
-      if (now - S.lastTrapTime > S.spawnInterval) {
-        if (random() < S.trapChance) {
-          spawnTrap();
-          S.lastTrapTime = now;
-        }
-      }
-
-      if (now - S.lastGoodTime > S.spawnInterval * 1.5) {
-        spawnGood();
-        S.lastGoodTime = now;
-      }
-
-      updateParticles();
-      updateScorePopups(dt);
-      updateRegularBeamHarvest(dt);
-      updateLaserStorm(now, dt);
-      updateLaserSmoke(dt);
-      updateShield(S, now);
-      updateSlamShockwave(dt, now);
-      updateUltimate(now, dt);
-      if (S.magnet.active) {
-        const hasPower = drainPower(S, POWER.MAGNET_DRAIN, dt);
-        hudUpdater.updatePowerBar(S);
-        if (!hasPower) S.magnet.active = false;
-      }
-      const projectileHits = updateProjectiles(S, dt, badguysRender);
-      if (projectileHits.length && S.shipHP > 0 && !S.isVictory) {
-        for (let i = 0; i < projectileHits.length; i++) {
-          const hit = projectileHits[i];
-          applyShipDamage(PROJECTILE.DAMAGE, hit.x, hit.y, 'projectile');
-          createParticles(hit.x, hit.y, '#ffd76a', 10);
-          S.cameraShake = Math.max(S.cameraShake, 5);
-          if (S.shipHP <= 0) break;
-        }
-        hudUpdater.updateShipHpBar(S);
-      }
-
-      // Camera shake
-      if (S.cameraShake > 0) {
-        S.cameraShake *= 0.9;
-        if (S.cameraShake < 0.1) S.cameraShake = 0;
-      }
-
-      const shakeAmplitude = S.cameraShake * getMotionScale();
-      let slamShakeX = 0;
-      let slamShakeY = 0;
-      if ((S.slam.shakeFrames || 0) > 0) {
-        slamShakeX = (random() - 0.5) * 8;
-        slamShakeY = (random() - 0.5) * 8;
-        S.slam.shakeFrames -= 1;
-      }
-      const shakeX = (random() - 0.5) * shakeAmplitude + slamShakeX;
-      const shakeY = (random() - 0.5) * shakeAmplitude + slamShakeY;
-
-      ctx.clearRect(0, 0, wCSS, hCSS);
-      ctx.save();
-      ctx.translate(shakeX, shakeY);
-
-      const layout = getGuardianLayout();
-      const cx = Math.max(layout.sidePad, Math.min(wCSS - layout.sidePad, touchX));
-      const time = now / 170;
-      let bodyX = 0;
-      let bodyY = 0;
-      let bodyW = 0;
-      let bodyH = 0;
-
-      drawWorld(worldState, ctx, wCSS, hCSS, now, cx, S.gameStartTime);
-
-      // Invincibility flash — scoped to character only (body + scowl + hands)
-      const invAlpha = getInvincibilityAlpha(S, now);
-      ctx.save();
-      if (invAlpha < 1) ctx.globalAlpha = invAlpha;
-
-      // Draw Body
-      if (avatar.complete && avatar.naturalWidth > 0) {
-        const scale = 350 / avatar.height;
-        bodyW = avatar.width * scale;
-        bodyH = 350;
-        bodyX = cx - bodyW / 2;
-        bodyY = hCSS - bodyH + 60;
-        drawImageWithTransparencyKey(avatar, bodyX, bodyY, bodyW, bodyH);
-      }
-
-      // Draw Scowl Overlay
-      if (S.scowlVisible && bodyW > 0 && scowlImg.complete && scowlImg.naturalWidth > 0) {
-        const overlayW = scowlImg.width * scowlOverlay.scale;
-        const overlayH = scowlImg.height * scowlOverlay.scale;
-        const drawX = bodyX + scowlOverlay.x;
-        const drawY = bodyY + scowlOverlay.y;
-        ctx.save();
-        ctx.translate(drawX + overlayW / 2, drawY + overlayH / 2);
-        ctx.rotate(scowlOverlay.rot);
-        ctx.drawImage(scowlImg, -overlayW / 2, -overlayH / 2, overlayW, overlayH);
-        ctx.restore();
-      }
-
-      // Draw Badguys Overlay (top-center of screen)
-      if (badguysRender.ready) {
-        // Ship should not inherit guardian invincibility alpha.
-        ctx.save();
-        ctx.globalAlpha = 1;
-        const activeBadguysImg = getActiveBadguysSpriteImage();
-        const frameIndex =
-          Math.floor((now * badguysSpriteSheet.fps) / 1000) % badguysSpriteSheet.frames;
-        const frameCol = frameIndex % badguysSpriteSheet.cols;
-        const frameRow = Math.floor(frameIndex / badguysSpriteSheet.cols);
-        const srcX = frameCol * badguysSpriteSheet.frameW;
-        const srcY = frameRow * badguysSpriteSheet.frameH;
-        ctx.drawImage(
-          activeBadguysImg,
-          srcX,
-          srcY,
-          badguysSpriteSheet.frameW,
-          badguysSpriteSheet.frameH,
-          badguysRender.x,
-          badguysRender.y,
-          badguysRender.w,
-          badguysRender.h
-        );
-
-        const hpRatio = getShipHPRatio(S);
-        const lowHpTint = Math.max(0, (1 - hpRatio) * 0.35);
-        if (lowHpTint > 0.01) {
-          ctx.save();
-          ctx.globalAlpha = lowHpTint;
-          ctx.fillStyle = '#5c1216';
-          ctx.fillRect(badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h);
-          ctx.restore();
-        }
-
-        // Ship damage flash overlay — bright flash when hit
-        if (S.shipDamageFlash > 0.01) {
-          ctx.save();
-          ctx.globalAlpha = S.shipDamageFlash * 0.6;
-          ctx.fillStyle = '#ff4444';
-          ctx.fillRect(badguysRender.x, badguysRender.y, badguysRender.w, badguysRender.h);
-          ctx.globalAlpha = 1;
-          ctx.restore();
-        }
-
-        // Low-HP sparking particles on the ship
-        if (S.bossPhase >= 3 && S.shipHP > 0) {
-          const sparkChance = S.bossPhase >= 4 ? 0.3 : 0.12;
-          if (random() < sparkChance) {
-            const sparkX = badguysRender.x + random() * badguysRender.w;
-            const sparkY = badguysRender.y + random() * badguysRender.h * 0.8;
-            createParticles(sparkX, sparkY, '#ff8844', 2);
-          }
-        }
-
-        drawDangerBeam(now);
-        drawLaserStorm(now);
-        drawBadguysLightAnchors(now);
-        ctx.restore();
-      }
-
-      // Calculate Stretch
-      let stretchL = 1.0 + Math.sin(time) * 0.35;
-      let stretchR = 1.0 + Math.sin(time + Math.PI) * 0.35;
-      if (now <= S.swat.stretchUntil) {
-        const t = Math.max(0, Math.min(1, (S.swat.stretchUntil - now) / SWAT.STRETCH_DURATION));
-        const swatBoost = SWAT.STRETCH_AMOUNT * t;
-        if (S.swat.hand === 'left') stretchL += swatBoost;
-        else if (S.swat.hand === 'right') stretchR += swatBoost;
-      } else {
-        S.swat.hand = null;
-      }
-
-      const anchorY = layout.anchorY;
-      const wristOffset = layout.wristOffset;
-      const handW = layout.handW;
-      const handH = layout.handH;
-
-      // Draw Left Hand
-      if (leftHandImg.complete && leftHandImg.naturalWidth > 0) {
-        ctx.save();
-        ctx.translate(cx - wristOffset + handTuning.left.x, anchorY + handTuning.left.y);
-        ctx.rotate(handTuning.left.rot);
-        ctx.scale(1, stretchL);
-        drawImageWithTransparencyKey(leftHandImg, -handW, 0, handW, handH);
-        ctx.restore();
-      }
-
-      // Draw Right Hand
-      if (rightHandImg.complete && rightHandImg.naturalWidth > 0) {
-        ctx.save();
-        ctx.translate(cx + wristOffset + handTuning.right.x, anchorY + handTuning.right.y);
-        ctx.rotate(handTuning.right.rot);
-        ctx.scale(1, stretchR);
-        drawImageWithTransparencyKey(rightHandImg, 0, 0, handW, handH);
-        ctx.restore();
-      }
-
-      // Restore canvas state (ends invincibility flash scope)
-      ctx.restore();
-
-      drawShield(ctx, cx, anchorY, S, now);
-      drawMagnetPullLines(cx, anchorY, now);
-
-      // Calculate collision zones
-      const bottomYL = anchorY + handH * stretchL;
-      const bottomYR = anchorY + handH * stretchR;
-
-      const leftHandCenterX = cx - wristOffset - handW / 2;
-      const rightHandCenterX = cx + wristOffset + handW / 2;
-      const impactTargets = {
-        body:
-          bodyW > 0
-            ? {
-                x: bodyX,
-                y: bodyY,
-                w: bodyW,
-                h: bodyH,
-                alpha: getSpriteAlphaData(avatar),
-              }
-            : null,
-        hands: [
-          {
-            tx: cx - wristOffset + handTuning.left.x,
-            ty: anchorY + handTuning.left.y,
-            rot: handTuning.left.rot,
-            stretch: stretchL,
-            drawX: -handW,
-            drawY: 0,
-            drawW: handW,
-            drawH: handH,
-            alpha: getSpriteAlphaData(leftHandImg),
-          },
-          {
-            tx: cx + wristOffset + handTuning.right.x,
-            ty: anchorY + handTuning.right.y,
-            rot: handTuning.right.rot,
-            stretch: stretchR,
-            drawX: 0,
-            drawY: 0,
-            drawW: handW,
-            drawH: handH,
-            alpha: getSpriteAlphaData(rightHandImg),
-          },
-        ],
-      };
-
-      updateDangerBeamEmbers(now, dt, impactTargets);
-      drawDangerBeamEmbers();
-      const regularPortal = getRegularBeamPortalState(now);
-
-      // Update and draw numbers
-      for (let i = nums.length - 1; i >= 0; i--) {
-        let n = nums[i];
-        if (now - (n.bornAt || now) > 26000) {
-          nums.splice(i, 1);
-          continue;
-        }
-        if (!regularPortal && n.beamCapturing) n.beamCapturing = false;
-
-        if (regularPortal && isGoodBeamNumber(n)) {
-          if (n.beamCapturing || isNumberInsideRegularBeam(n, regularPortal)) {
-            if (!n.beamCapturing) {
-              n.beamCapturing = true;
-              n.beamPhase = random() * Math.PI * 2;
-            }
-
-            const sway = Math.sin(now * 0.012 + n.beamPhase) * 1.8;
-            const targetX = regularPortal.x + sway;
-            const targetY = regularPortal.y;
-            n.dx += (targetX - n.x) * (0.048 + regularPortal.chargeRatio * 0.032);
-            n.dy += (targetY - n.y) * (0.074 + regularPortal.chargeRatio * 0.042);
-            n.dx *= 0.78;
-            n.dy *= 0.78;
-            n.x += n.dx;
-            n.y += n.dy;
-            n.cooldown = 0;
-
-            if (Math.hypot(n.x - regularPortal.x, n.y - regularPortal.y) <= regularPortal.snapRadius) {
-              registerRegularBeamCapture(n, now, regularPortal);
-              nums.splice(i, 1);
-              continue;
-            }
-
-            const beamAlpha = 0.55 + 0.45 * Math.sin(now * 0.03 + n.beamPhase);
-            ctx.shadowColor = '#9cefff';
-            ctx.shadowBlur = 18 + regularPortal.chargeRatio * 12;
-            ctx.globalAlpha = 0.72 + 0.28 * beamAlpha;
-            ctx.font = `bold ${layout.beamFont}px Arial`;
-            ctx.fillStyle = n.col;
-            ctx.textAlign = 'center';
-            ctx.fillText(n.txt, n.x, n.y);
-            ctx.globalAlpha = 1;
-            ctx.shadowBlur = 0;
-            continue;
-          }
-          n.beamCapturing = false;
-        }
-        applyLaserBrushToNumber(n, now);
-
-        if (n.cooldown > 0) n.cooldown -= 16;
-        n.dy += GRAVITY;
-        if (S.magnet.active && !n.isTrap && !n.beamCapturing) {
-          const dxMag = cx - n.x;
-          const dyMag = anchorY - n.y;
-          const distSqMag = dxMag * dxMag + dyMag * dyMag;
-          const maxDistSqMag = MAGNET.RANGE * MAGNET.RANGE;
-          if (distSqMag <= maxDistSqMag) {
-            const distMag = Math.sqrt(distSqMag) || 1;
-            const pullRatio = 1 - distMag / MAGNET.RANGE;
-            const pullScale = dt * 60 * (0.6 + pullRatio * 0.8);
-            n.dx += dxMag * MAGNET.FORCE * pullScale;
-            n.dy += dyMag * MAGNET.FORCE * 0.5 * pullScale;
-            const damping = Math.pow(MAGNET.DAMPING, pullScale);
-            n.dx *= damping;
-            n.dy *= damping;
-          }
-        }
-        if (n.dy > 15) n.dy = 15;
-        n.x += n.dx;
-        n.y += n.dy;
-
-        if (n.isTrap && isShieldActive(S, now)) {
-          const shieldCenterX = cx;
-          const shieldCenterY = anchorY + 18;
-          const trapRadius = 34;
-          const dxShield = n.x - shieldCenterX;
-          const dyShield = n.y - shieldCenterY;
-          const hitRadius = SHIELD.RADIUS_PX + trapRadius;
-          if (dxShield * dxShield + dyShield * dyShield <= hitRadius * hitRadius) {
-            S.shield.rippleAt = now;
-            createParticles(n.x, n.y, '#8ffff5', 14);
-            nums.splice(i, 1);
-            continue;
-          }
-        }
-
-        if (n.x < layout.wallPad) {
-          n.x = layout.wallPad;
-          const wallKick = Math.max(1.2, Math.abs(n.dx) * (n.lasered ? 0.94 : 0.88));
-          n.dx = wallKick;
-          if (Math.abs(n.dy) < 1.2) n.dy -= 0.9 + random() * 1.4;
-          n.wallHits = (n.wallHits || 0) + 1;
-        } else if (n.x > wCSS - layout.wallPad) {
-          n.x = wCSS - layout.wallPad;
-          const wallKick = Math.max(1.2, Math.abs(n.dx) * (n.lasered ? 0.94 : 0.88));
-          n.dx = -wallKick;
-          if (Math.abs(n.dy) < 1.2) n.dy -= 0.9 + random() * 1.4;
-          n.wallHits = (n.wallHits || 0) + 1;
-        }
-
-        const floorY = layout.floorY;
-        if (n.y > floorY) {
-          if (n.isTrap) {
-            nums.splice(i, 1);
-            continue;
-          } else {
-            n.y = floorY;
-            n.floorBounces = (n.floorBounces || 0) + 1;
-            n.dy *= FLOOR_BOUNCE;
-            if (Math.abs(n.dy) < 3) n.dy = -(5 + random() * 1.8);
-            if (Math.abs(n.dx) < 0.9) n.dx += (random() - 0.5) * 2.4;
-          }
-        }
-
-        if (!n.isTrap) {
-          if (n.x <= layout.wallPad + 1 && Math.abs(n.dx) < 1.1) n.dx = 1.2 + random() * 1.4;
-          else if (n.x >= wCSS - (layout.wallPad + 1) && Math.abs(n.dx) < 1.1) {
-            n.dx = -(1.2 + random() * 1.4);
-          }
-          if (n.y >= floorY - 1 && Math.abs(n.dy) < 1.2) n.dy = -(4.2 + random() * 2.2);
-        }
-
-        bounceLaseredNumberOffShip(n);
-        if (!n.isTrap && (n.floorBounces || 0) > 26 && !n.beamCapturing) {
-          nums.splice(i, 1);
-          continue;
-        }
-        if (!n.isTrap && (n.wallHits || 0) > 18 && n.y > floorY - 50) {
-          nums.splice(i, 1);
-          continue;
-        }
-
-        if ((n.laserSmokeTime || 0) > 0) {
-          n.laserSmokeTime = Math.max(0, n.laserSmokeTime - dt);
-          const smokeRateScale = getAdaptiveCapValue(
-            'laserSmokeSpawnScale',
-            isLowGraphicsModeEnabled() ? 0.42 : 1
-          );
-          n.laserSmokeCarry =
-            (n.laserSmokeCarry || 0) +
-            dt * (8 + (n.laserBrushHits || 1) * 4) * smokeRateScale;
-          while (n.laserSmokeCarry >= 1) {
-            n.laserSmokeCarry -= 1;
-            spawnLaserSmoke(n.x, n.y, 0.7 + (n.laserBrushHits || 0) * 0.2);
-          }
-        }
-
-        // Improved collision
-        const hitL =
-          Math.abs(n.x - leftHandCenterX) < layout.hitZoneX &&
-          Math.abs(n.y - bottomYL) < layout.hitZoneY;
-        const hitR =
-          Math.abs(n.x - rightHandCenterX) < layout.hitZoneX &&
-          Math.abs(n.y - bottomYR) < layout.hitZoneY;
-        let hitHand = null;
-        if (hitL && hitR) {
-          hitHand =
-            Math.abs(n.x - leftHandCenterX) <= Math.abs(n.x - rightHandCenterX) ? 'left' : 'right';
-        } else if (hitL) {
-          hitHand = 'left';
-        } else if (hitR) {
-          hitHand = 'right';
-        }
-
-        if ((hitL || hitR) && n.dy > 0 && n.cooldown <= 0) {
-          if (n.isTrap) {
-            // TEMP_NO_LOSE: dev toggle — just destroy the trap
-            if (TEMP_NO_LOSE) {
-              createParticles(n.x, n.y, n.col, 10);
-              nums.splice(i, 1);
-              continue;
-            }
-
-            // Skip if invincible (post-hit grace period)
-            if (isInvincible(S, now)) {
-              createParticles(n.x, n.y, n.col, 8);
-              nums.splice(i, 1);
-              continue;
-            }
-
-            // Lose a life
-            S.cameraShake = 20;
-            createParticles(n.x, n.y, n.col, 15);
-            S.combo = 0;
-            comboEl.classList.remove('active');
-            nums.splice(i, 1);
-
-            const stillAlive = loseLife(S, now);
-            telemetry.onLifeLost(S.lives);
-            hudUpdater.updateLivesDisplay(S);
-            livesEl.classList.remove('hit');
-            void livesEl.offsetWidth; // force reflow for re-trigger
-            livesEl.classList.add('hit');
-            S.lifeLossFlash = Math.max(S.lifeLossFlash, 1);
-            S.slowMoTimer = Math.max(S.slowMoTimer, POLISH.LIFE_LOSS_SLOW_MO_SEC);
-            pushScorePopup(n.x, n.y - 18, '-1 LIFE', '#ff9c8d', 20);
-
-            if (!stillAlive) {
-              // All lives lost — game over
-              S.isGameOver = true;
-              logRunSummary('game-over', now);
-              const survivalTime = Math.floor((now - S.gameStartTime) / 1000);
-              document.getElementById('finalScore').textContent = S.score;
-              document.getElementById('bestCombo').textContent = S.bestCombo;
-              document.getElementById('survivalTime').textContent = survivalTime;
-
-              if (S.score > S.highScore) {
-                S.highScore = S.score;
-                localStorage.setItem('highScore', S.highScore);
-                hudUpdater.syncBestDisplays(S);
-              }
-
-              idiotModal.style.display = 'flex';
-              break;
-            }
-            continue;
-          } else {
-            const boostedBySwat = hitHand && S.swat.hand === hitHand && now <= S.swat.stretchUntil;
-            const bounceForce = boostedBySwat
-              ? HAND_BOUNCE * SWAT.BOUNCE_MULTIPLIER
-              : HAND_BOUNCE;
-
-            n.dy = bounceForce;
-            n.dx += handVelX * 0.15;
-            if (boostedBySwat) {
-              n.dx += hitHand === 'left' ? -0.8 : 0.8;
-              S.swat.hand = null;
-              S.swat.stretchUntil = 0;
-            }
-            n.cooldown = 200;
-            n.floorBounces = 0;
-            n.wallHits = 0;
-            S.score++;
-            S.combo++;
-            S.bestCombo = Math.max(S.bestCombo, S.combo);
-            scoreEl.textContent = S.score;
-            pushScorePopup(n.x, n.y - 14, '+1', n.col, boostedBySwat ? 26 : 22);
-            if (S.combo >= 3 && S.combo % 3 === 0) {
-              pushScorePopup(n.x + (random() - 0.5) * 30, n.y - 42, `${S.combo}x`, '#ffe89a', 20);
-            }
-            chargePower(S, POWER.PER_BOUNCE + S.combo * POWER.COMBO_BONUS);
-            hudUpdater.updatePowerBar(S);
-            if (!S.ultimate.active && S.power >= POWER.ULTIMATE_COST) {
-              S.ultimate.pendingTrigger = true;
-            }
-
-            // Each bounce deals chip damage to the ship
-            if (S.shipHP > 0 && !S.isVictory) {
-              const dmg = S.combo >= 5 ? 2 : 1; // combo bonus damage
-              applyShipDamage(dmg, n.x, n.y, 'bounce');
-              hudUpdater.updateShipHpBar(S);
-            }
-
-            // Check for extra life at score milestones
-            if (checkExtraLife(S, S.score)) {
-              telemetry.onLifeGained(S.lives);
-              hudUpdater.updateLivesDisplay(S);
-              hudUpdater.triggerLifeGainPulse();
-              pushScorePopup(cx, hCSS * 0.3, 'LIFE +1', '#9cffc0', 24);
-              createParticles(cx, hCSS * 0.3, '#00ff88', 20);
-            }
-
-            if (S.combo > 1) {
-              comboEl.textContent = `${S.combo}x Combo!`;
-              comboEl.classList.add('active');
-            }
-
-            createParticles(n.x, n.y, n.col, boostedBySwat ? 10 : 6);
-          }
-        }
-
-        // Reset combo if number hits floor
-        if (n.y >= floorY && !n.isTrap && n.cooldown <= 0) {
-          S.combo = 0;
-          comboEl.classList.remove('active');
-        }
-
-        // Draw number with glow for traps
-        if (n.isTrap) {
-          n.glow = 0.5 + Math.sin(now / 200) * 0.5;
-          ctx.shadowColor = n.col;
-          ctx.shadowBlur = 20 * n.glow;
-        }
-
-        ctx.font = `bold ${layout.numberFont}px Arial`;
-        ctx.fillStyle = n.col;
-        ctx.textAlign = 'center';
-        ctx.fillText(n.txt, n.x, n.y);
-
-        ctx.shadowBlur = 0;
-      }
-
-      if (S.ultimate.pendingTrigger && !S.ultimate.active && !S.isVictory) {
-        startUltimate(now, cx, anchorY);
-      }
-
-      drawUltimate(now, cx, anchorY);
-      drawSlamShockwave(now);
-      drawLaserSmoke();
-      drawRegularBeamEruptionNumbers();
-      drawProjectiles(ctx, S, getAdaptiveQualityCaps());
-      drawScorePopups();
-      drawParticles();
-      ctx.restore();
-
-      if (S.lifeLossFlash > 0.01) {
-        ctx.save();
-        ctx.fillStyle = `rgba(255, 82, 62, ${Math.min(0.28, S.lifeLossFlash * 0.28)})`;
-        ctx.fillRect(0, 0, wCSS, hCSS);
-        ctx.restore();
-      }
-    }
     requestAnimationFrame(loop);
   }
 
