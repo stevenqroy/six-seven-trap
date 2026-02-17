@@ -87,7 +87,7 @@
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
-| 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | wip:claude | claude/S7R-090 | claude |
+| 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | reviewing | claude/S7R-090 | claude |
 
 ## What can run RIGHT NOW
 
