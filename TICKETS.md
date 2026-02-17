@@ -87,7 +87,7 @@
 | 45 | S7R-087 | Unit tests: support-registry (create, register, normalize, immutability) | — | no | codex/gemini | done | codex/S7R-087 | codex |
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
-| 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | reviewing | claude/S7R-090 | claude |
+| 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
 
 ## What can run RIGHT NOW
 
@@ -1137,7 +1137,7 @@
 14. **Start with TL;DR**: every ticket update must begin with a plain-language TL;DR before technical details.
 
 ## main.js Lock
-**Currently held by**: wip:claude (S7R-090)
+**Currently held by**: nobody (unlocked)
 **Format**: `wip:platform (S7R-###)` or `nobody (unlocked)`
 **Rule**: update this line in your first commit. Release when your branch merges to main.
 **Queue**: _(empty)_
@@ -1211,3 +1211,4 @@ We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Bot
 | 2026-02-16 | S7R-089 | `tests/unit/utils/sprite.test.js` — 8 tests: alpha sampling bounds, transparent sprite cache + null context, alpha data cache, drawImageWithTransparencyKey, body/hand visibility, hitVisibleCharacterPixel, estimateCharacterNormal + fallbacks | codex |
 | 2026-02-16 | S7R-083 | `src/systems/danger-beam.js`, `src/constants.js`, `src/main.js` — extracted danger beam (oscillation, rendering, geometry, ember/sizzle particles) into module, added ~50 SCENE.DANGER_* constants, removed unused sprite/math imports, main.js −314 net lines | claude |
 | 2026-02-16 | S7R-084 | `src/systems/beam-harvest.js`, `src/main.js` — extracted beam harvest (portal state, capture, eruption, physics, draw) into module with callback pattern for side effects, main.js −139 net lines | claude |
+| 2026-02-17 | S7R-090 | `src/main.js` — split 667-line loop() into updateGame/drawGame + updateVictory/drawVictory + updateTitlePreview/drawTitlePreview. loop() now 22-line orchestrator. Frame context object F shares values between phases. +43 net lines (structural — new function boundaries) | claude |
