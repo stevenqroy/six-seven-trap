@@ -1067,19 +1067,9 @@
         marker: '\u{1F504}',
       },
       'S7R-091': {
-        title: 'Codex auto-handoff',
-        summary: 'When Codex finishes a ticket, a notify script automatically captures the TL;DR handoff and saves it locally. No more copy-pasting from Codex to Claude.',
-        marker: '\u{1F4E4}',
-      },
-      'S7R-092': {
-        title: 'Gemini auto-handoff',
-        summary: 'When Gemini finishes a ticket, an AfterAgent hook automatically captures the TL;DR handoff and saves it locally. Same as S7R-091 but for Gemini.',
-        marker: '\u{1F4E4}',
-      },
-      'S7R-093': {
-        title: 'Claude auto-intake',
-        summary: 'When Claude starts a session, it automatically checks for pending agent handoffs and surfaces them. No more copy-pasting handoffs into the chat.',
-        marker: '\u{1F4E5}',
+        title: 'Auto-scan agent branches',
+        summary: 'When Claude starts a session, it fetches git and checks for new Codex/Gemini branches ahead of main. Reports what agents have been up to so Claude can offer to QA.',
+        marker: '\u{1F50D}',
       },
     };
 
