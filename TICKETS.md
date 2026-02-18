@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**46 of 56 V1 tickets done (82%). 10 tickets + 2 gates remaining.**
+**54 of 62 V1 tickets done (87%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -100,6 +100,8 @@
 | 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | done | main | gemini |
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
+| 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | next | — | — |
+| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -162,6 +164,8 @@
 | S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | done | — |
 | S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | done | — |
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
+| S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | next | codex |
+| S7R-104 | Unit tests for input system edge cases: normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1491,6 +1495,83 @@
 - [ ] `onQualityTierChange` tested: same tier transitions ignored
 - [ ] `onFrame` tested: zero/negative frame times ignored
 - [ ] Frame sample ring buffer tested: samples don't exceed sampleCap after overflow
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-103 Ready Brief
+
+**What:** Write deep unit tests for `src/systems/mobile-benchmark.js`. Existing coverage is only 3 tests for a 322-line module with 5 exported functions and complex spike/sustained-window/repeatability logic. Add edge cases for every export.
+
+**Reference files to read first:**
+- `src/systems/mobile-benchmark.js` — the module under test (322 lines, 5 exports: `computeFrameMetrics`, `evaluateBenchmarkChecks`, `computeRelativeSpread`, `evaluateRepeatability`, `DEFAULT_BENCHMARK_THRESHOLDS`)
+- `tests/unit/systems/mobile-benchmark.test.js` — existing tests (3 tests, basic happy paths only)
+- `tests/unit/systems/telemetry.test.js` — test pattern for stats/metrics modules with edge cases
+
+**Files to modify:**
+1. `tests/unit/systems/mobile-benchmark.test.js` (append new tests to existing file)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- Append to the existing `describe('mobile benchmark metrics')` block — do NOT replace the 3 existing tests
+- `computeFrameMetrics` has an internal `sanitizeFrameSamples` that filters non-finite and non-positive values — test with NaN, Infinity, -1, 0, null in the samples array
+- `computeFrameMetrics` with empty array should return all-zero metrics with `frames: 0`
+- `computeSpikeStats` (internal) counts consecutive frames above threshold as a burst — test with alternating spike/non-spike patterns to verify burst resets correctly
+- `computeWorstSustainedWindow` uses a sliding window — test with exactly-at-threshold window duration, test `ready: false` when total duration < window size
+- `evaluateBenchmarkChecks` with NaN/undefined thresholds should fall back to `DEFAULT_BENCHMARK_THRESHOLDS` via `toFinite` — test that fallback works
+- `computeRelativeSpread` with single value should return `ready: false` (needs >1 values)
+- `computeRelativeSpread` with all identical values should give `deltaRatio: 0`
+- `computeRelativeSpread` with non-finite values mixed in should filter them out
+- `evaluateRepeatability` with `!spread.ready` returns a passing check — test this path
+- The `sustainedWindowMs` has a `Math.max(250, ...)` floor — test with value below 250
+
+**Acceptance criteria:**
+- [ ] `computeFrameMetrics` tested: empty input returns all-zero, NaN/Infinity/negative samples filtered out, single-sample input works
+- [ ] Spike detection tested: consecutive burst tracking, burst reset on non-spike frame, all-spike input, no-spike input
+- [ ] Sustained window tested: window too short (ready: false), exactly at threshold, worst window selection
+- [ ] `evaluateBenchmarkChecks` tested: NaN thresholds fall back to defaults, all-pass scenario, all-fail scenario, mixed pass/fail
+- [ ] `computeRelativeSpread` tested: single value (not ready), identical values (deltaRatio 0), mixed non-finite filtered, empty array
+- [ ] `evaluateRepeatability` tested: not-ready returns passing, within tolerance, exceeds tolerance
+- [ ] Existing 3 tests still pass unchanged
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-104 Ready Brief
+
+**What:** Write edge-case unit tests for `src/core/input.js`. Existing coverage is 8 tests covering happy paths for the state-chart runtime only. Add tests for: `normalizeMode`, window blur cleanup, movement-beyond-tap canceling hold timer, pointer cancel recovery in legacy mode, `setHandlers` replacement, and destroy cleanup.
+
+**Reference files to read first:**
+- `src/core/input.js` — the module under test (490 lines, exports: `createInputSystem`, `INPUT_MODES`, `GESTURE_STATES`)
+- `tests/unit/core/input-state-machine.test.js` — existing tests (8 tests, state-chart happy paths)
+- `tests/helpers/input-harness.js` — test harness for simulating pointer events
+- `src/constants.js` — `GESTURE` namespace (HOLD_DELAY_MS, TAP_MAX_DURATION_MS, TAP_MAX_MOVEMENT_PX, DOUBLE_TAP_WINDOW_MS, SWIPE_MAX_DURATION_MS, SWIPE_UP_MIN_DISTANCE_PX)
+
+**Files to modify:**
+1. `tests/unit/core/input-state-machine.test.js` (append new tests to existing file)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- Append to the existing `describe('Input System - S7R-006 state chart')` or create a sibling `describe` block — do NOT replace the 8 existing tests
+- `normalizeMode('statechart')` returns `INPUT_MODES.STATE_CHART` (alias handling) — test this plus unknown string inputs that default to STATE_CHART
+- The `createInputHarness` helper is already set up in `tests/helpers/input-harness.js` — use it for all new tests. Read it to understand the API.
+- Window blur test: in state-chart mode, `onWindowBlur` fires `onHoldEnd` if holding, clears pending tap, resets to IDLE. The harness may not expose window blur simulation — check the harness API. If not available, you may need to simulate it via the canvas events or note it as untestable.
+- Movement beyond tap: pointer moves > `GESTURE.TAP_MAX_MOVEMENT_PX` should cancel the hold timer. Start a pointerdown, then move far, then wait for HOLD_DELAY — hold should NOT fire.
+- Pointer cancel in legacy mode: legacy runtime also handles pointercancel — test that it fires holdEnd and resets cleanly (existing tests only cover state-chart cancel)
+- `setHandlers` replacement: call `setHandlers` with new callbacks mid-session — verify the new callbacks fire on subsequent events
+- Destroy cleanup: after `destroy()`, events should not fire callbacks — emit events after destroy and verify no new events recorded
+- The harness uses `vi.useFakeTimers()` — all timer-dependent tests need `harness.advance()` to trigger timeouts
+
+**Acceptance criteria:**
+- [ ] `normalizeMode` tested: 'legacy' returns LEGACY, 'statechart' returns STATE_CHART, unknown returns STATE_CHART
+- [ ] Movement-beyond-tap tested: large movement cancels hold timer (hold doesn't fire after delay)
+- [ ] Pointer cancel in legacy mode tested: holdEnd fires, state resets, next gesture works
+- [ ] `setHandlers` tested: replacing handlers mid-session routes events to new callbacks
+- [ ] Destroy tested: no events fire after destroy()
+- [ ] Window blur cleanup tested: resets state, fires holdEnd if holding, clears pending tap
+- [ ] Existing 8 tests still pass unchanged
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
