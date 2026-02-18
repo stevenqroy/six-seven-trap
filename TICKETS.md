@@ -101,7 +101,7 @@
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
 | 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | next | — | — |
-| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | next | — | — |
+| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | wip:gemini | gemini/S7R-104 | gemini |
 
 ## What can run RIGHT NOW
 
