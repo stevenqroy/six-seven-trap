@@ -88,6 +88,9 @@
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 | 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
+| 49 | S7R-091 | Codex auto-handoff: notify script writes TL;DR to .handoffs/ on completion | — | no | claude | next | — | — |
+| 50 | S7R-092 | Gemini auto-handoff: AfterAgent hook writes TL;DR to .handoffs/ on completion | — | no | claude | next | — | — |
+| 51 | S7R-093 | Claude auto-intake: SessionStart hook reads .handoffs/ and surfaces pending handoffs | — | no | claude | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -1109,11 +1112,83 @@
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 
+#### S7R-091 Ready Brief
+
+**What:** Create a Codex `notify` script that detects when Codex outputs a TL;DR handoff and writes it to `.handoffs/S7R-###.md`. This eliminates the user copy-pasting handoffs from Codex to Claude.
+
+**Files to create/modify:**
+1. `scripts/codex-notify.py` — Python script triggered by Codex `agent-turn-complete` event
+2. `~/.codex/config.toml` — add `notify` config pointing to the script
+3. `.gitignore` — add `.handoffs/` directory
+
+**DO NOT modify:** Any source files, tests, or game code
+
+**Gotchas:**
+- Codex `notify` fires on EVERY agent turn, not just final completion — must pattern-match for TL;DR format
+- Script receives a JSON argument (not stdin) with `last-assistant-message`, `thread-id`, `cwd`
+- Extract ticket number from the handoff text (e.g., "S7R-086 complete on codex/S7R-086")
+- Write to main workspace `.handoffs/` dir, not the worktree
+- Script must be executable (`chmod +x`)
+
+**Acceptance criteria:**
+- [ ] Script parses Codex notify JSON and detects TL;DR handoffs
+- [ ] Writes handoff to `.handoffs/S7R-###.md` with full TL;DR content
+- [ ] Ignores non-handoff agent turns (no spurious files)
+- [ ] `.handoffs/` added to `.gitignore`
+- [ ] Config.toml entry documented
+
+#### S7R-092 Ready Brief
+
+**What:** Create a Gemini CLI `AfterAgent` hook that detects TL;DR handoffs and writes them to `.handoffs/S7R-###.md`. Same purpose as S7R-091 but for Gemini.
+
+**Files to create/modify:**
+1. `scripts/gemini-afteragent.sh` — Shell script triggered by Gemini `AfterAgent` hook
+2. `.gemini/settings.json` — add `AfterAgent` hook config
+
+**DO NOT modify:** Any source files, tests, or game code
+
+**Gotchas:**
+- Gemini `AfterAgent` hook receives JSON on stdin (different from Codex which passes JSON as an argument)
+- Same pattern-matching challenge: fires on every turn, not just final completion
+- Must handle the case where Gemini's output format differs slightly from Codex's TL;DR format
+- The `AfterAgent` hook may fire during mid-task tool-call pauses — script must distinguish final handoffs
+
+**Acceptance criteria:**
+- [ ] Script reads Gemini AfterAgent JSON from stdin and detects TL;DR handoffs
+- [ ] Writes handoff to `.handoffs/S7R-###.md` with full TL;DR content
+- [ ] Ignores non-handoff turns
+- [ ] settings.json entry documented
+
+#### S7R-093 Ready Brief
+
+**What:** Create a Claude Code hook that checks `.handoffs/` for pending agent handoffs at session start and surfaces them automatically. Claude sees "Agent handoffs waiting: S7R-086, S7R-089" and can proceed with intake without the user pasting anything.
+
+**Files to create/modify:**
+1. `.claude/hooks/check-handoffs.sh` — Shell script that reads `.handoffs/*.md`
+2. `.claude/settings.local.json` — add `SessionStart` hook entry (or use hookify format)
+
+**DO NOT modify:** Any source files, tests, or game code
+
+**Gotchas:**
+- `SessionStart` hook fires on session start, resume, clear, and compact — check-handoffs should be idempotent
+- After Claude processes a handoff, the file should be cleaned up (moved to `.handoffs/done/` or deleted) to avoid re-processing
+- Hook output uses `additionalContext` field to inject handoff content into Claude's context
+- Keep the injected context minimal — just the TL;DR, not the full agent transcript
+
+**Acceptance criteria:**
+- [ ] Hook fires on SessionStart and checks `.handoffs/` directory
+- [ ] Pending handoffs surfaced as context to Claude
+- [ ] Processed handoffs cleaned up to avoid re-processing
+- [ ] Works with both Codex and Gemini handoff formats
+
 ### Tooling tickets (no blockers, can start now)
 
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
 | S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | done | — |
+| S7R-091 | Codex notify script: detect TL;DR handoffs on agent-turn-complete, write to .handoffs/S7R-###.md | next | claude |
+| S7R-092 | Gemini AfterAgent hook: detect TL;DR handoffs on completion, write to .handoffs/S7R-###.md | next | claude |
+| S7R-093 | Claude SessionStart hook: check .handoffs/ for pending agent handoffs, inject as context | next | claude |
 
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
