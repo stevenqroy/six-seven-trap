@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**45 of 55 V1 tickets done (82%). 10 tickets + 2 gates remaining.**
+**45 of 56 V1 tickets done (80%). 11 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -95,6 +95,7 @@
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
 | 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | next | — | — |
 | 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | next | — | — |
+| 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | wip:claude | claude/S7R-098 | claude |
 
 ## What can run RIGHT NOW
 
