@@ -1071,6 +1071,16 @@
         summary: 'When Claude starts a session, it fetches git and checks for new Codex/Gemini branches ahead of main. Reports what agents have been up to so Claude can offer to QA.',
         marker: '\u{1F50D}',
       },
+      'S7R-092': {
+        title: 'Unit tests: math utils',
+        summary: 'Test the 4 pure math functions (clamp, point-to-segment distance, quantize, edge-biased random). Small standalone ticket to test the agent branch auto-scan workflow.',
+        marker: '\u{1F9EA}',
+      },
+      'S7R-093': {
+        title: 'Unit tests: defensive utils',
+        summary: 'Test the 4 defensive number helpers (toFinite, toNonNegativeFinite, clamp, lerp). Small standalone ticket to test the agent branch auto-scan workflow.',
+        marker: '\u{1F9EA}',
+      },
     };
 
     let lastText = '';

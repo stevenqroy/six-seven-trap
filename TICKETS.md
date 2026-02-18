@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**39 of 46 V1 tickets done (85%). 7 tickets + 2 gates remaining.**
+**41 of 51 V1 tickets done (80%). 10 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -89,6 +89,8 @@
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 | 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
 | 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
+| 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | next | — | — |
+| 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -101,11 +103,6 @@
 | V1-PLAYTEST-GATE-1 | Enable all flags, play on mobile, check session length + ability usage + fairness | next | steven (manual) |
 | S7R-054 | Tune damage/cooldowns/costs/speeds based on gate-1 feedback. Touches main.js + all modules. | blocked:gate-1 | claude/codex |
 | S7R-055 | Add retention telemetry hooks, prep for gate-2 soak test | blocked:054 | claude/codex |
-| S7R-080 | Extract world scenery from main.js → src/systems/world-render.js (~250 lines). Touches main.js. | done | claude |
-| S7R-081 | Extract badguys controller from main.js → src/systems/badguys.js (~220 lines). Touches main.js. | done | claude |
-| S7R-082 | Extract laser storm from main.js → src/systems/laser-storm.js (~350 lines). Touches main.js. | done | claude |
-| S7R-083 | Extract danger beam from main.js → src/systems/danger-beam.js (~330 lines). Touches main.js. Depends on S7R-082 (quantize). | done | claude |
-| S7R-084 | Extract beam harvest from main.js → src/systems/beam-harvest.js (~170 lines). Touches main.js. Depends on S7R-083 (getDangerBeamGeometry). | done | claude |
 
 ### VFX tickets (no blockers, can start now)
 
@@ -145,7 +142,9 @@
 | S7R-087 | Unit tests for support-registry: create, register duplicate IDs, normalize invalid inputs, snapshot immutability | done | codex |
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | done | gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | done | codex |
-| S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | wip:claude | claude |
+| S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | done | — |
+| S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | next | codex |
+| S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1133,6 +1132,64 @@
 - [ ] Skips branches for tickets already marked `done` in TICKETS.md
 - [ ] Fast enough to not delay session start noticeably
 - [ ] No setup required on Codex or Gemini side
+
+#### S7R-092 Ready Brief
+
+**What:** Write unit tests for `src/utils/math.js`. Cover all 4 exported functions: `clamp`, `distPointToSegmentSq`, `quantize`, `edgeBiasedUnit`.
+
+**Reference files to read first:**
+- `src/utils/math.js` — the module under test (49 lines, 4 exports)
+- `tests/unit/utils/rng.test.js` — test pattern for math utilities
+- `tests/unit/utils/sprite.test.js` — test pattern with mock injection
+
+**Files to modify:**
+1. `tests/unit/utils/math.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `clamp` is also exported from `src/utils/defensive.js` — this tests the `math.js` version
+- `distPointToSegmentSq` returns squared distance (not distance) — test values accordingly
+- `distPointToSegmentSq` has a degenerate case when segment length < 0.0001 — test with zero-length segment
+- `edgeBiasedUnit` takes an optional `random` function param — inject a deterministic fake to test bias behavior
+- `quantize` returns 0 for non-finite values and returns the value unchanged for non-positive step — test both paths
+
+**Acceptance criteria:**
+- [ ] `clamp` tested: value within range, below min, above max
+- [ ] `distPointToSegmentSq` tested: point on segment, point off segment, degenerate (zero-length) segment
+- [ ] `quantize` tested: normal snap, non-finite input returns 0, non-positive step returns value unchanged
+- [ ] `edgeBiasedUnit` tested: returns value in [0,1], uses injected rng, edge bias with higher power
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-093 Ready Brief
+
+**What:** Write unit tests for `src/utils/defensive.js`. Cover all 4 exported functions: `toFinite`, `toNonNegativeFinite`, `clamp`, `lerp`.
+
+**Reference files to read first:**
+- `src/utils/defensive.js` — the module under test (21 lines, 4 exports)
+- `tests/unit/utils/rng.test.js` — test pattern for utility modules
+
+**Files to modify:**
+1. `tests/unit/utils/defensive.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `toFinite` returns the fallback for `Infinity`, `-Infinity`, `NaN`, `null`, `undefined` — test all
+- `toNonNegativeFinite` clamps negative values to 0 after applying the finite check — test negative finites too
+- `clamp` here is identical in behavior to the one in `math.js` but is a separate export — test independently
+- `lerp` does not clamp t — extrapolation (t < 0 or t > 1) should work and return values outside [start, end]
+
+**Acceptance criteria:**
+- [ ] `toFinite` tested: valid number passthrough, Infinity/NaN/null returns fallback, custom fallback
+- [ ] `toNonNegativeFinite` tested: positive passthrough, negative clamped to 0, non-finite returns fallback
+- [ ] `clamp` tested: within range, below min, above max
+- [ ] `lerp` tested: t=0 returns start, t=1 returns end, t=0.5 returns midpoint, extrapolation works
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
 
 ### Tooling tickets (no blockers, can start now)
 
