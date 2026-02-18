@@ -94,7 +94,7 @@
 | 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | done | main | codex |
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
 | 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | next | — | — |
-| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | next | — | — |
+| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | wip:gemini | gemini/S7R-097 | gemini |
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 
 ## What can run RIGHT NOW
