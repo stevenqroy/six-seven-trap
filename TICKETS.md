@@ -93,8 +93,8 @@
 | 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
 | 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | done | main | codex |
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
-| 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | reviewing | codex/S7R-096 | codex |
-| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | reviewing | gemini/S7R-097 | gemini |
+| 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | done | main | codex |
+| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | done | main | gemini |
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 
 ## What can run RIGHT NOW
@@ -152,8 +152,8 @@
 | S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
 | S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | done | — |
 | S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
-| S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | reviewing | codex |
-| S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | reviewing | gemini |
+| S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | done | — |
+| S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | done | — |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1458,3 +1458,5 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-094 | `tests/unit/systems/enemy-registry.test.js` — 6 tests: factory from valid/invalid manifest, getById/has with valid/unknown/non-string IDs, listByRole with frozen arrays, getAll frozen, immutability throws | codex |
 | 2026-02-17 | S7R-095 | `tests/unit/systems/badguys.test.js` — 7 tests: getBadguysBounds (viewport/small viewport), pickBadguysTarget (edge bias/direct), updateBadguysFlight (init/physics/retarget/speed shift/wall bounce) | gemini |
 | 2026-02-17 | S7R-098 | `vitest.config.js` — add `exclude: ['.worktrees/**']` to prevent duplicate test discovery from agent worktrees | claude |
+| 2026-02-17 | S7R-096 | `tests/unit/systems/danger-beam.test.js` — 6 tests: null guards (not ready, disabled, non-positive height), valid geometry (6 finite fields, centered origin), deterministic output, oscillation over time | codex |
+| 2026-02-17 | S7R-097 | `tests/unit/systems/beam-harvest.test.js` — 5 tests: isGoodBeamNumber (6/7 non-trap true, trap/other false), isNumberInsideRegularBeam (inside/outside/above-below, chargeRatio expansion), triggerRegularBeamEruption (reset/populate, rng digit fill, onErupt callback, portalState coords) | gemini |
