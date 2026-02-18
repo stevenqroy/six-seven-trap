@@ -88,7 +88,7 @@
 | 46 | S7R-088 | Unit tests: run-rng (seed precedence, deterministic mode, draw-count reset) | — | no | codex/gemini | done | gemini/S7R-088 | gemini |
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 | 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
-| 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | next | — | — |
+| 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
 
 ## What can run RIGHT NOW
 
@@ -1139,7 +1139,7 @@
 | Ticket | TL;DR | Status | Available to |
 |--------|-------|--------|-------------|
 | S7R-056 | Single-file HTML dashboard that parses TICKETS.md and shows project status with color-coded tickets, progress bar, phase timeline, ownership chart. Zero dependencies. | done | — |
-| S7R-091 | Claude SessionStart hook: git fetch + scan for new agent branches ahead of main | next | claude |
+| S7R-091 | Claude SessionStart hook: git fetch + scan for new agent branches ahead of main | done | — |
 
 ## Optional / Post-V1
 | Ticket | Name | Status | Notes |
@@ -1250,3 +1250,4 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-16 | S7R-083 | `src/systems/danger-beam.js`, `src/constants.js`, `src/main.js` — extracted danger beam (oscillation, rendering, geometry, ember/sizzle particles) into module, added ~50 SCENE.DANGER_* constants, removed unused sprite/math imports, main.js −314 net lines | claude |
 | 2026-02-16 | S7R-084 | `src/systems/beam-harvest.js`, `src/main.js` — extracted beam harvest (portal state, capture, eruption, physics, draw) into module with callback pattern for side effects, main.js −139 net lines | claude |
 | 2026-02-17 | S7R-090 | `src/main.js` — split 667-line loop() into updateGame/drawGame + updateVictory/drawVictory + updateTitlePreview/drawTitlePreview. loop() now 22-line orchestrator. Frame context object F shares values between phases. +43 net lines (structural — new function boundaries) | claude |
+| 2026-02-17 | S7R-091 | `.claude/hooks/scan-agent-branches.sh`, `.claude/settings.local.json` — SessionStart hook that git-fetches and scans for agent branches ahead of main, reports status so Claude can auto-offer QA | claude |
