@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**45 of 53 V1 tickets done (85%). 8 tickets + 2 gates remaining.**
+**45 of 55 V1 tickets done (82%). 10 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -93,6 +93,8 @@
 | 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
 | 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | done | main | codex |
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
+| 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | next | — | — |
+| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -149,6 +151,8 @@
 | S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
 | S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | done | — |
 | S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
+| S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | next | codex |
+| S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1259,6 +1263,74 @@
 - [ ] `updateBadguysFlight` initialization tested: sets position, velocity, swoop params, marks initialized
 - [ ] `updateBadguysFlight` physics tested: updates position based on velocity and dt
 - [ ] All functions use injected rng (no Math.random calls)
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-096 Ready Brief
+
+**What:** Write unit tests for the geometry and oscillation math in `src/systems/danger-beam.js`. Focus on `getDangerBeamGeometry` — the only exported pure function. The internal `getDangerBeamOscillation` is tested indirectly through it.
+
+**Reference files to read first:**
+- `src/systems/danger-beam.js` lines 1–56 — oscillation helper + geometry export
+- `src/constants.js` — `SCENE.DANGER_BEAM_*` constants used by the functions
+- `tests/unit/systems/badguys.test.js` — recent test pattern for systems with mock state objects
+
+**Files to modify:**
+1. `tests/unit/systems/danger-beam.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `getDangerBeamGeometry` returns `null` in two cases: `!badguysRender.ready` or `!dangerBeam.enabled`, and when `beamHeight <= 0`. Test all three paths.
+- The function uses `quantize()` from `utils/math.js` internally (via oscillation) — no need to mock this, it's a pure import.
+- `dangerBeam` param needs many fields: `enabled`, `offsetX`, `offsetY`, `widthRatio`, `speedA`, `speedB`, `phaseA`, `phaseB`, `widthAmp`, `lengthMin`, `lengthMax`, `huePhase`. Create a helper factory to build valid test objects.
+- `badguysRender` needs: `ready`, `x`, `y`, `w`, `h`. Minimal mock.
+- The oscillation produces deterministic output for a given `now` value — use fixed timestamps.
+- Return value shape: `{ originX, originY, beamBottom, beamHeight, topWidth, bottomWidth }`. Verify all fields are finite numbers.
+- `hitVisibleCharacterPixel` and `estimateCharacterNormal` are imported but only used in `updateDangerBeamEmbers` (not in geometry) — no need to mock sprite.js for geometry tests.
+
+**Acceptance criteria:**
+- [ ] `getDangerBeamGeometry` tested: returns null when `badguysRender.ready` is false
+- [ ] `getDangerBeamGeometry` tested: returns null when `dangerBeam.enabled` is false
+- [ ] `getDangerBeamGeometry` tested: returns valid geometry object with all 6 fields for valid inputs
+- [ ] `getDangerBeamGeometry` tested: `originX` is centered on badguys + offset
+- [ ] `getDangerBeamGeometry` tested: `beamHeight` is positive, `beamBottom > originY`
+- [ ] `getDangerBeamGeometry` tested: deterministic — same inputs produce same output
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-097 Ready Brief
+
+**What:** Write unit tests for the non-drawing functions in `src/systems/beam-harvest.js`. Focus on `isGoodBeamNumber`, `isNumberInsideRegularBeam`, and `triggerRegularBeamEruption`.
+
+**Reference files to read first:**
+- `src/systems/beam-harvest.js` lines 1–94 — portal query functions + eruption logic
+- `src/systems/danger-beam.js` line 44 — `getDangerBeamGeometry` (called by `getRegularBeamPortalState`)
+- `tests/unit/systems/badguys.test.js` — test pattern for systems with mock state
+
+**Files to modify:**
+1. `tests/unit/systems/beam-harvest.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `isGoodBeamNumber` takes number objects with `{ isTrap, txt }` — test all 4 combinations: 6/7 non-trap (true), 6/7 trap (false), other digit (false), trap other digit (false)
+- `isNumberInsideRegularBeam` takes a number `{ x, y }` and a `portalState` with `{ geo: { originX, originY, beamBottom, beamHeight, topWidth, bottomWidth }, chargeRatio }`. Build mock portalState objects.
+- The beam is a trapezoid — wider at bottom. Test points at top (narrow), middle, bottom (wide), and outside.
+- `triggerRegularBeamEruption` mutates `regularBeamHarvest` — verify `charge` resets to 0, `capturedDigits` cleared, `eruptionNumbers` populated.
+- `triggerRegularBeamEruption` takes `rng` param — inject deterministic mock.
+- `triggerRegularBeamEruption` calls `onErupt` callback — verify it's called with coordinates.
+- `getRegularBeamPortalState` calls `getDangerBeamGeometry` from danger-beam.js — mock it with `vi.mock` to avoid needing real dangerBeam oscillation state, OR pass valid params and accept the computed geometry. Mocking is cleaner.
+- Read the actual function signatures carefully — don't guess from comments. The `edgeBiasedUnit` pattern from S7R-095 had stale comments; avoid repeating that.
+
+**Acceptance criteria:**
+- [ ] `isGoodBeamNumber` tested: 6 and 7 non-trap return true, trap returns false, other digits return false
+- [ ] `isNumberInsideRegularBeam` tested: inside beam returns true, outside returns false, above/below returns false
+- [ ] `triggerRegularBeamEruption` tested: resets charge, clears capturedDigits, populates eruptionNumbers
+- [ ] `triggerRegularBeamEruption` tested: calls onErupt callback with coordinates
+- [ ] `triggerRegularBeamEruption` tested: uses injected rng for digit selection and physics
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
