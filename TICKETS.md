@@ -1156,6 +1156,18 @@ The game found its story. The numbers aren't just numbers — they're alien kids
 
 We ran our first Codex vs Gemini race on S7R-057 (shared defensive helpers). Both passed all tests, but Codex won — cleaner diff, caught a gotcha Gemini missed, and didn't bloat TICKETS.md. Added three new rules to CLAUDE.md based on lessons learned.
 
+### February 14, 2026
+Things went sideways. Branches got tangled — agents updated TICKETS.md on their own branches but main never saw it, so the dashboard showed stale data. Stashing across branches destroyed content. Edits landed on the wrong branch. We stopped, diagnosed everything, and wrote hard rules: intake protocol, dispatch sync, merge warnings, branch hygiene gates, stash policy, one-branch-at-a-time. Painful day, but the workflow is solid now.
+
+### February 15, 2026
+The great extraction begins. main.js was a 4,000-line monolith — every game system tangled together in one file. We started pulling systems out into their own modules: world rendering (sky, stars, hills, barn, ground), badguys flight controller, and laser storm. Three extractions, 683 lines removed from main.js. Meanwhile Codex and Gemini cranked through unit tests — progression, projectiles, power, debug panel all got test coverage. 34 of 45 tickets done.
+
+### February 16, 2026
+Extraction sprint continued. Danger beam (oscillation, rendering, ember particles) came out — 314 lines gone. Then beam harvest (portal capture, eruption physics) with a new callback pattern for side effects — 139 more lines gone. Test coverage kept growing: lives, hud-updates, support-registry, run-rng, and sprite utilities all got dedicated test suites. main.js down to 3,103 lines. 39 of 46 done.
+
+### February 17, 2026
+Split the game loop. The monolithic 667-line `loop()` function — which mixed state updates and drawing in one tangled mess — got separated into `updateGame()` and `drawGame()`, plus dedicated update/draw splits for the title screen and victory states. `loop()` is now a 22-line orchestrator. main.js is 3,146 lines (slight increase from the new function boundaries, but structurally much cleaner). Set up Hookify for deterministic branch protection — no more accidental edits on main. 40 of 46 done (87%).
+
 ## Merge Log
 > Every merge to main gets a one-liner here. Workers: read the last few entries when starting a session to see what changed since you last pulled.
 
