@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**45 of 56 V1 tickets done (80%). 11 tickets + 2 gates remaining.**
+**46 of 56 V1 tickets done (82%). 10 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -95,7 +95,7 @@
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
 | 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | next | — | — |
 | 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | next | — | — |
-| 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | wip:claude | claude/S7R-098 | claude |
+| 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 
 ## What can run RIGHT NOW
 
@@ -1457,3 +1457,4 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-093 | `tests/unit/utils/defensive.test.js` — 13 tests: toFinite (passthrough/fallback), toNonNegativeFinite (clamp negative/non-finite), clamp (range/bounds), lerp (interpolation/extrapolation) | gemini |
 | 2026-02-17 | S7R-094 | `tests/unit/systems/enemy-registry.test.js` — 6 tests: factory from valid/invalid manifest, getById/has with valid/unknown/non-string IDs, listByRole with frozen arrays, getAll frozen, immutability throws | codex |
 | 2026-02-17 | S7R-095 | `tests/unit/systems/badguys.test.js` — 7 tests: getBadguysBounds (viewport/small viewport), pickBadguysTarget (edge bias/direct), updateBadguysFlight (init/physics/retarget/speed shift/wall bounce) | gemini |
+| 2026-02-17 | S7R-098 | `vitest.config.js` — add `exclude: ['.worktrees/**']` to prevent duplicate test discovery from agent worktrees | claude |
