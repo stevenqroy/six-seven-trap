@@ -98,6 +98,8 @@
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 | 57 | S7R-099 | Unit tests: laser-storm physics (startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke) | — | no | codex | next | — | — |
 | 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | next | — | — |
+| 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | next | — | — |
+| 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -158,6 +160,8 @@
 | S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | done | — |
 | S7R-099 | Unit tests for laser-storm physics: startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke | next | codex |
 | S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | next | gemini |
+| S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | next | codex |
+| S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1406,6 +1410,87 @@
 - [ ] `rebuildWorldStars` tested: deterministic — same rng + same dimensions = same stars
 - [ ] `rebuildWorldStars` tested: replaces stars array on second call (not appending)
 - [ ] `resetWorldCache` tested: clears gradientCache.key to empty string
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-101 Ready Brief
+
+**What:** Write unit tests for `src/ui/settings-panel.js`. This module wires the accessibility settings overlay — open/close lifecycle, escape-key dismissal, enable/disable visibility, form ↔ controller sync, and destroy cleanup. Runs in jsdom with mock DOM elements.
+
+**Reference files to read first:**
+- `src/ui/settings-panel.js` — full file (192 lines), single export `createSettingsPanel`
+- `src/config/accessibility-settings.js` — the controller API: `getSettings()`, `setSettings()`, `subscribe()`
+- `tests/unit/config/debug-panel.test.js` — test pattern for DOM-dependent modules with jsdom: element creation, event dispatch, destroy cleanup
+
+**Files to modify:**
+1. `tests/unit/ui/settings-panel.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createSettingsPanel` returns a stub API (`open: () => false`, etc.) in two cases: (1) no controller passed, (2) any required DOM element is missing. Test both fallback paths.
+- You must create mock DOM elements before calling `createSettingsPanel`. Required IDs: `settingsBtn`, `pauseSettingsBtn`, `settingsOverlay`, `settingsCloseBtn`, `settingReducedMotion`, `settingLowGraphics`, `settingHighContrast`. Also need `input[name="settingControlScale"]` radio buttons (at least 2, e.g. "normal" and "large").
+- The `controller` param needs: `getSettings()` returning `{ reducedMotion, lowGraphicsMode, highContrast, controlScale }`, `setSettings(partial)`, and `subscribe(callback)` returning an unsubscribe function. Mock all three.
+- `open(trigger)` returns `false` if not enabled or already open, or if `beforeOpen()` returns `false`. Test all three guards.
+- `close()` restores focus to `lastTrigger` if `restoreFocus` is true. Mock `.focus()` on the trigger element.
+- `setEnabled(false)` hides both settings buttons AND auto-closes the panel if open.
+- Escape key handler: dispatch `new KeyboardEvent('keydown', { key: 'Escape' })` on `document` — should close panel only if open.
+- Overlay click: dispatching click where `event.target === overlay` closes panel; click on a child does not.
+- Checkbox change events call `controller.setSettings()` with the current checkbox states.
+- `destroy()` removes all event listeners — verify that after destroy, clicking buttons / pressing Escape no longer triggers open/close.
+
+**Acceptance criteria:**
+- [ ] `createSettingsPanel` tested: returns stub API when controller is missing
+- [ ] `createSettingsPanel` tested: returns stub API when required DOM elements are missing
+- [ ] `open` tested: opens panel, returns true; returns false when disabled or already open
+- [ ] `open` tested: respects `beforeOpen` returning false
+- [ ] `close` tested: closes panel, restores focus to trigger element
+- [ ] `setEnabled` tested: hides buttons and auto-closes when disabled
+- [ ] Escape key tested: closes open panel, no-op when panel is closed
+- [ ] Form sync tested: checkbox change dispatches `setSettings` to controller
+- [ ] `destroy` tested: removes listeners — no response to clicks/keys after destroy
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-102 Ready Brief
+
+**What:** Write additional unit tests for `src/systems/telemetry.js` targeting edge cases and normalization logic not covered by existing tests. The existing `telemetry.test.js` has 4 tests covering happy-path flow; this ticket adds edge-case coverage.
+
+**Reference files to read first:**
+- `src/systems/telemetry.js` — full file, especially `computeFrameStats` (lines 41–62), `createRunMetrics` (lines 65–103), internal normalizers `normalizeAbilityName` / `normalizeDamageSource` (lines 145–153)
+- `tests/unit/systems/telemetry.test.js` — existing 4 tests (DO NOT duplicate or conflict with these)
+- `tests/unit/systems/danger-beam.test.js` — recent test pattern for describe/it structure
+
+**Files to modify:**
+1. `tests/unit/systems/telemetry.test.js` (append new describe blocks — DO NOT remove existing tests)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- **Append only** — the existing 4 tests must remain unchanged. Add new `describe` blocks after the existing ones (inside the outer `describe('telemetry system')` or as sibling describe blocks).
+- `computeFrameStats` with empty `frameSampleMs` array: should return all zeros for percentiles. Test this.
+- `computeFrameStats` with NaN/non-finite inputs: `frameCount` and `frameTotalMs` use `toFinite()` internally — passing `NaN` should produce 0 values, not NaN.
+- `createRunMetrics` with no arguments: should use defaults (`seed: null`, `deterministic: false`, `sampleCap` >= 60). Verify the `frameRaw.sampleCap` floor of 60.
+- `createRunMetrics` with `sampleCap: 10` should clamp to 60 (the minimum).
+- `onAbilityUsed` with an unknown ability name (e.g. `'fireball'`) should be silently ignored — the counter should not change.
+- `onShipDamage` with zero or negative amount should be ignored (no damage event recorded).
+- `onShipDamage` with unknown source (e.g. `'laser'`) should bucket to `'unknown'`.
+- `onQualityTierChange` where `oldTier === newTier` should be ignored (no transition recorded).
+- `onFrame` with zero or negative ms should be ignored.
+- Frame sample cap overflow: call `onFrame` more than `sampleCap` times, verify `sampleMs` doesn't grow beyond cap (uses ring buffer overwrite).
+- `beginRun` returns a compacted snapshot — verify it's a new object (not a reference to internal state).
+
+**Acceptance criteria:**
+- [ ] `computeFrameStats` tested: empty samples array returns zero percentiles
+- [ ] `computeFrameStats` tested: NaN inputs produce safe zero-based output
+- [ ] `createRunMetrics` tested: sampleCap floor enforced (min 60)
+- [ ] `onAbilityUsed` tested: unknown ability names are silently ignored
+- [ ] `onShipDamage` tested: zero/negative damage ignored, unknown source bucketed to 'unknown'
+- [ ] `onQualityTierChange` tested: same tier transitions ignored
+- [ ] `onFrame` tested: zero/negative frame times ignored
+- [ ] Frame sample ring buffer tested: samples don't exceed sampleCap after overflow
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
