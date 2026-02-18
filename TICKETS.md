@@ -100,7 +100,7 @@
 | 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | done | main | gemini |
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
-| 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | next | — | — |
+| 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | wip:codex | codex/S7R-103 | codex |
 | 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
@@ -164,7 +164,7 @@
 | S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | done | — |
 | S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | done | — |
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
-| S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | next | codex |
+| S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | wip:codex | codex |
 | S7R-104 | Unit tests for input system edge cases: normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery | next | gemini |
 
 ### Research tickets (no blockers, can start now)
