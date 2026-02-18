@@ -93,8 +93,8 @@
 | 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
 | 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | done | main | codex |
 | 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
-| 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | next | — | — |
-| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | next | — | — |
+| 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | wip:codex | codex/S7R-096 | codex |
+| 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | wip:gemini | gemini/S7R-097 | gemini |
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 
 ## What can run RIGHT NOW
@@ -152,8 +152,8 @@
 | S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
 | S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | done | — |
 | S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
-| S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | next | codex |
-| S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | next | gemini |
+| S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | wip:codex | codex |
+| S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | wip:gemini | gemini |
 
 ### Research tickets (no blockers, can start now)
 
