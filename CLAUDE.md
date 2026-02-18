@@ -127,6 +127,8 @@ When context is getting heavy or a session is ending, add an entry to the TICKET
 - Exact next action
 - What NOT to re-read next session
 
+Also check the Story Log — if today doesn't have an entry, add one. Keep it narrative, plain language, one paragraph. It's the "bedtime story" version of what happened today.
+
 ## Before every action — verify
 
 - [ ] Confirmed branch with `git branch --show-current`
