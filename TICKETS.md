@@ -96,6 +96,8 @@
 | 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | done | main | codex |
 | 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | done | main | gemini |
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
+| 57 | S7R-099 | Unit tests: laser-storm physics (startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke) | — | no | codex | next | — | — |
+| 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -154,6 +156,8 @@
 | S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
 | S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | done | — |
 | S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | done | — |
+| S7R-099 | Unit tests for laser-storm physics: startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke | next | codex |
+| S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1332,6 +1336,76 @@
 - [ ] `triggerRegularBeamEruption` tested: resets charge, clears capturedDigits, populates eruptionNumbers
 - [ ] `triggerRegularBeamEruption` tested: calls onErupt callback with coordinates
 - [ ] `triggerRegularBeamEruption` tested: uses injected rng for digit selection and physics
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-099 Ready Brief
+
+**What:** Write unit tests for the non-drawing exported functions in `src/systems/laser-storm.js`. Focus on `startLaserPostHitBounce` (bounce path generation), `spawnLaserSmoke` (particle creation with caps), and `updateLaserSmoke` (particle physics and removal).
+
+**Reference files to read first:**
+- `src/systems/laser-storm.js` lines 119–150 (startLaserPostHitBounce), 353–399 (spawnLaserSmoke, updateLaserSmoke)
+- `src/constants.js` — `MAX_ACTIVE_LASER_BEAMS`, `MAX_LASER_SMOKE`, `SCENE.LASER_*` constants
+- `tests/unit/systems/danger-beam.test.js` — recent test pattern for systems with mock state + rng injection
+
+**Files to modify:**
+1. `tests/unit/systems/laser-storm.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `startLaserPostHitBounce` mutates a beam object in-place. Build a factory that creates a valid beam: `{ angle, length, life, inert: false, tipX, tipY, sourceX, sourceY, bouncePath: null, bouncesRemaining: 0, inertElapsed: 0, inertDuration: 0, bounceStage: -1 }`. After calling, verify `beam.inert` is true, `beam.bouncePath` is an array of 5 points ({x,y}), and `beam.bouncesRemaining === SCENE.LASER_BOUNCE_SEGMENTS`.
+- `startLaserPostHitBounce` takes `{ wCSS, hCSS, rng }` — inject deterministic rng. The bounce path uses `rng()` for side ordering and point positions. With fixed rng values, verify all points are clamped within `[0, wCSS]` and `[0, hCSS]`.
+- `startLaserPostHitBounce` is a no-op if `beam.inert` is already true — test this guard.
+- `spawnLaserSmoke` takes `{ rng, isLowGraphics, getAdaptiveCapValue }`. The `getAdaptiveCapValue` is a function — mock it to return the default cap. When `isLowGraphics` is true AND `rng() > SCENE.LASER_SMOKE_LOW_GRAPHICS_CHANCE`, spawn is skipped — test this branch.
+- `spawnLaserSmoke` enforces a cap on `laserStorm.smokePuffs.length` — fill the array to cap and verify splice behavior.
+- `updateLaserSmoke` decrements `s.life` and removes dead puffs via swap-and-pop. Create puffs with known life values, advance by dt, verify life decremented and dead puffs removed.
+- `updateLaserStorm` and `drawLaserStorm`/`drawLaserSmoke` are draw-heavy and depend on canvas context — skip these. Focus on the three functions above.
+
+**Acceptance criteria:**
+- [ ] `startLaserPostHitBounce` tested: sets beam.inert, creates 5-point bouncePath within viewport bounds
+- [ ] `startLaserPostHitBounce` tested: no-op when beam is already inert
+- [ ] `startLaserPostHitBounce` tested: deterministic path with fixed rng
+- [ ] `spawnLaserSmoke` tested: adds a smoke puff with expected fields (x, y, vx, vy, r, life, lifeMax, grow)
+- [ ] `spawnLaserSmoke` tested: skips spawn in low-graphics mode when rng exceeds threshold
+- [ ] `spawnLaserSmoke` tested: enforces smoke cap (splice oldest when at limit)
+- [ ] `updateLaserSmoke` tested: decrements life, applies velocity/drag/gravity, removes dead puffs
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-100 Ready Brief
+
+**What:** Write unit tests for the state management functions in `src/systems/world-render.js`. Focus on `initWorldState` (factory), `rebuildWorldStars` (starfield generation), and `resetWorldCache` (cache invalidation). Skip `getWorldGradients` and `drawWorld` — they require a real canvas context.
+
+**Reference files to read first:**
+- `src/systems/world-render.js` lines 1–73 — factory, stars, cache reset
+- `src/constants.js` — `SCENE.STAR_COUNT_MIN`, `SCENE.STAR_COUNT_MAX`, `SCENE.STAR_DENSITY_DIVISOR`, `SCENE.STAR_HEIGHT_RATIO`
+- `tests/unit/systems/danger-beam.test.js` — recent test pattern for systems with factory helpers and rng injection
+
+**Files to modify:**
+1. `tests/unit/systems/world-render.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `initWorldState` returns `{ stars: [], gradientCache: { key: '', sky: null, ... } }`. Verify shape: `stars` is empty array, `gradientCache.key` is empty string, all gradient slots are null.
+- `rebuildWorldStars(ws, w, h, rng)` — inject deterministic rng. Star count is `clamp(floor(w*h / STAR_DENSITY_DIVISOR), STAR_COUNT_MIN, STAR_COUNT_MAX)`. Verify count is within [MIN, MAX] for various viewport sizes.
+- Each star has fields: `{ x, y, r, a, tw, phase }`. Verify `x` is in `[0, w]`, `y` is in `[0, h * STAR_HEIGHT_RATIO]`, `r`/`a`/`tw`/`phase` are positive finite.
+- `rebuildWorldStars` replaces `ws.stars` entirely — call twice with different sizes and verify second call replaces first.
+- `resetWorldCache(ws)` sets `ws.gradientCache.key` to `''` — set it to a non-empty string first, then verify reset clears it.
+- `rebuildWorldStars` is deterministic for fixed rng — call twice with same params and verify identical output.
+- Import `SCENE` from constants.js to reference the actual constant values in assertions — don't hardcode magic numbers.
+
+**Acceptance criteria:**
+- [ ] `initWorldState` tested: returns correct shape with empty stars array and null gradient cache
+- [ ] `rebuildWorldStars` tested: generates stars within [STAR_COUNT_MIN, STAR_COUNT_MAX] range
+- [ ] `rebuildWorldStars` tested: star positions within viewport bounds (x ≤ w, y ≤ h * STAR_HEIGHT_RATIO)
+- [ ] `rebuildWorldStars` tested: star properties (r, a, tw, phase) are positive finite numbers
+- [ ] `rebuildWorldStars` tested: deterministic — same rng + same dimensions = same stars
+- [ ] `rebuildWorldStars` tested: replaces stars array on second call (not appending)
+- [ ] `resetWorldCache` tested: clears gradientCache.key to empty string
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
