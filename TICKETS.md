@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**41 of 51 V1 tickets done (80%). 10 tickets + 2 gates remaining.**
+**43 of 51 V1 tickets done (84%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -89,8 +89,8 @@
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 | 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
 | 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
-| 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | reviewing | codex/S7R-092 | codex |
-| 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | reviewing | gemini/S7R-093 | gemini |
+| 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | done | main | codex |
+| 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
 
 ## What can run RIGHT NOW
 
@@ -143,8 +143,8 @@
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | done | gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | done | codex |
 | S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | done | — |
-| S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | review | codex |
-| S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | review | gemini |
+| S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | done | — |
+| S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1308,3 +1308,5 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-16 | S7R-084 | `src/systems/beam-harvest.js`, `src/main.js` — extracted beam harvest (portal state, capture, eruption, physics, draw) into module with callback pattern for side effects, main.js −139 net lines | claude |
 | 2026-02-17 | S7R-090 | `src/main.js` — split 667-line loop() into updateGame/drawGame + updateVictory/drawVictory + updateTitlePreview/drawTitlePreview. loop() now 22-line orchestrator. Frame context object F shares values between phases. +43 net lines (structural — new function boundaries) | claude |
 | 2026-02-17 | S7R-091 | `.claude/hooks/scan-agent-branches.sh`, `.claude/settings.local.json` — SessionStart hook that git-fetches and scans for agent branches ahead of main, reports status so Claude can auto-offer QA | claude |
+| 2026-02-17 | S7R-092 | `tests/unit/utils/math.test.js` — 7 tests: clamp bounds, distPointToSegmentSq (on/off/degenerate), quantize (snap/NaN/non-positive step), edgeBiasedUnit (rng injection, power bias) | codex |
+| 2026-02-17 | S7R-093 | `tests/unit/utils/defensive.test.js` — 13 tests: toFinite (passthrough/fallback), toNonNegativeFinite (clamp negative/non-finite), clamp (range/bounds), lerp (interpolation/extrapolation) | gemini |
