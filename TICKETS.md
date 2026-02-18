@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**54 of 62 V1 tickets done (87%). 8 tickets + 2 gates remaining.**
+**55 of 62 V1 tickets done (89%). 7 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -100,8 +100,8 @@
 | 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | done | main | gemini |
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
-| 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | reviewing | codex/S7R-103 | codex |
-| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | reviewing | gemini/S7R-104 | gemini |
+| 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | done | main | codex |
+| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | review | gemini/S7R-104 | gemini |
 
 ## What can run RIGHT NOW
 
@@ -164,7 +164,7 @@
 | S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | done | — |
 | S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | done | — |
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
-| S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | review | codex |
+| S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | done | — |
 | S7R-104 | Unit tests for input system edge cases: normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery | review | gemini |
 
 ### Research tickets (no blockers, can start now)
@@ -1704,3 +1704,4 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-100 | `tests/unit/systems/world-render.test.js` — 7 tests: initWorldState shape, rebuildWorldStars (count range, viewport bounds, valid properties, deterministic, replaces not appends), resetWorldCache clears key | gemini |
 | 2026-02-17 | S7R-101 | `tests/unit/ui/settings-panel.test.js` — 9 tests: stub API (no controller, missing DOM), open/close lifecycle (guards, focus restore, beforeOpen), setEnabled (hide buttons, auto-close), escape key, overlay backdrop click, form↔controller sync, destroy cleanup | codex |
 | 2026-02-17 | S7R-102 | `tests/unit/systems/telemetry.test.js` — 10 tests appended: computeFrameStats (empty/NaN), createRunMetrics (sampleCap floor, defaults), input normalization (unknown ability, unknown damage source, zero damage, same-tier transition, zero frame), ring buffer overflow, snapshot isolation | gemini |
+| 2026-02-17 | S7R-103 | `tests/unit/systems/mobile-benchmark.test.js` — 9 tests appended: empty/NaN sanitization, single-sample, spike burst tracking/reset, all-spike/no-spike, sustained window (not-ready/threshold/worst), NaN threshold fallback, all-pass/fail/mixed checks, spread edge cases, repeatability not-ready/tolerance | codex |
