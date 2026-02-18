@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**43 of 51 V1 tickets done (84%). 8 tickets + 2 gates remaining.**
+**43 of 53 V1 tickets done (81%). 10 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -91,6 +91,8 @@
 | 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
 | 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | done | main | codex |
 | 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
+| 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | next | — | — |
+| 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -145,6 +147,8 @@
 | S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | done | — |
 | S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | done | — |
 | S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
+| S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | next | codex |
+| S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1187,6 +1191,74 @@
 - [ ] `toNonNegativeFinite` tested: positive passthrough, negative clamped to 0, non-finite returns fallback
 - [ ] `clamp` tested: within range, below min, above max
 - [ ] `lerp` tested: t=0 returns start, t=1 returns end, t=0.5 returns midpoint, extrapolation works
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-094 Ready Brief
+
+**What:** Write unit tests for `src/systems/enemy-registry.js`. Cover the factory function `createEnemyRegistry`, all lookup methods (`getById`, `listByRole`, `has`, `getAll`), validation error handling, and immutability guarantees.
+
+**Reference files to read first:**
+- `src/systems/enemy-registry.js` — the module under test (100 lines, 3 exports: `createEnemyRegistry`, `loadDefaultEnemyRegistry`, `EnemyManifestValidationError`)
+- `src/systems/enemy-schema.js` — validation used by the registry (provides `validateEnemyManifest`, `ENEMY_ROLE_VALUES`)
+- `src/assets/enemies/enemy-manifest.json` — the default manifest data
+- `tests/unit/systems/enemy-schema.test.js` — existing schema tests for patterns
+
+**Files to modify:**
+1. `tests/unit/systems/enemy-registry.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createEnemyRegistry()` accepts an optional `{ manifest, source }` config — pass a custom test manifest to avoid depending on the real manifest structure
+- Build a minimal valid manifest for tests: `{ version: "1.0", enemies: [{ id: "test-a", name: "Test A", role: "assault", ... }] }` — check `enemy-schema.js` for required fields
+- `EnemyManifestValidationError` has a `diagnostics` property — test that it's populated on validation failure
+- Registry returns frozen objects — verify with `Object.isFrozen()` checks
+- `listByRole` returns `EMPTY_LIST` (frozen empty array) for unknown roles — test that the returned array is frozen and shared
+- `getById` returns `null` for non-string IDs — test with number, undefined, null inputs
+
+**Acceptance criteria:**
+- [ ] `createEnemyRegistry` tested: creates registry from valid manifest, throws on invalid manifest
+- [ ] `getById` tested: valid ID returns enemy, unknown ID returns null, non-string returns null
+- [ ] `listByRole` tested: valid role returns frozen array, unknown role returns frozen empty array
+- [ ] `has` tested: valid ID returns true, unknown returns false, non-string returns false
+- [ ] `getAll` tested: returns frozen array of all enemies
+- [ ] Immutability tested: returned objects are frozen (Object.isFrozen)
+- [ ] `EnemyManifestValidationError` tested: has diagnostics property
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-095 Ready Brief
+
+**What:** Write unit tests for `src/systems/badguys.js`. Cover the pure computation functions: `getBadguysBounds`, `pickBadguysTarget`, and `updateBadguysFlight` initialization and physics.
+
+**Reference files to read first:**
+- `src/systems/badguys.js` — the module under test (4 exports: `getBadguysBounds`, `pickBadguysTarget`, `updateBadguysFlight`, `updateBadguysState`)
+- `src/constants.js` — `SCENE.BADGUYS_*` constants used by the functions
+- `tests/unit/utils/math.test.js` — test pattern for math/physics functions with injected RNG
+
+**Files to modify:**
+1. `tests/unit/systems/badguys.test.js` (create new)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- All functions take `rng` as a parameter — inject a deterministic fake (e.g., `vi.fn(() => 0.5)`) to get reproducible results
+- `getBadguysBounds` uses `SCENE.BADGUYS_*` constants from `src/constants.js` — these are imported automatically, no need to mock
+- `pickBadguysTarget` mutates `flight.targetX` and `flight.targetY` — verify the mutations
+- `updateBadguysFlight` with `flight.initialized = false` initializes the flight state (position, velocity, swoop params) — test this first-frame path
+- `updateBadguysFlight` needs an `overlay` param with `{ scale, y }` shape
+- `updateBadguysState` depends on `getPhaseSpeedMultiplier` (imported from progression.js) and references sprite dimensions — it may be harder to test in isolation. Focus on the other 3 functions.
+- The `edgeBiasedUnit` call inside `pickBadguysTarget` consumes 2 rng calls — account for this when mocking
+
+**Acceptance criteria:**
+- [ ] `getBadguysBounds` tested: returns valid bounds object, respects viewport dimensions, sidePad minimum
+- [ ] `pickBadguysTarget` tested: mutates flight.targetX/targetY within bounds
+- [ ] `updateBadguysFlight` initialization tested: sets position, velocity, swoop params, marks initialized
+- [ ] `updateBadguysFlight` physics tested: updates position based on velocity and dt
+- [ ] All functions use injected rng (no Math.random calls)
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
