@@ -69,9 +69,10 @@ When the ticket is complete:
 4. Update your row in `TICKETS.md`: set Status to `review`, confirm Branch is filled
 5. If you held the main.js lock, release it: set back to `nobody (unlocked)`
 6. Commit `TICKETS.md` as your final commit
-7. **Verify**: run `git status` — working tree must be clean. If not, you missed something.
-8. Output the TL;DR handoff (see "Completion handoff" below)
-9. **Stop. Do not start another ticket. Do not touch other files.**
+7. **Push your branch**: `git push -u origin yourplatform/S7R-###`
+8. **Verify**: run `git status` — working tree must be clean. If not, you missed something.
+9. Output the TL;DR handoff (see "Completion handoff" below)
+10. **Stop. Do not start another ticket. Do not touch other files.**
 
 ## QA gate — run before every commit
 

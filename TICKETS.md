@@ -89,8 +89,8 @@
 | 47 | S7R-089 | Unit tests: sprite (alpha sampling, null context, cache, character normal) | — | no | codex/gemini | done | codex/S7R-089 | codex |
 | 48 | S7R-090 | Split game loop: separate update and draw phases in main.js | — | yes | claude | done | claude/S7R-090 | claude |
 | 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
-| 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | next | — | — |
-| 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | next | — | — |
+| 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | review | codex/S7R-092 | codex |
+| 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | review | gemini/S7R-093 | gemini |
 
 ## What can run RIGHT NOW
 
@@ -143,8 +143,8 @@
 | S7R-088 | Unit tests for run-rng: seed override precedence, deterministic/non-deterministic modes, draw-count reset per run | done | gemini |
 | S7R-089 | Unit tests for sprite: alpha sampling bounds, null context guards, cache hit, estimateCharacterNormal fallback | done | codex |
 | S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | done | — |
-| S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | next | codex |
-| S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | next | gemini |
+| S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | review | codex |
+| S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | review | gemini |
 
 ### Research tickets (no blockers, can start now)
 

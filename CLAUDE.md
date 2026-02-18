@@ -77,7 +77,7 @@ STEP 3: Update TICKETS.md — set status to wip:<agent>, Branch to <agent>/S7R-#
 STEP 4: Read your ticket's Ready Brief in TICKETS.md (search for "S7R-### Ready Brief").
 STEP 5: Implement. Follow AGENTS.md rules, QA gate, and completion handoff format.
 STEP 6: Before marking review — rebase onto latest main: git fetch origin && git rebase origin/main. Re-run build after rebase.
-STEP 7: Commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Output the TL;DR handoff from AGENTS.md.
+STEP 7: Commit code and TICKETS.md SEPARATELY (code first, TICKETS.md last). Set status to review. Push your branch: `git push -u origin <branch>`. Output the TL;DR handoff from AGENTS.md.
 ```
 
 **After dispatching — MANDATORY SYNC (do not skip, do not defer):**
