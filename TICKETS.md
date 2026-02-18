@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**43 of 53 V1 tickets done (81%). 10 tickets + 2 gates remaining.**
+**45 of 53 V1 tickets done (85%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -91,8 +91,8 @@
 | 49 | S7R-091 | Claude auto-scan: SessionStart hook fetches remote and reports new agent branches | — | no | claude | done | — | claude |
 | 50 | S7R-092 | Unit tests: math utils (clamp, distPointToSegmentSq, quantize, edgeBiasedUnit) | — | no | codex | done | main | codex |
 | 51 | S7R-093 | Unit tests: defensive utils (toFinite, toNonNegativeFinite, clamp, lerp) | — | no | gemini | done | main | gemini |
-| 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | reviewing | codex/S7R-094 | codex |
-| 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | reviewing | gemini/S7R-095 | gemini |
+| 52 | S7R-094 | Unit tests: enemy-registry (createEnemyRegistry, getById, listByRole, validation, immutability) | — | no | codex | done | main | codex |
+| 53 | S7R-095 | Unit tests: badguys controller (getBadguysBounds, pickBadguysTarget, updateBadguysFlight) | — | no | gemini | done | main | gemini |
 
 ## What can run RIGHT NOW
 
@@ -147,8 +147,8 @@
 | S7R-090 | Split loop() into updateGame(now, dt) + drawGame(now). Pure refactor, no behavior change. Touches main.js. | done | — |
 | S7R-092 | Unit tests for math utils: clamp, distPointToSegmentSq, quantize, edgeBiasedUnit | done | — |
 | S7R-093 | Unit tests for defensive utils: toFinite, toNonNegativeFinite, clamp, lerp | done | — |
-| S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | next | codex |
-| S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | next | gemini |
+| S7R-094 | Unit tests for enemy-registry: createEnemyRegistry, getById, listByRole, validation, immutability | done | — |
+| S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1382,3 +1382,5 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-091 | `.claude/hooks/scan-agent-branches.sh`, `.claude/settings.local.json` — SessionStart hook that git-fetches and scans for agent branches ahead of main, reports status so Claude can auto-offer QA | claude |
 | 2026-02-17 | S7R-092 | `tests/unit/utils/math.test.js` — 7 tests: clamp bounds, distPointToSegmentSq (on/off/degenerate), quantize (snap/NaN/non-positive step), edgeBiasedUnit (rng injection, power bias) | codex |
 | 2026-02-17 | S7R-093 | `tests/unit/utils/defensive.test.js` — 13 tests: toFinite (passthrough/fallback), toNonNegativeFinite (clamp negative/non-finite), clamp (range/bounds), lerp (interpolation/extrapolation) | gemini |
+| 2026-02-17 | S7R-094 | `tests/unit/systems/enemy-registry.test.js` — 6 tests: factory from valid/invalid manifest, getById/has with valid/unknown/non-string IDs, listByRole with frozen arrays, getAll frozen, immutability throws | codex |
+| 2026-02-17 | S7R-095 | `tests/unit/systems/badguys.test.js` — 7 tests: getBadguysBounds (viewport/small viewport), pickBadguysTarget (edge bias/direct), updateBadguysFlight (init/physics/retarget/speed shift/wall bounce) | gemini |
