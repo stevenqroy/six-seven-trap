@@ -44,6 +44,8 @@ cd .worktrees/S7R-###
 
 **All work happens in `.worktrees/S7R-###`** — every file edit, every commit, every test run. Never `cd` back to the main workspace to edit files.
 
+**BEFORE EVERY FILE WRITE**: Verify your current directory is `.worktrees/S7R-###`, not the main workspace. Run `pwd` if unsure. Writing files to the main workspace pollutes Claude's QA environment and will be flagged as a scope violation.
+
 **Cleanup (after ticket is merged to main):**
 ```bash
 cd /Users/steven/Documents/Six Seven
