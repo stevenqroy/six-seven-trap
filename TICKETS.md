@@ -96,8 +96,8 @@
 | 54 | S7R-096 | Unit tests: danger-beam geometry (getDangerBeamGeometry, oscillation math) | — | no | codex | done | main | codex |
 | 55 | S7R-097 | Unit tests: beam-harvest logic (isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption) | — | no | gemini | done | main | gemini |
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
-| 57 | S7R-099 | Unit tests: laser-storm physics (startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke) | — | no | codex | next | — | — |
-| 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | next | — | — |
+| 57 | S7R-099 | Unit tests: laser-storm physics (startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke) | — | no | codex | reviewing | codex/S7R-099 | codex |
+| 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | wip:gemini | gemini/S7R-100 | gemini |
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | next | — | — |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | next | — | — |
 
@@ -158,8 +158,8 @@
 | S7R-095 | Unit tests for badguys controller: getBadguysBounds, pickBadguysTarget, updateBadguysFlight | done | — |
 | S7R-096 | Unit tests for danger-beam geometry: getDangerBeamGeometry, oscillation math | done | — |
 | S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | done | — |
-| S7R-099 | Unit tests for laser-storm physics: startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke | next | codex |
-| S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | next | gemini |
+| S7R-099 | Unit tests for laser-storm physics: startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke | reviewing | codex |
+| S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | wip:gemini | gemini |
 | S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | next | codex |
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | next | gemini |
 
