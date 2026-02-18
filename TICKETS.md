@@ -98,8 +98,8 @@
 | 56 | S7R-098 | Exclude .worktrees/ from vitest test discovery | — | no | claude | done | main | claude |
 | 57 | S7R-099 | Unit tests: laser-storm physics (startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke) | — | no | codex | done | main | codex |
 | 58 | S7R-100 | Unit tests: world-render state (initWorldState, rebuildWorldStars, resetWorldCache) | — | no | gemini | done | main | gemini |
-| 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | reviewing | codex/S7R-101 | codex |
-| 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | reviewing | gemini/S7R-102 | gemini |
+| 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
+| 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
 
 ## What can run RIGHT NOW
 
@@ -160,8 +160,8 @@
 | S7R-097 | Unit tests for beam-harvest logic: isGoodBeamNumber, isNumberInsideRegularBeam, triggerEruption | done | — |
 | S7R-099 | Unit tests for laser-storm physics: startLaserPostHitBounce, updateLaserSmoke, spawnLaserSmoke | done | — |
 | S7R-100 | Unit tests for world-render state: initWorldState, rebuildWorldStars, resetWorldCache | done | — |
-| S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | reviewing | codex |
-| S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | reviewing | gemini |
+| S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | done | — |
+| S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1621,3 +1621,5 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-097 | `tests/unit/systems/beam-harvest.test.js` — 5 tests: isGoodBeamNumber (6/7 non-trap true, trap/other false), isNumberInsideRegularBeam (inside/outside/above-below, chargeRatio expansion), triggerRegularBeamEruption (reset/populate, rng digit fill, onErupt callback, portalState coords) | gemini |
 | 2026-02-17 | S7R-099 | `tests/unit/systems/laser-storm.test.js` — 7 tests: startLaserPostHitBounce (inert + 5-point bounded path, deterministic with fixed rng, no-op when already inert), spawnLaserSmoke (fields, low-graphics skip, cap enforcement), updateLaserSmoke (physics + dead puff removal) | codex |
 | 2026-02-17 | S7R-100 | `tests/unit/systems/world-render.test.js` — 7 tests: initWorldState shape, rebuildWorldStars (count range, viewport bounds, valid properties, deterministic, replaces not appends), resetWorldCache clears key | gemini |
+| 2026-02-17 | S7R-101 | `tests/unit/ui/settings-panel.test.js` — 9 tests: stub API (no controller, missing DOM), open/close lifecycle (guards, focus restore, beforeOpen), setEnabled (hide buttons, auto-close), escape key, overlay backdrop click, form↔controller sync, destroy cleanup | codex |
+| 2026-02-17 | S7R-102 | `tests/unit/systems/telemetry.test.js` — 10 tests appended: computeFrameStats (empty/NaN), createRunMetrics (sampleCap floor, defaults), input normalization (unknown ability, unknown damage source, zero damage, same-tier transition, zero frame), ring buffer overflow, snapshot isolation | gemini |
