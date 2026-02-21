@@ -102,6 +102,7 @@
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
 | 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | done | main | codex |
 | 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | review | gemini/S7R-104 | gemini |
+| 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -166,6 +167,7 @@
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
 | S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | done | — |
 | S7R-104 | Unit tests for input system edge cases: normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery | review | gemini |
+| S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | next | codex |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1572,6 +1574,47 @@
 - [ ] Destroy tested: no events fire after destroy()
 - [ ] Window blur cleanup tested: resets state, fires holdEnd if holding, clears pending tap
 - [ ] Existing 8 tests still pass unchanged
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-105 Ready Brief
+
+**What:** Write edge-case unit tests for `src/systems/adaptive-quality.js`. Existing coverage is 4 tests for a 256-line module with 2 exports and 6 public methods. Add tests for: dwell timer preventing rapid tier changes, disabled→enabled transition reset, getCaps shadow blur defaults and ember/sizzle hard caps, zero/negative frame times ignored, destroy clears state, getDebugState shape, computeRecentWindowStats edge cases.
+
+**Reference files to read first:**
+- `src/systems/adaptive-quality.js` — the module under test (256 lines, exports: `computeRecentWindowStats`, `createAdaptiveQualityGovernor`)
+- `tests/unit/systems/adaptive-quality.test.js` — existing tests (4 tests, covers: window stats, downgrade/upgrade cycle, disabled reset, getCaps + reset tier)
+- `tests/unit/systems/mobile-benchmark.test.js` — recent test pattern for stats modules with edge cases
+
+**Files to modify:**
+1. `tests/unit/systems/adaptive-quality.test.js` (append new tests to existing file)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- Append to the existing `describe('adaptive quality governor')` block — do NOT replace the 4 existing tests
+- `onFrame` ignores frames with `ms <= 0` (returns null) — test with 0, negative, NaN frame times
+- `minTierDwellMs` prevents tier changes too quickly — test that no transition fires during the dwell period even if thresholds are met
+- Disabled→enabled transition: when `enabled` flips from false to true, the governor resets `lastTierChangeAt` to current time and clears samples — test that a new dwell period starts
+- `getCaps` merges `DEFAULT_SHADOW_BLUR_CAPS` when tier caps don't specify shadow blur — test that `low` tier gets `shadowBlurEnabled: false, maxShadowBlur: 0`, `high` gets `shadowBlurEnabled: true, maxShadowBlur: 18`
+- `getCaps` hard-caps `maxDangerEmbers` at 300 and `maxDangerSizzles` at 150 — test with tier caps that exceed these limits
+- `computeRecentWindowStats` with empty array returns `ready: false, sampleCount: 0, avgMs: 0`
+- `computeRecentWindowStats` with samples totaling less than windowMs returns `ready: false`
+- `destroy()` clears samples and sets `lastEnabled` to false — test that `getDebugState` reflects cleared state after destroy
+- `getDebugState` returns shape with: `tier`, `enabled`, `lastTierChangeAt`, `msSinceTierChange`, `sampleCount`, `sampledDurationMs`, `downgradeWindow`, `upgradeWindow`
+- The `now` parameter in constructor allows injecting a clock — use it for deterministic tests instead of relying on real time
+
+**Acceptance criteria:**
+- [ ] `onFrame` tested: zero/negative/NaN frame times return null, no sample added
+- [ ] Dwell timer tested: no transition during dwell period even when thresholds are met
+- [ ] Disabled→enabled tested: samples cleared, dwell period resets, tier preserved
+- [ ] `getCaps` tested: shadow blur defaults per tier (high=18, medium=10, low=0), `shadowBlurEnabled` false forces `maxShadowBlur` to 0
+- [ ] `getCaps` tested: `maxDangerEmbers` capped at 300, `maxDangerSizzles` capped at 150
+- [ ] `computeRecentWindowStats` tested: empty array, insufficient duration
+- [ ] `destroy` tested: clears state, getDebugState reflects reset
+- [ ] `getDebugState` tested: returns correct shape with all expected fields
+- [ ] Existing 4 tests still pass unchanged
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
