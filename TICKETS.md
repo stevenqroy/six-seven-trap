@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**55 of 62 V1 tickets done (89%). 7 tickets + 2 gates remaining.**
+**56 of 62 V1 tickets done (90%). 6 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -102,7 +102,7 @@
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
 | 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | done | main | codex |
 | 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | skip | gemini/S7R-104 | gemini |
-| 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | reviewing | codex/S7R-105 | codex |
+| 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | done | codex/S7R-105 | codex |
 | 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
@@ -168,7 +168,7 @@
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
 | S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | done | — |
 | S7R-104 | ~~Unit tests for input system edge cases~~ (Gemini failed QA twice — reassigned to S7R-106) | skip | — |
-| S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | reviewing | codex |
+| S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | done | codex |
 | S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
 
 ### Research tickets (no blockers, can start now)
@@ -1791,3 +1791,4 @@ Split the game loop. The monolithic 667-line `loop()` function — which mixed s
 | 2026-02-17 | S7R-101 | `tests/unit/ui/settings-panel.test.js` — 9 tests: stub API (no controller, missing DOM), open/close lifecycle (guards, focus restore, beforeOpen), setEnabled (hide buttons, auto-close), escape key, overlay backdrop click, form↔controller sync, destroy cleanup | codex |
 | 2026-02-17 | S7R-102 | `tests/unit/systems/telemetry.test.js` — 10 tests appended: computeFrameStats (empty/NaN), createRunMetrics (sampleCap floor, defaults), input normalization (unknown ability, unknown damage source, zero damage, same-tier transition, zero frame), ring buffer overflow, snapshot isolation | gemini |
 | 2026-02-17 | S7R-103 | `tests/unit/systems/mobile-benchmark.test.js` — 9 tests appended: empty/NaN sanitization, single-sample, spike burst tracking/reset, all-spike/no-spike, sustained window (not-ready/threshold/worst), NaN threshold fallback, all-pass/fail/mixed checks, spread edge cases, repeatability not-ready/tolerance | codex |
+| 2026-02-20 | S7R-105 | `tests/unit/systems/adaptive-quality.test.js` — 7 tests appended: empty/insufficient windowStats, zero/negative/NaN frame guard, dwell timer suppression, disabled→enabled reset, shadow blur defaults per tier, ember/sizzle hard caps, destroy+getDebugState shape | codex |
