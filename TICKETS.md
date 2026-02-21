@@ -101,8 +101,9 @@
 | 59 | S7R-101 | Unit tests: settings-panel (open/close lifecycle, escape key, enable/disable, form sync, destroy) | — | no | codex | done | main | codex |
 | 60 | S7R-102 | Unit tests: telemetry edge cases (computeFrameStats edge inputs, frame sample cap, ability/damage normalization) | — | no | gemini | done | main | gemini |
 | 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | done | main | codex |
-| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | review | gemini/S7R-104 | gemini |
+| 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | skip | gemini/S7R-104 | gemini |
 | 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | next | — | — |
+| 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -166,8 +167,9 @@
 | S7R-101 | Unit tests for settings-panel: open/close lifecycle, escape key, enable/disable, form sync, destroy | done | — |
 | S7R-102 | Unit tests for telemetry edge cases: computeFrameStats edge inputs, frame sample cap, ability/damage normalization | done | — |
 | S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | done | — |
-| S7R-104 | Unit tests for input system edge cases: normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery | review | gemini |
+| S7R-104 | ~~Unit tests for input system edge cases~~ (Gemini failed QA twice — reassigned to S7R-106) | skip | — |
 | S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | next | codex |
+| S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1615,6 +1617,47 @@
 - [ ] `destroy` tested: clears state, getDebugState reflects reset
 - [ ] `getDebugState` tested: returns correct shape with all expected fields
 - [ ] Existing 4 tests still pass unchanged
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-106 Ready Brief
+
+**What:** Write edge-case unit tests for `src/core/input.js`. This is a reassignment of S7R-104 (Gemini failed QA twice). Existing coverage is 8 tests covering happy paths for state-chart runtime. Add tests for: `normalizeMode`, movement-beyond-tap canceling hold, destroy cleanup, `setHandlers` replacement, and window blur reset.
+
+**CRITICAL — Read the test harness API first:**
+- `tests/helpers/input-harness.js` — the harness exposes: `{ events, canvas, input, emit, setNow, advance, destroy }`
+- **`harness.input`** is the input system object (has `.setHandlers()` and `.destroy()`) — NOT `harness.system` (does not exist)
+- **After `harness.destroy()`**, canvas listeners are removed, so `harness.emit()` will throw `Missing listener` — use `expect(() => harness.emit(...)).toThrow()` to verify destroy worked
+- **Legacy tap is DEFERRED** — both legacy and state-chart runtimes use `pendingTapTimer`. After pointerup, you MUST call `harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS)` before the tap event fires
+- **Window blur**: call `window.dispatchEvent(new Event('blur'))` — the harness ensures the window event API exists via `ensureWindowEventApi()`
+- All tests must use `vi.useFakeTimers()` in `beforeEach` and `vi.useRealTimers()` in `afterEach`
+
+**Reference files to read first:**
+- `src/core/input.js` — the module under test (490 lines, exports: `createInputSystem`, `INPUT_MODES`, `GESTURE_STATES`)
+- `tests/unit/core/input-state-machine.test.js` — existing tests (8 tests in `describe('Input System - S7R-006 state chart')`)
+- `tests/helpers/input-harness.js` — **READ THIS COMPLETELY** before writing any test. Understand the full API.
+- `src/constants.js` — `GESTURE` namespace (HOLD_DELAY_MS, TAP_MAX_DURATION_MS, TAP_MAX_MOVEMENT_PX, DOUBLE_TAP_WINDOW_MS, SWIPE_MAX_DURATION_MS, SWIPE_UP_MIN_DISTANCE_PX)
+
+**Files to modify:**
+1. `tests/unit/core/input-state-machine.test.js` (append a NEW `describe('Input System - S7R-106 edge cases')` block after the existing describe)
+
+**DO NOT modify:** Any source files, any helper files — test-only ticket
+
+**Gotchas:**
+- `normalizeMode` is not exported — test it indirectly by creating harnesses with `mode: 'statechart'` (alias) and `mode: 'unknown'` (defaults to STATE_CHART) and verifying gestures work
+- The `gestureTypes` helper from the existing tests filters out 'move' events — reuse it
+- `setHandlers` test: create harness, then call `harness.input.setHandlers({ onTap: newFn })`, emit a tap, verify newFn was called
+- Pointer cancel test: after cancel during hold, verify holdEnd fires, then do a NEW gesture to verify recovery — both legacy and state-chart
+- Movement-beyond-tap: emit pointerdown, then pointermove with distance > `GESTURE.TAP_MAX_MOVEMENT_PX`, then advance past HOLD_DELAY_MS — hold should NOT fire
+
+**Acceptance criteria:**
+- [ ] `normalizeMode` tested indirectly: 'statechart' alias works, unknown mode defaults to STATE_CHART behavior
+- [ ] Movement-beyond-tap tested: large movement cancels hold timer (hold doesn't fire after delay)
+- [ ] `setHandlers` tested: replacing handlers via `harness.input.setHandlers()` routes events to new callbacks
+- [ ] Destroy tested: after `harness.destroy()`, `harness.emit()` throws (listeners removed)
+- [ ] Window blur tested: `window.dispatchEvent(new Event('blur'))` resets state, fires holdEnd if holding
+- [ ] Existing 8 tests still pass unchanged
 - [ ] All new tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
