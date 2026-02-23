@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**56 of 64 V1 tickets done (88%). 8 tickets + 2 gates remaining.**
+**56 of 65 V1 tickets done (86%). 9 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -106,6 +106,7 @@
 | 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
 | 65 | S7R-107 | Unit tests: enemy-state-machine edge cases (isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn) | — | no | codex | next | — | — |
 | 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | next | — | — |
+| 67 | S7R-109 | Sparkly stars: glow halos, size pulsing, bloom composite on background stars | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -126,6 +127,7 @@
 | S7R-071 | Shield sparkle/electric effects, degradation visuals, proper cooldown timer on button | done | codex |
 | S7R-072 | Slam expanding shockwave VFX, push aliens + non-6/7 numbers, haptic vibration on impact | done | — |
 | S7R-073 | Projectile trails, color variety, energy bolt look, usage limiter | done | gemini |
+| S7R-109 | Sparkly stars: glow halos, size pulsing, bloom composite on background stars | next | codex |
 
 ### Cleanup tickets (no blockers, can start now)
 
@@ -1736,6 +1738,43 @@
 - [ ] All tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
+
+#### S7R-109 Ready Brief
+
+**What:** Enhance background stars to look sparkly. Stars already have basic sine-wave alpha twinkle. Add glow halos, size pulsing, and bloom composite for a more visually appealing night sky.
+
+**Reference files to read first:**
+- `src/systems/world-render.js` — star rendering at lines 220-232, star data built in `rebuildWorldStars` (lines 40-65). Each star has: `x, y, r` (radius 0.6-2.3), `a` (alpha 0.2-0.95), `tw` (twinkle rate), `phase`
+- `src/constants.js` — existing `SCENE.STAR_*` constants (lines 222-226): `STAR_COUNT_MIN: 36`, `STAR_COUNT_MAX: 96`, `STAR_HEIGHT_RATIO: 0.62`, `STAR_FADE_FACTOR: 0.58`
+- `src/systems/danger-beam.js` lines 163-198 — reference for procedural sparkle rendering with sine waves and radial gradients
+- `src/game-objects/shield.js` lines 26-30 — reference for sparkle color palette (white, cyan, gold)
+
+**Files to modify:**
+1. `src/systems/world-render.js` — enhance star drawing loop in `drawWorld`
+2. `src/constants.js` — add `SCENE.STAR_GLOW_*` tuning constants
+
+**DO NOT modify:** `src/main.js`, any test files, any other source files
+
+**Gotchas:**
+- Stars already twinkle — current rendering: `twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(now * s.tw + s.phase))`. Enhance this, don't replace it
+- Stars fade during day — existing `starFade` logic must still work. Glow should fade with stars
+- Use `globalCompositeOperation = 'lighter'` for bloom effect, but MUST restore original composite op after the star loop
+- Skip glow halos on `low` quality tier (check `getCaps()` or pass quality tier to draw). The enhanced alpha/size twinkle can still run on low tier since it's cheap
+- Radial gradients are expensive — cache or keep glow radius small (3-4x star radius max)
+- Don't add new star data fields unless necessary — the existing `r, a, tw, phase` should be enough to drive all the new visuals
+- `ctx.save()`/`ctx.restore()` around composite operation changes to avoid affecting other draw calls
+
+**Acceptance criteria:**
+- [ ] Stars have visible glow halos (radial gradient around each star)
+- [ ] Star size pulses subtly in sync with alpha twinkle (~±30% of base radius)
+- [ ] Bloom composite (`'lighter'`) makes stars appear brighter against dark sky
+- [ ] Glow halos skipped on `low` quality tier
+- [ ] Stars still fade correctly during day cycle (glow fades too)
+- [ ] New `SCENE.STAR_GLOW_*` constants added for tuning (glow radius multiplier, glow intensity)
+- [ ] No visual artifacts — composite operation restored after star rendering
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+- [ ] Existing world-render tests still pass (`npm run test`)
 
 ### Tooling tickets (no blockers, can start now)
 
