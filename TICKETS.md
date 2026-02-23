@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**56 of 62 V1 tickets done (90%). 6 tickets + 2 gates remaining.**
+**56 of 64 V1 tickets done (88%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -104,6 +104,8 @@
 | 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | skip | gemini/S7R-104 | gemini |
 | 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | done | codex/S7R-105 | codex |
 | 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
+| 65 | S7R-107 | Unit tests: enemy-state-machine edge cases (isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn) | — | no | codex | next | — | — |
+| 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | next | — | — |
 
 ## What can run RIGHT NOW
 
@@ -170,6 +172,8 @@
 | S7R-104 | ~~Unit tests for input system edge cases~~ (Gemini failed QA twice — reassigned to S7R-106) | skip | — |
 | S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | done | codex |
 | S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
+| S7R-107 | Unit tests for enemy-state-machine edge cases: isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn | next | codex |
+| S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | next | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1659,6 +1663,77 @@
 - [ ] Window blur tested: `window.dispatchEvent(new Event('blur'))` resets state, fires holdEnd if holding
 - [ ] Existing 8 tests still pass unchanged
 - [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-107 Ready Brief
+
+**What:** Write edge-case unit tests for `src/systems/enemy-state-machine.js`. Existing coverage is 5 tests for a 542-line module with 3 exports and 9 public methods. Add tests for: `isEnemyLifecycleState` valid/invalid inputs, `markDead` edge cases, `reset`/`destroy` behavior, concurrent entity management, `getDebugState` full shape, `onFrame` with zero/NaN, lifetime-forced despawn, spawn-when-disabled.
+
+**Reference files to read first:**
+- `src/systems/enemy-state-machine.js` — the module under test (542 lines, exports: `ENEMY_LIFECYCLE_STATES`, `isEnemyLifecycleState`, `createEnemyStateMachineRuntime`)
+- `tests/unit/systems/enemy-state-machine.test.js` — existing tests (5 tests, covers: lifecycle loop, state timeout, invalid transition, dead cleanup, flag disable)
+- `tests/unit/systems/adaptive-quality.test.js` — recent test pattern for edge case coverage with clock helpers
+
+**Files to modify:**
+1. `tests/unit/systems/enemy-state-machine.test.js` (append new tests to existing `describe('enemy state machine runtime')` block)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- Existing tests use a `createClock()` helper and a `firstState()` helper — reuse these
+- `isEnemyLifecycleState` accepts lowercase strings only ('spawn', 'dead', etc.) — test with uppercase, numbers, null, empty string
+- `markDead` returns `false` for unknown runtimeId, `false` for already-despawned entity, `true` for already-dead entity (idempotent)
+- `reset()` clears all entities, resets metrics, returns `getDebugState()` snapshot. Also resets `nextRuntimeId` to 1.
+- `destroy()` calls `reset()` internally, returns the snapshot
+- `getDebugState` returns 15 fields: `enabled`, `activeCount`, `byState`, `oldestStateAgeMs`, `oldestLifetimeMs`, `totalSpawned`, `totalTransitions`, `totalDespawns`, `totalCleanups`, `forcedRecoveries`, `forcedDespawns`, `invalidStateRecoveries`, `invalidTransitions`, `deadStateCleanups`, `maxConcurrentEntities`, `lastTickAtMs`
+- Multiple concurrent entities: spawn 3 enemies, verify `getEntities` returns 3, verify `getDebugState().activeCount` is 3, `byState` has correct counts
+- Lifetime despawn: set `maxEntityLifetimeMs` short (e.g. 3000ms), advance clock past it, call `onFrame` — entity should be forced to 'despawned' state and removed
+- `spawnEnemy` when disabled returns `null`
+- `onFrame` with `frameMs = 0` or `NaN` still processes entities normally (only affects the returned `frameMs` field)
+
+**Acceptance criteria:**
+- [ ] `isEnemyLifecycleState` tested: valid states return true, invalid inputs (uppercase, number, null, empty) return false
+- [ ] `markDead` edge cases: unknown runtimeId returns false, already-despawned returns false, already-dead returns true
+- [ ] `reset` tested: clears entities, resets metrics, returns debug snapshot
+- [ ] `destroy` tested: clears entities, returns snapshot
+- [ ] `getDebugState` shape tested: all 15 fields present with correct types
+- [ ] Concurrent entities: spawn 3, verify counts and byState
+- [ ] Lifetime despawn: entity despawned after maxLifetimeMs exceeded
+- [ ] Spawn-when-disabled: returns null
+- [ ] Existing 5 tests still pass unchanged
+- [ ] All new tests pass (`npm run test`)
+- [ ] `npm run lint` passes
+- [ ] `npm run build` succeeds
+
+#### S7R-108 Ready Brief
+
+**What:** Write unit tests for `src/ui/action-bar-config.js`. This is a tiny 33-line module with a single export. Zero existing tests.
+
+**Reference files to read first:**
+- `src/ui/action-bar-config.js` — the module under test (33 lines, exports: `createActionBarButtons`)
+- `tests/unit/ui/action-bar.test.js` — existing test pattern for UI modules
+- `tests/unit/ui/action-router.test.js` — another UI test pattern for reference
+
+**Files to modify:**
+1. `tests/unit/ui/action-bar-config.test.js` (create new test file)
+
+**DO NOT modify:** Any source files — test-only ticket
+
+**Gotchas:**
+- `createActionBarButtons()` takes no arguments, returns an array of 3 objects
+- Each object has: `id` (string), `label` (string), `icon` (string emoji), `position` (string)
+- The 3 button IDs are: 'shield', 'projectile', 'slam' — test these exact values
+- **Mutation safety**: the function should return a fresh array each call — verify `createActionBarButtons() !== createActionBarButtons()` (reference inequality)
+- This is a very simple module — keep tests concise, don't over-test
+
+**Acceptance criteria:**
+- [ ] Returns array of exactly 3 elements
+- [ ] Each element has `id`, `label`, `icon`, `position` properties (all strings)
+- [ ] IDs are exactly: 'shield', 'projectile', 'slam'
+- [ ] Each button has a non-empty label and non-empty icon
+- [ ] Returns fresh array each call (no shared reference)
+- [ ] All tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] `npm run build` succeeds
 
