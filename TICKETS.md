@@ -1797,6 +1797,9 @@ Extraction sprint continued. Danger beam (oscillation, rendering, ember particle
 ### February 17, 2026
 Split the game loop. The monolithic 667-line `loop()` function — which mixed state updates and drawing in one tangled mess — got separated into `updateGame()` and `drawGame()`, plus dedicated update/draw splits for the title screen and victory states. `loop()` is now a 22-line orchestrator. main.js is 3,146 lines (slight increase from the new function boundaries, but structurally much cleaner). Set up Hookify for deterministic branch protection — no more accidental edits on main. 40 of 46 done (87%).
 
+### February 20-21, 2026
+The test coverage push continues. Nine new mobile-benchmark tests landed (S7R-103), then seven adaptive-quality edge cases (S7R-105) — both from Codex, both clean first-try passes. Gemini tried input system edge cases (S7R-104) but failed QA twice with the same four bugs — wrong harness API, misunderstanding of tap deferral. We skipped it and reassigned to Codex as S7R-106 with a much more detailed Ready Brief that documents the exact harness API. Two more test tickets created (S7R-107, S7R-108) to keep both agents busy. 56 of 64 V1 tickets done (88%). The test suite is at 343 tests across 36 files. Almost every source module has dedicated coverage now.
+
 ## Merge Log
 > Every merge to main gets a one-liner here. Workers: read the last few entries when starting a session to see what changed since you last pulled.
 
