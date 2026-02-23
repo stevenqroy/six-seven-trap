@@ -105,7 +105,7 @@
 | 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | done | codex/S7R-105 | codex |
 | 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
 | 65 | S7R-107 | Unit tests: enemy-state-machine edge cases (isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn) | — | no | codex | next | — | — |
-| 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | next | — | — |
+| 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | reviewing | gemini/S7R-108 | gemini |
 | 67 | S7R-109 | Sparkly stars: glow halos, size pulsing, bloom composite on background stars | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
@@ -175,7 +175,7 @@
 | S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | done | codex |
 | S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
 | S7R-107 | Unit tests for enemy-state-machine edge cases: isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn | next | codex |
-| S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | next | gemini |
+| S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | reviewing | gemini |
 
 ### Research tickets (no blockers, can start now)
 
