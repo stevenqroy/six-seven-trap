@@ -103,7 +103,7 @@
 | 61 | S7R-103 | Unit tests: mobile-benchmark deep coverage (spike detection, sustained window, sanitization, repeatability) | — | no | codex | done | main | codex |
 | 62 | S7R-104 | Unit tests: input system edge cases (normalizeMode, window blur cleanup, movement-cancels-hold, pointer cancel recovery) | — | no | gemini | skip | gemini/S7R-104 | gemini |
 | 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | done | codex/S7R-105 | codex |
-| 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
+| 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | wip:codex | codex/S7R-106 | codex |
 | 65 | S7R-107 | Unit tests: enemy-state-machine edge cases (isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn) | — | no | codex | next | — | — |
 | 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | reviewing | gemini/S7R-108 | gemini |
 | 67 | S7R-109 | Sparkly stars: glow halos, size pulsing, bloom composite on background stars | — | no | codex | next | — | — |
@@ -173,7 +173,7 @@
 | S7R-103 | Unit tests for mobile-benchmark deep coverage: spike detection, sustained window, sanitization, repeatability, empty/NaN inputs | done | — |
 | S7R-104 | ~~Unit tests for input system edge cases~~ (Gemini failed QA twice — reassigned to S7R-106) | skip | — |
 | S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | done | codex |
-| S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
+| S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | wip:codex | codex |
 | S7R-107 | Unit tests for enemy-state-machine edge cases: isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn | next | codex |
 | S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | reviewing | gemini |
 
