@@ -19,7 +19,7 @@
 - Next → S7R-055 launch prep (retention telemetry, iteration checkpoint)
 - Next → Gate-2 playtest (runs/session, ability diversity, soak test)
 
-**56 of 65 V1 tickets done (86%). 9 tickets + 2 gates remaining.**
+**57 of 65 V1 tickets done (88%). 8 tickets + 2 gates remaining.**
 
 ## Status Key
 - `done` — merged to main, verified
@@ -105,7 +105,7 @@
 | 63 | S7R-105 | Unit tests: adaptive-quality edge cases (dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState) | — | no | codex | done | codex/S7R-105 | codex |
 | 64 | S7R-106 | Unit tests: input system edge cases (normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers) | — | no | codex | next | — | — |
 | 65 | S7R-107 | Unit tests: enemy-state-machine edge cases (isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn) | — | no | codex | next | — | — |
-| 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | reviewing | gemini/S7R-108 | gemini |
+| 66 | S7R-108 | Unit tests: action-bar-config (button array shape, IDs, mutation safety) | — | no | gemini | done | gemini/S7R-108 | gemini |
 | 67 | S7R-109 | Sparkly stars: glow halos, size pulsing, bloom composite on background stars | — | no | codex | next | — | — |
 
 ## What can run RIGHT NOW
@@ -175,7 +175,7 @@
 | S7R-105 | Unit tests for adaptive-quality edge cases: dwell timer, disabled→enabled reset, getCaps shadow blur, destroy, getDebugState | done | codex |
 | S7R-106 | Unit tests for input system edge cases: normalizeMode, blur cleanup, movement-cancels-hold, destroy, setHandlers | next | codex |
 | S7R-107 | Unit tests for enemy-state-machine edge cases: isEnemyLifecycleState, markDead edges, reset/destroy, concurrent entities, lifetime despawn | next | codex |
-| S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | reviewing | gemini |
+| S7R-108 | Unit tests for action-bar-config: button array shape, IDs, mutation safety | done | gemini |
 
 ### Research tickets (no blockers, can start now)
 
@@ -1909,3 +1909,4 @@ The test coverage push continues. Nine new mobile-benchmark tests landed (S7R-10
 | 2026-02-17 | S7R-102 | `tests/unit/systems/telemetry.test.js` — 10 tests appended: computeFrameStats (empty/NaN), createRunMetrics (sampleCap floor, defaults), input normalization (unknown ability, unknown damage source, zero damage, same-tier transition, zero frame), ring buffer overflow, snapshot isolation | gemini |
 | 2026-02-17 | S7R-103 | `tests/unit/systems/mobile-benchmark.test.js` — 9 tests appended: empty/NaN sanitization, single-sample, spike burst tracking/reset, all-spike/no-spike, sustained window (not-ready/threshold/worst), NaN threshold fallback, all-pass/fail/mixed checks, spread edge cases, repeatability not-ready/tolerance | codex |
 | 2026-02-20 | S7R-105 | `tests/unit/systems/adaptive-quality.test.js` — 7 tests appended: empty/insufficient windowStats, zero/negative/NaN frame guard, dwell timer suppression, disabled→enabled reset, shadow blur defaults per tier, ember/sizzle hard caps, destroy+getDebugState shape | codex |
+| 2026-02-23 | S7R-108 | `tests/unit/ui/action-bar-config.test.js` — 5 tests: array of 3, correct IDs (shield/projectile/slam), required string properties, non-empty labels+icons, mutation safety (fresh array per call) | gemini |
