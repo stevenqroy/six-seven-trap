@@ -153,3 +153,124 @@ describe('Input System - S7R-006 state chart', () => {
     harness.destroy();
   });
 });
+
+describe('Input System - S7R-106 edge cases', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it.each(['statechart', 'unknown'])(
+    'normalizes %s mode to state-chart runtime behavior',
+    (mode) => {
+      const harness = createInputHarness({ mode });
+
+      harness.emit('pointerdown', { pointerId: 7, clientX: 118, clientY: 250 });
+      harness.advance(GESTURE.HOLD_DELAY_MS);
+      harness.emit('lostpointercapture', { pointerId: 7, clientX: 118, clientY: 250 });
+
+      expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd']);
+
+      harness.advance(20);
+      harness.emit('pointerdown', { pointerId: 7, clientX: 160, clientY: 190 });
+      harness.advance(70);
+      harness.emit('pointerup', { pointerId: 7, clientX: 160, clientY: 190 });
+      harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS);
+
+      expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd', 'tap']);
+
+      harness.destroy();
+    }
+  );
+
+  it.each([INPUT_MODES.STATE_CHART, INPUT_MODES.LEGACY])(
+    'cancels hold when movement exceeds tap threshold in %s mode',
+    (mode) => {
+      const harness = createInputHarness({ mode });
+      const movedX = 100 + GESTURE.TAP_MAX_MOVEMENT_PX + 1;
+
+      harness.emit('pointerdown', { clientX: 100, clientY: 220 });
+      harness.emit('pointermove', { clientX: movedX, clientY: 220 });
+      harness.advance(GESTURE.HOLD_DELAY_MS + 10);
+
+      expect(gestureTypes(harness.events)).toEqual([]);
+
+      harness.emit('pointerup', { clientX: movedX, clientY: 220 });
+      harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS + 10);
+
+      expect(gestureTypes(harness.events)).toEqual([]);
+
+      harness.destroy();
+    }
+  );
+
+  it('routes tap events to replacement handlers via setHandlers', () => {
+    const harness = createInputHarness({ mode: INPUT_MODES.STATE_CHART });
+    const onTap = vi.fn();
+
+    harness.input.setHandlers({ onTap });
+    harness.emit('pointerdown', { clientX: 145, clientY: 175 });
+    harness.advance(90);
+    harness.emit('pointerup', { clientX: 145, clientY: 175 });
+    harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS);
+
+    expect(onTap).toHaveBeenCalledTimes(1);
+    expect(onTap).toHaveBeenCalledWith(expect.objectContaining({ x: 145, y: 175 }));
+    expect(gestureTypes(harness.events)).toEqual([]);
+
+    harness.destroy();
+  });
+
+  it('removes event listeners on destroy', () => {
+    const harness = createInputHarness({ mode: INPUT_MODES.STATE_CHART });
+
+    harness.destroy();
+
+    expect(() => harness.emit('pointerdown')).toThrow(/Missing listener/);
+  });
+
+  it('resets active hold on window blur and recovers for the next gesture', () => {
+    const harness = createInputHarness({ mode: INPUT_MODES.STATE_CHART });
+
+    harness.emit('pointerdown', { clientX: 120, clientY: 240 });
+    harness.advance(GESTURE.HOLD_DELAY_MS);
+    window.dispatchEvent(new Event('blur'));
+
+    expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd']);
+    expect(harness.events[1].payload.event).toBeNull();
+
+    harness.advance(20);
+    harness.emit('pointerdown', { clientX: 180, clientY: 200 });
+    harness.advance(80);
+    harness.emit('pointerup', { clientX: 180, clientY: 200 });
+    harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS);
+
+    expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd', 'tap']);
+
+    harness.destroy();
+  });
+
+  it('recovers after pointercancel during hold in legacy mode', () => {
+    const harness = createInputHarness({ mode: INPUT_MODES.LEGACY });
+
+    harness.emit('pointerdown', { clientX: 100, clientY: 240 });
+    harness.advance(GESTURE.HOLD_DELAY_MS);
+    harness.emit('pointercancel', { clientX: 100, clientY: 240 });
+
+    expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd']);
+
+    harness.advance(20);
+    harness.emit('pointerdown', { clientX: 180, clientY: 200 });
+    harness.advance(80);
+    harness.emit('pointerup', { clientX: 180, clientY: 200 });
+    harness.advance(GESTURE.DOUBLE_TAP_WINDOW_MS);
+
+    expect(gestureTypes(harness.events)).toEqual(['holdStart', 'holdEnd', 'tap']);
+
+    harness.destroy();
+  });
+});
